@@ -1,4 +1,4 @@
-package com.popularlifeinsuranceapp
+package com.insurancecompanyapp
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
