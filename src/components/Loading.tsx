@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import type { RootState } from '../store/index';
 
 const Loading: React.FC = () => {
-  const { loading } = useSelector((state: RootState) => state.loading);
+  const { loading, message } = useSelector((state: RootState) => state.loading);
 
   if (!loading) return null;
 
@@ -12,7 +12,7 @@ const Loading: React.FC = () => {
     <View style={styles.overlay}>
       <View style={styles.box}>
         <ActivityIndicator size="large" color="#966EAF" />
-        <Text style={styles.text}>Please wait...</Text>
+        <Text style={styles.text}>{message}</Text>
       </View>
     </View>
   );
@@ -36,7 +36,7 @@ const styles = StyleSheet.create({
   },
   text: {
     marginLeft: 16,
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: '#333',
   },

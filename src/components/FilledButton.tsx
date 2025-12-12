@@ -15,7 +15,7 @@ export const FilledButton: React.FC<FilledButtonProps> = ({ title, style, ...pro
       activeOpacity={0.8}
       {...props}
     >
-      <Text style={[globalStyle.font, styles.text]}>{title.toUpperCase()}</Text>
+      <Text style={[globalStyle.fontFjallaOne, styles.text]}>{title.toUpperCase()}</Text>
     </TouchableOpacity>
   );
 };

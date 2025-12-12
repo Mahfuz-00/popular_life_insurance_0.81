@@ -89,6 +89,7 @@ export const getPolicyListByUser = async () => {
   try {
     const headers = await getAuthHeaders();
     const { data } = await axios.post(`${API}/api/policy-list/auth`, {}, { headers });
+    console.log('Policy List:', data);
     return data.data || [];
   } catch (error) {
     return [];
@@ -215,6 +216,59 @@ export const fetchFirstPremiumTransactions = async (nid: string) => {
     return { success: false, data: [] };
   } catch (error: any) {
     return { success: false, message: error.response?.data?.message || error.message || 'Server error' };
+  }
+};
+
+// ──────────────────────────────────────────────────────────────
+// CODE-WISE COLLECTION ACTIONS
+// ──────────────────────────────────────────────────────────────
+
+export const getCodeWiseCollectionSummary = async (
+  projectCode: string,
+  designation: string,
+  code: string
+) => {
+  try {
+    const headers = await getAuthHeaders();
+    const { data } = await axios.post(
+      `${API}/api/code-wise-collection-summary`,
+      { project_code: projectCode, designation, code },
+      { headers }
+    );
+    return data;
+  } catch (error: any) {
+    console.error('Summary fetch error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const getCodeWiseCollectionDetails = async (
+  projectCode: string,
+  designation: string,
+  code: string
+) => {
+  try {
+    const headers = await getAuthHeaders();
+    const { data } = await axios.post(
+      `${API}/api/code-wise-collection-details`,
+      { project_code: projectCode, designation, code },
+      { headers }
+    );
+    return data;
+  } catch (error: any) {
+    console.error('Details fetch error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const fetchDesignations = async () => {
+  try {
+    const headers = await getAuthHeaders();
+    const { data } = await axios.get(`${API}/api/designations`, { headers });
+    return data;
+  } catch (error: any) {
+    console.error('Failed to fetch designations:', error);
+    throw error;
   }
 };
 

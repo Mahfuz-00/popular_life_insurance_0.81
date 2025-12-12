@@ -7,7 +7,18 @@ const globalStyle = StyleSheet.create({
   },
   wrapper: {
     paddingHorizontal: 16,
-    marginVertical: 12,
+    marginTop: 12,
+    marginBottom: 22,
+  },
+   inputWrapper: {
+    borderWidth: 1,
+    borderColor: '#000',     
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    minHeight: 50,            
+    justifyContent: 'center',
   },
 
   // Font Family Styles
@@ -37,6 +48,7 @@ const globalStyle = StyleSheet.create({
     fontSize: 14,
     color: '#056608',
     fontFamily: 'Poppins-Medium',
+    // fontFamily: 'FjallaOne-Regular',
   },
 
   // Errors

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import { Dropdown } from 'react-native-element-dropdown';
 import globalStyle from '../styles/globalStyle';
 
 interface Item {
@@ -19,7 +19,7 @@ interface PickerComponentProps {
   errorField?: string;
   required?: boolean;
   style?: object;
-  pickerProps?: any; // extra props for Picker
+  disabled?: boolean;
 }
 
 export const PickerComponent: React.FC<PickerComponentProps> = ({
@@ -33,7 +33,7 @@ export const PickerComponent: React.FC<PickerComponentProps> = ({
   errorField = '',
   required = false,
   style,
-  pickerProps = {},
+  disabled = false,
 }) => {
   return (
     <View style={[styles.container, style]}>
@@ -42,30 +42,24 @@ export const PickerComponent: React.FC<PickerComponentProps> = ({
           {label} {required && <Text style={styles.required}>*</Text>}
         </Text>
       )}
-      <View style={styles.pickerWrapper}>
-        <Picker
-          selectedValue={value}
-          onValueChange={(itemValue, itemIndex) => {
-            setValue(itemValue);
-            if (setLabel) {
-              // fallback for placeholder
-              setLabel(itemValue === '' ? '' : items[itemIndex - 1]?.label || '');
-            }
-          }}
-          style={styles.picker}
-          {...pickerProps}
-        >
-          <Picker.Item label={placeholder} value="" />
-          {items.map((item, index) => (
-            <Picker.Item
-              key={index}
-              label={item.label}
-              value={item.value}
-              style={globalStyle.font}
-            />
-          ))}
-        </Picker>
-      </View>
+
+      <Dropdown
+        style={[globalStyle.inputWrapper, styles.dropdown, disabled && styles.dropdownDisabled]}
+        placeholderStyle={styles.placeholderStyle}
+        selectedTextStyle={styles.selectedTextStyle}
+        itemTextStyle={styles.itemTextStyle}
+        data={items}
+        labelField="label"
+        valueField="value"
+        placeholder={placeholder}
+        value={value}
+        onChange={(item) => {
+          setValue(item.value);
+          if (setLabel) setLabel(item.label);
+        }}
+        disable={disabled}
+      />
+
       {errors[errorField] && (
         <Text style={globalStyle.errorMessageText}>{errors[errorField]}</Text>
       )}
@@ -77,12 +71,31 @@ const styles = StyleSheet.create({
   container: { marginVertical: 8 },
   label: { marginBottom: 4 },
   required: { color: 'red' },
-  pickerWrapper: {
-    borderWidth: 1,
-    borderColor: '#ddd',
+
+  dropdown: {
+    height: 50,
     borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: '#fff', // like old project
+    paddingHorizontal: 12,
+    backgroundColor: '#fff',
+    justifyContent: 'center', 
   },
-  picker: { height: 50 },
+
+  dropdownDisabled: {
+    backgroundColor: '#e0e0e0', 
+  },
+
+  placeholderStyle: {
+    color: '#444',
+    fontSize: 16,
+  },
+
+  selectedTextStyle: {
+    color: '#000',
+    fontSize: 16,
+  },
+
+  itemTextStyle: {
+    color: '#000',
+    fontSize: 16,
+  },
 });

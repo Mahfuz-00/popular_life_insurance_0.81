@@ -15,55 +15,55 @@ import type { RootStackParamList } from './src/navigation/RootStackParamList';
 
 // -- Screens (grouped for clarity) --
 // Public screens
-import HomeScreen from './src/screens/HomeScreen';
-import PremiumCalculatorScreen from './src/screens/PremiumCalculatorScreen';
-import CompanyInfoScreen from './src/screens/CompanyInfoScreen';
-import LocateUsScreen from './src/screens/LocateUsScreen';
-import PayPremiumScreen from './src/screens/PayPremiumScreen';
-import ProductInfoScreen from './src/screens/ProductInfoScreen';
-import ClaimSubmissionScreen from './src/screens/ClaimSubmissionScreen';
-import MessageFromMd from './src/screens/MessageFromMd';
-import PolicyInfoScreen from './src/screens/PolicyInfoScreen';
-import ContactUsScreen from './src/screens/ContactUsScreen';
-import ApplyOnlineScreen from './src/screens/ApplyOnlineScreen';
-import ProposalTrackingScreen from './src/screens/ProposalTrackingScreen';
-import MyTransactionScreen from './src/screens/MyTransactionScreen';
-import SyncPaymentScreen from './src/screens/policyHolder/SyncPaymentScreen';
-import CodeWiseCollectionScreen from './src/screens/CodeWiseCollectionScreen';
-import PolicyPhoneUpdateScreen from './src/screens/PolicyPhoneUpdateScreen';
+import HomeScreen from './src/screens/Dashboard/HomeScreen';
+import PremiumCalculatorScreen from './src/screens/Dashboard/PremiumCalculatorScreen';
+import CompanyInfoScreen from './src/screens/Dashboard/CompanyInfoScreen';
+import LocateUsScreen from './src/screens/Dashboard/LocateUsScreen';
+import PayPremiumScreen from './src/screens/Dashboard/PayPremiumScreen';
+import ProductInfoScreen from './src/screens/Dashboard/ProductInfoScreen';
+import ClaimSubmissionScreen from './src/screens/Dashboard/ClaimSubmissionScreen';
+import MessageFromMd from './src/screens/Dashboard/MessageFromMd';
+import PolicyInfoScreen from './src/screens/Dashboard/PolicyInfoScreen';
+import ContactUsScreen from './src/screens/Dashboard/ContactUsScreen';
+import ApplyOnlineScreen from './src/screens/Dashboard/ApplyOnlineScreen';
+import ProposalTrackingScreen from './src/screens/Dashboard/ProposalTrackingScreen';
+import MyTransactionScreen from './src/screens/Dashboard/MyTransactionScreen';
+import SyncPaymentScreen from './src/screens/User/policyHolder/SyncPaymentScreen';
+import CodeWiseCollectionScreen from './src/screens/Dashboard/CodeWiseCollectionScreen';
+import PolicyPhoneUpdateScreen from './src/screens/Dashboard/PolicyPhoneUpdateScreen';
 
 // First premium / payment flows
-import PayFirstPremiumScreen from './src/screens/PayFirstPremiumScreen';
-import PayfirstPremiumGateway from './src/screens/PayFirstPremiumGateway';
-import FirstPremiumTransactionsScreen from './src/screens/PayFirstPremiumTransactionsScreen';
+import PayFirstPremiumScreen from './src/screens/Dashboard/firstpremium/PayFirstPremiumScreen';
+import PayfirstPremiumGateway from './src/screens/Dashboard/firstpremium/PayFirstPremiumGateway';
+import FirstPremiumTransactionsScreen from './src/screens/Dashboard/firstpremium/PayFirstPremiumTransactionsScreen';
 
 // Auth
-import LoginScreen from './src/screens/LoginScreen';
-import RegistrationScreen from './src/screens/RegistrationScreen';
-import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
-import ResetPasswordScreen from './src/screens/ResetPasswordScreen';
+import LoginScreen from './src/screens/Auth/LoginScreen';
+import RegistrationScreen from './src/screens/Auth/RegistrationScreen';
+import ForgotPasswordScreen from './src/screens/Auth/ForgotPasswordScreen';
+import ResetPasswordScreen from './src/screens/Auth/ResetPasswordScreen';
 import Loading from './src/components/Loading';
-import SelectLoginScreen from './src/screens/SelectLoginScreen';
+import SelectLoginScreen from './src/screens/Auth/SelectLoginScreen';
 
 // Policy holder screens
-import DashboardPhScreen from './src/screens/policyHolder/DashboardPhScreen';
-import PhPolicyListScreen from './src/screens/policyHolder/PhPolicyListScreen';
-import PhPolicyStatementScreen from './src/screens/policyHolder/PhPolicyStatementScreen';
-import PhDuePremiumScreen from './src/screens/policyHolder/PhDuePremiumScreen';
-import PhPayPremiumScreen from './src/screens/policyHolder/PhPayPremiumScreen';
-import PhPolicyTransactionsScreen from './src/screens/policyHolder/PhPolicyTransactionsScreen';
-import PhPolicyPartialTransactionsScreen from './src/screens/policyHolder/PhPolicyPartialTransactionsScreen';
-import AuthPolicyInfoScreen from './src/screens/AuthPolicyInfoScreen';
-import PhMyProfileScreen from './src/screens/policyHolder/PhMyProfileScreen';
-import PhClaimSubmissionScreen from './src/screens/policyHolder/PhClaimSubmissionScreen';
-import PhPRListScreen from './src/screens/policyHolder/PhPRListScreen copy';
+import DashboardPhScreen from './src/screens/User/policyHolder/DashboardPhScreen';
+import PhPolicyListScreen from './src/screens/User/policyHolder/PhPolicyListScreen';
+import PhPolicyStatementScreen from './src/screens/User/policyHolder/PhPolicyStatementScreen';
+import PhDuePremiumScreen from './src/screens/User/policyHolder/PhDuePremiumScreen';
+import PhPayPremiumScreen from './src/screens/User/policyHolder/PhPayPremiumScreen';
+import PhPolicyTransactionsScreen from './src/screens/User/policyHolder/PhPolicyTransactionsScreen';
+import PhPolicyPartialTransactionsScreen from './src/screens/User/policyHolder/PhPolicyPartialTransactionsScreen';
+import AuthPolicyInfoScreen from './src/screens/Dashboard/AuthPolicyInfoScreen';
+import PhMyProfileScreen from './src/screens/User/policyHolder/PhMyProfileScreen';
+import PhClaimSubmissionScreen from './src/screens/User/policyHolder/PhClaimSubmissionScreen';
+import PhPRListScreen from './src/screens/User/policyHolder/PhPRListScreen copy';
 
 // Producer screens
-import DashboardProducerScreen from './src/screens/producer/DashboardProducerScreen';
-import BusinessInfoScreen from './src/screens/producer/BusinessInfoScreen';
-import EarningInfoScreen from './src/screens/producer/EarningInfoScreen';
-import PolicyListScreen from './src/screens/producer/PolicyListScreen';
-import OrgMyProfileScreen from './src/screens/producer/OrgMyProfileScreen';
+import DashboardProducerScreen from './src/screens/User/producer/DashboardProducerScreen';
+import BusinessInfoScreen from './src/screens/User/producer/BusinessInfoScreen';
+import EarningInfoScreen from './src/screens/User/producer/EarningInfoScreen';
+import PolicyListScreen from './src/screens/User/producer/PolicyListScreen';
+import OrgMyProfileScreen from './src/screens/User/producer/OrgMyProfileScreen';
 
 // Drawer content
 import DrawerContent from './src/components/DrawerContent';
@@ -72,7 +72,7 @@ import { DrawerParamList } from './src/navigation/DrawerParamList';
 
 // -- Navigator types --
 const Stack = createNativeStackNavigator<RootStackParamList>();
-const Drawer = createDrawerNavigator<{ MainStack: undefined }>();
+const Drawer = createDrawerNavigator();
 
 // -- Helpers --
 

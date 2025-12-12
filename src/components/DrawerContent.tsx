@@ -3,11 +3,11 @@ import {
   View,
   Text,
   TouchableOpacity,
-  StyleSheet,
-  ScrollView,
   Image,
-  SafeAreaView,
   Dimensions,
+  StyleSheet,
+  SafeAreaView,
+  ScrollView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -21,13 +21,16 @@ const guidelineBaseWidth = 360;
 const scale = (size: number) => (width / guidelineBaseWidth) * size;
 
 const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
-  const { navigation } = props;
+  const { navigation, state } = props; // ← GET BOTH
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const dispatch = useDispatch<any>();
 
   const logoutHandler = () => {
     dispatch(logout(navigation));
   };
+
+  // Get current route name
+  const currentRouteName = state.routeNames[state.index];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -56,23 +59,25 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
         {/* Scrollable Menu */}
         <ScrollView showsVerticalScrollIndicator={false}>
           <Text style={styles.sectionTitle}>General</Text>
-          {menuItems.map((item, index) => (
+          {menuItems.map((item) => (
             <MenuItem
-              key={index}
+              key={item.screen}
               icon={item.icon}
               label={item.label}
-              onPress={() => navigation.navigate(item.screen)}
+              onPress={() => navigation.navigate('Stack', { screen: item.screen })}
+              isActive={currentRouteName === item.screen}
             />
           ))}
 
           <View style={styles.divider} />
           <Text style={styles.sectionTitle}>About</Text>
-          {aboutItems.map((item, index) => (
+          {aboutItems.map((item) => (
             <MenuItem
-              key={index}
+              key={item.screen}
               icon={item.icon}
               label={item.label}
-              onPress={() => navigation.navigate(item.screen)}
+              onPress={() => navigation.navigate('Stack', { screen: item.screen })}
+              isActive={currentRouteName === item.screen}
             />
           ))}
 
@@ -97,18 +102,21 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   );
 };
 
-// Reusable Menu Item
+// Reusable Menu Item with active state
 const MenuItem: React.FC<{
   icon: string;
   label: string;
   onPress: () => void;
   textStyle?: object;
-}> = ({ icon, label, onPress, textStyle }) => (
-  <TouchableOpacity style={styles.menuItem} onPress={onPress}>
+  isActive?: boolean;
+}> = ({ icon, label, onPress, textStyle, isActive = false }) => (
+  <TouchableOpacity style={[styles.menuItem, isActive && styles.activeMenuItem]} onPress={onPress}>
     <View style={styles.menuIconContainer}>
-      <Icon name={icon} size={scale(26)} color="#000" />
+      <Icon name={icon} size={scale(26)} color={isActive ? '#EE4E89' : '#000'} />
     </View>
-    <Text style={[styles.menuText, textStyle]}>{label}</Text>
+    <Text style={[styles.menuText, textStyle, isActive && styles.activeText]}>
+      {label}
+    </Text>
   </TouchableOpacity>
 );
 
@@ -141,8 +149,10 @@ const styles = StyleSheet.create({
   divider: { height: 1, backgroundColor: '#ccc', marginHorizontal: scale(15), marginVertical: scale(12) },
   sectionTitle: { fontSize: scale(16), fontWeight: '600', color: '#333', marginLeft: scale(20), marginTop: scale(12), marginBottom: scale(6) },
   menuItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: scale(12), paddingHorizontal: scale(15) },
+  activeMenuItem: { backgroundColor: '#FFF5F8' },
   menuIconContainer: { width: '15%', alignItems: 'center' },
   menuText: { fontSize: scale(15), color: '#000', marginLeft: scale(8), flex: 1 },
+  activeText: { color: '#EE4E89', fontWeight: '600' },
 });
 
 export default DrawerContent;

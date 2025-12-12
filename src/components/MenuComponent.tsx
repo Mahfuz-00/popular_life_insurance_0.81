@@ -1,9 +1,8 @@
 import React from 'react';
-import { TouchableOpacity, Image, Text, StyleSheet, Dimensions, ImageSourcePropType, View } from 'react-native';
+import { View, Text, TouchableOpacity, Image, Dimensions, StyleSheet, ImageSourcePropType } from 'react-native';
 import globalStyle from '../styles/globalStyle';
 
-const { width } = Dimensions.get('window');
-const SIZE = width * 0.29;
+const { width } = Dimensions.get('window'); 
 
 interface MenuComponentProps {
   icon: ImageSourcePropType;
@@ -11,48 +10,71 @@ interface MenuComponentProps {
   onPress?: () => void;
 }
 
-const MenuComponent: React.FC<MenuComponentProps> = ({ icon, title, onPress }) => {
+const MenuComponent: React.FC<MenuComponentProps> = ({ icon, title, ...props }) => {
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity
+      style={styles.container}
+      activeOpacity={0.8}
+      {...props}
+    >
       <View style={styles.iconWrapper}>
-        <Image source={icon} style={styles.icon} resizeMode="contain" />
+        <Image
+          source={icon}
+          style={styles.icon}
+          resizeMode="cover" 
+        />
       </View>
-      <Text style={[globalStyle.font, styles.title]} numberOfLines={2} textBreakStrategy="simple">
+
+      <Text style={[globalStyle.font, styles.title]} numberOfLines={2}>
         {title}
       </Text>
     </TouchableOpacity>
   );
 };
 
+const componentWidth = width * 0.28;
+
 const styles = StyleSheet.create({
   container: {
-    width: SIZE,
-    height: SIZE,
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    justifyContent: 'center',
+    width: componentWidth,
+    height: componentWidth, 
+    backgroundColor: 'white',
     alignItems: 'center',
+    marginBottom: 20, 
+    marginHorizontal: '0.5%', 
   },
+
   iconWrapper: {
-    width: '62%',
-    height: '62%',
-    justifyContent: 'center',
-    alignItems: 'center',
+    height: '80%', 
+    width: '80%', 
+    overflow: 'hidden',    
+    borderWidth: 1,
+    borderColor: '#000',
+    borderRadius: 19,
+    justifyContent: 'center', 
+    alignItems: 'center',    
   },
+
   icon: {
     width: '100%',
     height: '100%',
-    borderWidth: 1.2,
-    borderColor: '#000',
-    borderRadius: 16,
+    padding: 0,
+
+    // --- SOFT SHADOW STYLES ADDED HERE ---
+    // iOS Shadow properties
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2, // Lower opacity for a softer look
+    shadowRadius: 3,    // Higher radius for a softer, wider spread
+
+    // Android Shadow property
+    elevation: 5,
   },
+
   title: {
-    fontSize: 12.5,
     textAlign: 'center',
-    color: '#333',
-    fontWeight: '500',
-    marginTop: 6,
-    paddingHorizontal: 4,
+    marginTop: 5, 
+    fontSize: componentWidth * 0.1, 
   },
 });
 

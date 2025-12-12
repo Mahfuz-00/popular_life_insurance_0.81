@@ -7,8 +7,22 @@ export const updatePolicyMobile = async (postData: any) => {
   try {
     const { data } = await axios.post(`${API}/api/update/policy/mobile`, postData);
     ToastAndroid.show(data.message || 'Success', ToastAndroid.LONG);
+    return { 
+        isSuccess: true, 
+        message: data.message || 'Policy mobile number updated successfully!' 
+    };
   } catch (error: any) {
-    ToastAndroid.show(error.response?.data?.message || 'Failed', ToastAndroid.LONG);
+    const errorMessage = error.response?.data?.message || 'Failed to update phone number due to a network error.';
+    // ToastAndroid.show(errorMessage, ToastAndroid.LONG); // Removed toast here to let the screen handle it with Alert
+    
+    // Check for validation errors if structure is consistent
+    const errors = error.response?.data?.errors; 
+
+    return { 
+        isSuccess: false, 
+        message: errorMessage,
+        errors: errors
+    };
   }
 };
 
