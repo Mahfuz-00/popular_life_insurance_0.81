@@ -20,28 +20,28 @@ const PhMyProfileScreen: React.FC<PhMyProfileScreenProps> = ({ navigation }) => 
       <ScrollView>
         <View style={styles.rowWrapper}>
           <Text style={styles.rowIcon}>
-            <Icon name="md-person-outline" size={24} color="#966EAF" />
+            <Icon name="person-circle-outline" size={24} color="#966EAF" />
           </Text>
           <Text style={styles.rowValue}>{user?.name || '-'}</Text>
         </View>
 
         <View style={styles.rowWrapper}>
           <Text style={styles.rowIcon}>
-            <Icon name="md-mail-outline" size={24} color="#966EAF" />
+            <Icon name="mail-outline" size={24} color="#966EAF" />
           </Text>
           <Text style={styles.rowValue}>{user?.email || '-'}</Text>
         </View>
 
         <View style={styles.rowWrapper}>
           <Text style={styles.rowIcon}>
-            <Icon name="md-call-outline" size={24} color="#966EAF" />
+            <Icon name="call-outline" size={24} color="#966EAF" />
           </Text>
           <Text style={styles.rowValue}>{user?.phone || '-'}</Text>
         </View>
 
         <View style={styles.rowWrapper}>
           <Text style={styles.rowIcon}>
-            <Icon name="filter-outline" size={24} color="#966EAF" />
+            <Icon name="people-outline" size={24} color="#966EAF" />
           </Text>
           <Text style={styles.rowValue}>{user?.type || '-'}</Text>
         </View>

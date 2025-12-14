@@ -12,24 +12,35 @@ import {
   Alert,
   BackHandler,
 } from 'react-native';
-import RadioButtonRN from 'radio-buttons-react-native';
-import { Image } from 'react-native';
-import { useSelector } from 'react-redux';
-import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { useSelector, useDispatch } from 'react-redux';
+import { BkashPayment } from '../../../components/payment/BkashPayment';
+import { NagadPayment } from '../../../components/payment/NagadPayment';
 import Header from '../../../components/Header';
 import globalStyle from '../../../styles/globalStyle';
 import BackgroundImage from '../../../assets/BackgroundImage.png';
 import { FilledButton } from '../../../components/FilledButton';
-import { BkashPayment } from '../../../components/payment/BkashPayment';
-import { NagadPayment } from '../../../components/payment/NagadPayment';
-import { API } from '../../../config';
-import PaymentMethodSelector, { PaymentMethod } from '../../../components/PaymentMethodRadio';
+import PaymentMethodSelector from '../../../components/PaymentMethodRadio';
 import { userPayFirstPremium, downloadFirstPremiumReceipt } from '../../../actions/userActions';
+import { clearFirstPremiumData } from '../../../actions/payFirstPremiumActions'; // Assuming this path
+import { SHOW_LOADING, HIDE_LOADING } from '../../../store/constants/commonConstants';
 
-const PayFirstPremiumGateway: React.FC<{ navigation: any; route: any }> = ({ navigation, route }) => {
-  const { user } = useSelector((state: any) => state.auth);
+type PaymentMethod = 'bkash' | 'nagad' | 'ssl';
+
+const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) => {
+  const dispatch = useDispatch();
+  const formData = useSelector((state: any) => state.payFirstPremium.formData);
+
+  // If no data in Redux, go back
+  useEffect(() => {
+    if (!formData) {
+      Alert.alert('Error', 'Payment data not found. Please try again.');
+      navigation.goBack();
+    }
+  }, [formData, navigation]);
+
+  if (!formData) {
+    return null;
+  }
 
   const {
     project,
@@ -68,16 +79,13 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any; route: any }> = ({ nav
     nominee2Percent,
     nominee3Name,
     nominee3Percent,
-  } = route.params;
+  } = formData;
 
-  const [amount] = useState(netAmount);
-  const [method, setMethod] = useState<'bkash' | 'nagad' | 'ssl'>('bkash');
+  const [method, setMethod] = useState<PaymentMethod>('bkash');
   const [isEnabled, setIsEnabled] = useState(false);
-
   const [showBkash, setShowBkash] = useState(false);
   const [showNagad, setShowNagad] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
 
   const tableData = [
     { label: 'Project', value: project },
@@ -118,64 +126,69 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any; route: any }> = ({ nav
   ];
 
   const handleFirstPremiumSubmission = async (transactionID: string) => {
-      const project = projectCode.toString();
-      const codeString = code.toString();
+    setIsSubmitting(true);
+    dispatch({ type: SHOW_LOADING, payload: 'Processing payment...' });
 
-      const postData = {
-        payment_id: transactionID,
-        nid,
-        project: project,
-        code: codeString,
-        name,
-        entrydate,
-        mobile,
-        plan,
-        age,
-        term,
-        mode,
-        sumAssured,
-        totalPremium,
-        servicingCell,
-        fa,
-        um: um || null,
-        bm: bm || null,
-        agm: agm || null,
-        agentMobile,
-        commission: commission || '0',
-        net_pay: netAmount || '0',
-        father_or_husband_name: fatherHusbandName,
-        mother_name: motherName,
-        address,
-        district,
-        gender,
-        nominee_1_name: nominee1Name,
-        nominee_1_percentage: nominee1Percent,
-        nominee_2_name: nominee2Name,
-        nominee_2_percentage: nominee2Percent,
-        nominee_3_name: nominee3Name,
-        nominee_3_percentage: nominee3Percent,
-      };
+    const postData = {
+      payment_id: transactionID,
+      nid,
+      project: projectCode.toString(),
+      code: code.toString(),
+      name,
+      entrydate,
+      mobile,
+      plan,
+      age,
+      term,
+      mode,
+      sumAssured,
+      totalPremium,
+      servicingCell,
+      fa,
+      um: um || null,
+      bm: bm || null,
+      agm: agm || null,
+      agentMobile,
+      commission: commission || '0',
+      net_pay: netAmount || '0',
+      father_or_husband_name: fatherHusbandName,
+      mother_name: motherName,
+      address,
+      district,
+      gender,
+      nominee_1_name: nominee1Name,
+      nominee_1_percentage: nominee1Percent,
+      nominee_2_name: nominee2Name,
+      nominee_2_percentage: nominee2Percent,
+      nominee_3_name: nominee3Name,
+      nominee_3_percentage: nominee3Percent,
+    };
 
-        const result = await userPayFirstPremium(postData);
-        return result.success;
+    try {
+      const result = await userPayFirstPremium(postData);
+      return result.success;
+    } catch (error) {
+      console.error('Payment submission failed:', error);
+      return false;
+    } finally {
+      setIsSubmitting(false); 
+      dispatch({ type: HIDE_LOADING });
+    }
   };
 
   const handleSubmit = () => {
-    if (isSubmitting) return;
-
     if (!isEnabled) {
-      return ToastAndroid.show('Please agree to terms', ToastAndroid.LONG);
+      ToastAndroid.show('Please agree to terms', ToastAndroid.LONG);
+      return;
     }
 
     setIsSubmitting(true);
-    
-    try {
-        if (method === 'bkash') setShowBkash(true);
-        if (method === 'nagad') setShowNagad(true);
-    } finally {
-        // optionally, you may want to reset it in onClose or onSuccess instead
-        setIsSubmitting(false);
+    if (method === 'bkash') setShowBkash(true);
+    if (method === 'nagad') setShowNagad(true);
+    if (method === 'ssl') {
+      Alert.alert('Payment Method', 'SSL Commerz is under maintanence.');
     }
+    setIsSubmitting(false);
   };
 
   useEffect(() => {
@@ -194,19 +207,23 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any; route: any }> = ({ nav
   if (showBkash) {
     return (
       <BkashPayment
-        amount={amount}
+        amount={netAmount}
         number={nid}
         paymentType="full"
         policyDetails={{}}
         onSuccess={async (trxID) => {
-        const success = await handleFirstPremiumSubmission(trxID);
-        if (success) {
-        Alert.alert(
-            'Payment Successful',
-            'Download your eReceipt',
-            [{ text: 'Download', onPress: () => downloadFirstPremiumReceipt(nid, trxID) }]
+          const success = await handleFirstPremiumSubmission(trxID);
+          if (success) {
+            Alert.alert(
+              'Payment Successful',
+              'Download your eReceipt',
+              [{ text: 'Download', onPress: () => downloadFirstPremiumReceipt(nid, trxID) }]
             );
-            navigation.reset({ index: 0, routes: [{ name: 'HomeScreen' }] });
+            dispatch(clearFirstPremiumData());
+            navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+          } else {
+             // Handle case where gateway succeeds but server submission fails
+             Alert.alert('Error', 'Payment recorded by gateway but failed to process on server. Please check your policy status and contact support with Transaction ID: ' + trxID);
           }
         }}
         onClose={() => setShowBkash(false)}
@@ -218,21 +235,25 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any; route: any }> = ({ nav
   if (showNagad) {
     return (
       <NagadPayment
-        amount={amount}
+        amount={netAmount}
         number={nid}
         mobileNo={mobile}
         paymentType="full"
         policyDetails={{}}
-         onSuccess={async (trxID) => {
-            const success = await handleFirstPremiumSubmission(trxID);
-            if (success) {
+        onSuccess={async (trxID) => {
+          const success = await handleFirstPremiumSubmission(trxID);
+          if (success) {
             Alert.alert(
-                'Payment Successful',
-                'Download your eReceipt',
-                [{ text: 'Download', onPress: () => downloadFirstPremiumReceipt(nid, trxID) }]
+              'Payment Successful',
+              'Download your eReceipt',
+              [{ text: 'Download', onPress: () => downloadFirstPremiumReceipt(nid, trxID) }]
             );
-            navigation.reset({ index: 0, routes: [{ name: 'HomeScreen' }] });
-            }
+            dispatch(clearFirstPremiumData());
+            navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+          } else {
+             // Handle case where gateway succeeds but server submission fails
+             Alert.alert('Error', 'Payment recorded by gateway but failed to process on server. Please check your policy status and contact support with Transaction ID: ' + trxID);
+          }
         }}
         onClose={() => setShowNagad(false)}
       />
@@ -243,7 +264,6 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any; route: any }> = ({ nav
     <View style={globalStyle.container}>
       <ImageBackground source={BackgroundImage} style={{ flex: 1 }}>
         <Header navigation={navigation} title="Pay First Premium" />
-
         <ScrollView>
           <View style={globalStyle.wrapper}>
             {/* Data Table */}
@@ -256,23 +276,16 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any; route: any }> = ({ nav
               ))}
             </View>
 
-            {/* Gateway Selection */}
+            {/* Payment Method */}
             <Text style={[globalStyle.fontMedium, { color: '#000', marginTop: 15 }]}>
               Choose Payment Method
             </Text>
 
-             <PaymentMethodSelector
-                selectedMethod={method}
-                onSelect={(m: PaymentMethod) => setMethod(m)}
+            <PaymentMethodSelector
+              selectedMethod={method}
+              onSelect={(m: PaymentMethod) => setMethod(m)}
+              disabled={isSubmitting}
             />
-
-
-            {/* <RadioButtonRN
-              data={gatewayOptions}
-              selectedBtn={(e: any) => setMethod(e.value)}
-              initial={1}
-              boxActiveBgColor="#FFF"
-            /> */}
 
             {/* Terms */}
             <View style={styles.termsRow}>
@@ -287,9 +300,10 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any; route: any }> = ({ nav
 
             {/* Pay Button */}
             <FilledButton
-              title={`Pay ${Math.ceil(Number(amount))}`}
+              title={isSubmitting ? 'Processing...' : `Pay ${Math.ceil(Number(netAmount))}`} 
               style={styles.payBtn}
               onPress={handleSubmit}
+              disabled={isSubmitting}
             />
           </View>
         </ScrollView>
@@ -323,7 +337,6 @@ const styles = StyleSheet.create({
     padding: 8,
     fontFamily: globalStyle.fontMedium.fontFamily,
   },
-  gatewayImg: { width: 80, height: 35 },
   termsRow: {
     flexDirection: 'row',
     alignItems: 'center',

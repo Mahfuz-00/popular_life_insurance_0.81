@@ -47,18 +47,29 @@ export const NagadPayment: React.FC<NagadPaymentProps> = ({
   }, []);
 
   const handleSuccess = async () => {
+    const partialFields = paymentType === 'partial' ? {
+      partial_amount: partialAmount, 
+      adjust_with: adjustWith,
+      cause: cause?.trim(),
+    } : {};
+
+
     const postData: any = {
       policy_no: number,
       method: 'nagad',
+      // If full payment, use the amount prop, otherwise nullify the main amount field.
       amount: paymentType === 'full' ? amount : null,
       transaction_no: trxNo,
       date_time: moment().format('DD-MM-YYYY HH:mm:ss'),
-      partial_amount: paymentType === 'partial' ? partialAmount : null,
-      adjust_with: paymentType === 'partial' ? adjustWith : null,
-      cause: paymentType === 'partial' ? cause?.trim() : null,
+
+       //SPREAD THE PARTIAL FIELDS: Only exists if paymentType is 'partial'
+      ...partialFields,
+      
       service_cell_code: policyDetails?.service_cell_code || '',
       branch_code: policyDetails?.branch_code || '',
     };
+
+    console.log('NAGAD PAYMENT POST DATA:', postData);
 
     const saved = JSON.parse((await AsyncStorage.getItem('syncPayments')) || '[]');
     await AsyncStorage.setItem('syncPayments', JSON.stringify([...saved, postData]));

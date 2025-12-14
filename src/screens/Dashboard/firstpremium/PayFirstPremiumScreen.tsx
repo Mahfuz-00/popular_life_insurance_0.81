@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import moment from 'moment';
+import { useDispatch } from 'react-redux';
 
 import globalStyle from '../../../styles/globalStyle';
 import { Input } from '../../../components/input/Input';
@@ -22,27 +23,43 @@ import { fetchProjects, getAgentCodes } from '../../../actions/userActions';
 import { getPlanList, getTermList } from '../../../actions/calculatePremiumActions';
 import { getRate } from '../../../actions/userActions';
 import EnglishOnlyInput from '../../../components/input/EnglishOnlyInput';
+import { saveFirstPremiumData } from '../../../actions/payFirstPremiumActions';
+import { SHOW_LOADING, HIDE_LOADING } from '../../../store/constants/commonConstants';
 
 const SPECIAL_PROJECTS = ['ABA', 'AKOK', 'ALA', 'IA', 'JBA', 'JBAK', 'IBT'];
 const MODE_MULTIPLIER: Record<string, number> = { yly: 1, hly: 2, qly: 4, mly: 12, single: 1 };
 const PLAN_72_FACTOR: Record<string, number> = { mly: 1, qly: 3, hly: 6, yly: 12, single: 1 };
 
-type Project = { name: string; id: number | string; code: string };
-type Mode = { label: string; value: string };
-type Plan = { label: string; value: string; fullLabel?: string; modes?: Mode[]};
+interface ProjectItem {
+  label: string;
+  value: string | number;
+  code: string;
+}
+
+interface ModeItem {
+  label: string;
+  value: string;
+}
+
+interface PlanItem {
+  label: string;
+  value: string;
+  fullLabel?: string;
+  modes?: ModeItem[];
+}
 
 const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
-  const [selectedProject, setSelectedProject] = useState<Project | null>({
-    code: '',
-    id: '',
-    name: '',
-  });
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [plans, setPlans] = useState<Plan[]>([]);
-  const [terms, setTerms] = useState<string[]>([]);
-  const [modes, setModes] = useState<{ label: string; value: string }[]>([]);
+  const dispatch = useDispatch();
+  const [projects, setProjects] = useState<ProjectItem[]>([]);
+  const [selectedProject, setSelectedProject] = useState<ProjectItem | null>(null);
+  const [plans, setPlans] = useState<PlanItem[]>([]);
+  const [terms, setTerms] = useState<{ label: string; value: string }[]>([]);
+  const [modes, setModes] = useState<ModeItem[]>([]);
 
-  const [code, setCode] = useState<string>('');
+  // ⭐️ Renamed local loading states and removed isFaValidating
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isProjectLoading, setIsProjectLoading] = useState(true);
+
   const [nid, setNid] = useState<string>('');
   const [name, setName] = useState<string>('');
   const [mobile, setMobile] = useState<string>('');
@@ -82,32 +99,67 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
   const [nominee3Percent, setNominee3Percent] = useState<string>('');
 
   const entrydate = moment().format('YYYY-MM-DD');
-
   const isSpecialProject = selectedProject?.code ? SPECIAL_PROJECTS.includes(selectedProject.code) : false;
+  
+  // ⭐️ Combined Loading state (use isSubmitting for button/input disabling)
+  const isInputDisabled = isSubmitting || isProjectLoading; 
 
-  // Fetch Projects
+
+  // Fetch Projects and Plans
   useEffect(() => {
-    const loadProjects = async () => {
-      const res = await fetchProjects();
-      if (res?.data) {
-        const formatted = res.data.map((p: any) => ({
+    const loadInitialData = async () => {
+      setIsProjectLoading(true);
+      
+      // 1. Fetch Projects
+      const projectRes = await fetchProjects();
+      if (projectRes?.data) {
+        const formatted = projectRes.data.map((p: any) => ({
           label: p.name,
           value: p.id,
           code: p.code,
         }));
-        console.log('Project List:', formatted);
         setProjects(formatted);
       }
+      
+      // 2. Fetch Plans
+      const planRes = await getPlanList();
+      if (planRes && Array.isArray(planRes)) {
+        const formattedPlans = planRes.map((p: any) => ({
+            label: p.value,
+            value: p.value,
+            fullLabel: p.fullLabel || p.label,
+            modes: Object.values(p.modes || {})
+                .filter(Boolean)
+                .map((m: any) => ({
+                    label: m.label || m,    
+                    value: m.value || m,
+                })),
+        }));
+        setPlans(formattedPlans);
+      }
+
+      setIsProjectLoading(false);
     };
-    loadProjects();
+    loadInitialData();
   }, []);
 
-  // Update code when project changes
+  // Filter Plans based on selected project
   useEffect(() => {
-    setCode(selectedProject?.id?.toString() || '');
-  }, [selectedProject]);
+    if (isProjectLoading) return;
 
-  // Reset fields on project change
+    let allowed = plans;
+    if (selectedProject?.code && !SPECIAL_PROJECTS.includes(selectedProject.code)) {
+      allowed = plans.filter((p: PlanItem) => ['28', '57', '72'].includes(p.value));
+      
+      if (plan && !allowed.some((p: PlanItem) => p.value === plan)) {
+        setPlan('');
+        setModes([]);
+        setMode('');
+      }
+    }
+  }, [selectedProject?.code, plans, isProjectLoading]);
+  
+  // Reset on project change
   useEffect(() => {
     setPlan('');
     setModes([]);
@@ -122,55 +174,12 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
     setSelectedPlanLabel('');
   }, [selectedProject?.code]);
 
-  // Fetch Plans
-  useEffect(() => {
-    const loadPlans = async () => {
-      const res = await getPlanList();
-      console.log('Plan List:', res);
-      if (!res || !Array.isArray(res)) return;
-
-      let allowed = res;
-      if (selectedProject?.code && !SPECIAL_PROJECTS.includes(selectedProject.code)) {
-        allowed = res.filter((p: any) => ['28', '57', '72'].includes(p.value));
-      }
-
-      const formatted = allowed.map((p: any) => ({
-        label: p.value,  
-        value: p.value,                            
-        fullLabel: p.fullLabel || p.label,
-        modes: Object.values(p.modes || {})
-          .filter(Boolean)
-          .map((m: any) => ({
-            label: m.label || m,
-            value: m.value || m,
-          })),
-      }));
-
-      console.log('Filtered Plans:', formatted);
-
-      setPlans(formatted);
-
-      if (plan && !formatted.some((p: Plan) => p.value === plan)) {
-        setPlan('');
-        setModes([]);
-        setMode('');
-        ToastAndroid.show('Only Plan 28 & 57 allowed for this project', ToastAndroid.LONG);
-      }
-    };
-    loadPlans();
-  }, [selectedProject?.code]);
-
   // Update modes & plan label
   useEffect(() => {
     const selected = plans.find(p => p.value === plan);
     if (selected) {
       setSelectedPlanLabel(selected.fullLabel || '');
-       setModes(
-        selected.modes?.map((m) => ({
-            label: m.label.toUpperCase(),
-            value: m.value,
-        })) || []
-      );
+      setModes(selected.modes || []);
       setMode('');
     } else {
       setSelectedPlanLabel('');
@@ -181,23 +190,52 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
   // Fetch Terms
   useEffect(() => {
     const loadTerms = async () => {
-      if (!plan) {
+      if (!plan || isProjectLoading) {
         setTerms([]);
         setTerm('');
         return;
       }
-      const res = await getTermList(plan);
-      if (res && Array.isArray(res)) {
-        setTerms(res);
-      } else {
+
+      dispatch({ type: SHOW_LOADING, payload: 'Loading terms...' });
+
+      try {
+        const res = await getTermList(plan);
+
+        let parsedTerms: { label: string; value: string }[] = [];
+
+        if (Array.isArray(res)) {
+          parsedTerms = res.map((t: any) => ({
+            label: String(t.label ?? t.value),
+            value: String(t.value),
+          }));
+        } else if (res?.data && Array.isArray(res.data)) {
+          parsedTerms = res.data.map((t: any) => ({
+            label: String(t.label ?? t.value),
+            value: String(t.value),
+          }));
+        }
+
+        setTerms(parsedTerms);
+
+        if (parsedTerms.length === 0) {
+          ToastAndroid.show('No term available for this plan', ToastAndroid.LONG);
+          setTerm('');
+        }
+      } catch (error) {
+        console.error('Failed to load terms:', error);
         setTerms([]);
         setTerm('');
-        ToastAndroid.show('No term available', ToastAndroid.LONG);
+        ToastAndroid.show('Failed to load terms', ToastAndroid.SHORT);
+      } finally {
+        dispatch({ type: HIDE_LOADING });
       }
     };
-    loadTerms();
-  }, [plan]);
 
+    loadTerms();
+  }, [plan, dispatch, isProjectLoading]);
+
+
+  // Age calculation
   useEffect(() => {
     if (!dateOfBirth) return;
     const birth = moment(dateOfBirth);
@@ -208,7 +246,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
     setAge(calculatedAge);
   }, [dateOfBirth]);
 
-  // Auto Calculate Premium
+  // Premium calculation (same as before)
   useEffect(() => {
     const calculate = async () => {
       setCode6Digit(''); setRate(''); setPremium(''); setCommission(''); setNetAmount('');
@@ -228,6 +266,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
 
       if (isSpecialProject) {
         const result = await getRate(selectedProject.code, plan, term, age);
+
         if (!result?.success || result.rate <= 0) {
           setRate('Not Found');
           return;
@@ -277,26 +316,45 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
     return () => clearTimeout(timer);
   }, [selectedProject?.code, plan, term, age, sumAssured, mode]);
 
-  // Fetch Agent Codes
+  // ⭐️ Agent codes validation - Now using useEffect and Redux Global Loading
   useEffect(() => {
-    if (!fa || fa.length !== 8 || !/^\d+$/.test(fa) || !selectedProject?.code) {
+    const faValidation = fa.replace(/[^0-9]/g, '').slice(0, 8);
+    
+    if (!faValidation || faValidation.length !== 8 || !selectedProject?.code) {
       setUm(''); setBm(''); setAgm('');
       return;
     }
 
-    (async () => {
-      const res = await getAgentCodes(fa, selectedProject.code);
-      if (res.success) {
-        setUm(res.um || '');
-        setBm(res.bm || '');
-        setAgm(res.agm || '');
-        ToastAndroid.show('Agent verified!', ToastAndroid.SHORT);
-      } else {
-        setUm(''); setBm(''); setAgm('');
-        ToastAndroid.show('Invalid FA Code', ToastAndroid.LONG);
-      }
-    })();
-  }, [fa, selectedProject?.code]);
+    // Debounce agent validation slightly
+    const timer = setTimeout(async () => {
+        // ⭐️ Treat as major operation: Use Redux dispatch for global loading
+        dispatch({ type: SHOW_LOADING, payload: 'Verifying agent code...' });
+        
+        try {
+            const res = await getAgentCodes(faValidation, selectedProject.code);
+            console.log('Agent verification response:', res);
+            if (res.success) {
+                setUm(res.um || '');
+                setBm(res.bm || '');
+                setAgm(res.agm || '');
+                ToastAndroid.show('Agent verified!', ToastAndroid.SHORT);
+            } else {
+                setUm(''); setBm(''); setAgm('');
+                ToastAndroid.show('Invalid FA Code', ToastAndroid.LONG);
+            }
+        } catch (error) {
+            console.error('Agent verification error:', error);
+            ToastAndroid.show('Agent verification failed.', ToastAndroid.LONG);
+        } finally {
+            // ⭐️ Hide Redux loading
+            dispatch({ type: HIDE_LOADING });
+        }
+    }, 800); // 800ms debounce
+
+    return () => clearTimeout(timer);
+    
+  }, [fa, selectedProject?.code, dispatch]);
+
 
   const handleNomineePercent = (setter: (v: string) => void) => (text: string) => {
     const filtered = text.replace(/[^0-9]/g, '').slice(0, 3);
@@ -313,34 +371,50 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
     return true;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (isInputDisabled) return; 
+
     if (!checkNomineeTotal()) return;
     if (age < 18) return Alert.alert('Error', 'Age must be 18 or above');
-    if (!fatherHusbandName || !motherName || !nominee1Name || !nominee1Percent)
-      return Alert.alert('Error', 'Please fill all required fields');
+    if (!fatherHusbandName || !motherName || !nominee1Name || !nominee1Percent || !fa || !um)
+      return Alert.alert('Error', 'Please fill all required fields including FA/UM codes');
 
     if (!netAmount || !code6Digit || !commission)
-      return Alert.alert('Error', 'Premium calculation incomplete');
+      return Alert.alert('Error', 'Premium calculation incomplete. Check Project, Plan, Term, Mode, SA.');
 
-    navigation.navigate('PayfirstPremiumGateways', {
-      project: selectedProject!.name,
-      projectCode: selectedProject!.code,
-      code: selectedProject!.id,
-      nid, entrydate, name, mobile,
-      plan: `${selectedProject!.id}${plan}`,
-      planlabel: selectedPlanLabel,
-      age, term, mode, sumAssured,
-      totalPremium, servicingCell, agentMobile,
-      fa, um, bm, agm,
-      rateCode: code6Digit,
-      basePremium: premium,
-      commission: netCommission,
-      rate,
-      netAmount,
-      fatherHusbandName, motherName, address, district, gender,
-      nominee1Name, nominee1Percent, nominee2Name, nominee2Percent,
-      nominee3Name, nominee3Percent,
-    });
+    setIsSubmitting(true);
+    dispatch({ type: SHOW_LOADING, payload: 'Preparing payment...' });
+
+    try {
+        // Save to Redux instead of navigation params
+        dispatch(saveFirstPremiumData({
+            project: selectedProject!.label,
+            projectCode: selectedProject!.code,
+            code: selectedProject!.value,
+            nid, entrydate, name, mobile,
+            plan: `${selectedProject!.value}${plan}`,
+            planlabel: selectedPlanLabel,
+            age, term, mode, sumAssured,
+            totalPremium, servicingCell, agentMobile,
+            fa, um, bm, agm,
+            rateCode: code6Digit,
+            basePremium: premium,
+            commission: netCommission,
+            rate,
+            netAmount,
+            fatherHusbandName, motherName, address, district, gender,
+            nominee1Name, nominee1Percent, nominee2Name, nominee2Percent,
+            nominee3Name, nominee3Percent,
+        }));
+
+        navigation.navigate('PayfirstPremiumGateways');
+    } catch (error) {
+        Alert.alert('Error', 'Failed to prepare payment data.');
+        console.error('Submission error:', error);
+    } finally {
+        setIsSubmitting(false);
+        dispatch({ type: HIDE_LOADING });
+    }
   };
 
   return (
@@ -348,115 +422,90 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       <ImageBackground source={BackgroundImage} style={{ flex: 1 }}>
         <Header navigation={navigation} title="Pay First Premium" />
         <ScrollView style={[globalStyle.wrapper, { margin: 10 }]}>
-          {/* All your inputs here - exactly as you wrote */}
-          <PickerComponent 
-          items={projects.map(p => ({ label: p.name, value: p.id.toString() }))} 
-          value={selectedProject?.id ?? ''}
-          setValue={(v) => {
-            const p = projects.find(p => p.id === v);
-            if (p) setSelectedProject({ id: p.id, code: p.code, name: p.name });
-          }} 
-          label="Project" 
-          placeholder={'Select a project'}
-          required />
+          <PickerComponent
+            items={projects}
+            value={selectedProject?.value || ''}
+            setValue={(v) => {
+              const p = projects.find(item => item.value === v);
+              if (p) {
+                setSelectedProject(p);
+              }
+            }}
+            label="Project"
+            placeholder={isProjectLoading ? "Loading projects..." : "Select a project"}
+            required
+            disabled={isInputDisabled} 
+          />
 
-          <Input label="NID" value={nid} onChangeText={setNid} keyboardType='numeric' required />
+          <Input label="NID" value={nid} onChangeText={setNid} keyboardType="numeric" required editable={!isInputDisabled} />
           <Input label="Date" value={entrydate} editable={false} />
-          <EnglishOnlyInput label="Proposer's Name" value={name} onChangeText={setName} required />
-          <Input label="Mobile No." value={mobile} onChangeText={setMobile} keyboardType="phone-pad" required />
+          <EnglishOnlyInput label="Proposer's Name" value={name} onChangeText={setName} required editable={!isInputDisabled} />
+          <Input label="Mobile No." value={mobile} onChangeText={setMobile} keyboardType="phone-pad" required editable={!isInputDisabled} />
 
           <PickerComponent
             items={plans}
             value={plan}
             setValue={setPlan}
-            label={'Plan'}
-            placeholder={'Select a plan'}
+            label="Plan"
+            placeholder="Select a plan"
             required
+            disabled={isInputDisabled} 
           />
 
           <View>
             <Text style={styles.planName}>Plan Name</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.planNameScroll}>
-              <Text style={styles.planNameInput}>{selectedPlanLabel}</Text>
+              <Text style={styles.planNameInput}>{selectedPlanLabel || '...'}</Text>
             </ScrollView>
           </View>
 
-          <DatePickerComponent 
-            date={dateOfBirth} 
-            setDate={setDateOfBirth} 
-            label="Birth Date" 
-            required 
-          />
+          <DatePickerComponent date={dateOfBirth} setDate={setDateOfBirth} label="Birth Date" required />
           {age < 18 && <Text style={{ color: 'red', marginLeft: 15, fontWeight: 'bold' }}>
             Age: {age} years — First payment not allowed under 18
           </Text>}
 
-          <PickerComponent 
-            items={terms.map(t => ({ label: t, value: t }))} 
-            value={term} 
-            setValue={setTerm} 
-            label="Term" 
-            placeholder={'Select a term'} 
-            required 
+          <PickerComponent
+            items={terms}
+            value={term}
+            setValue={setTerm}
+            label="Term"
+            placeholder="Select a term"
+            required
+            disabled={isInputDisabled} 
           />
+
 
           <PickerComponent 
             items={modes} 
             value={mode} 
             setValue={setMode} 
             label="Mode" 
-            placeholder={'Select a mode'} 
+            placeholder="Select a mode" 
             required 
+            disabled={isInputDisabled} 
           />
 
-          <Input label="Sum Assured" value={sumAssured} onChangeText={setSumAssured} keyboardType="numeric" required />
+          <Input label="Sum Assured" value={sumAssured} onChangeText={setSumAssured} keyboardType="numeric" required editable={!isInputDisabled} />
           <Input label="Code (Auto)" value={code6Digit} editable={false} />
           <Input label="Rate" value={isSpecialProject ? rate : '0'} editable={false} />
           <Input label="Premium" value={premium ? Math.ceil(parseFloat(premium)).toString() : ''} editable={false} />
           <Input label="Commission" value={netCommission ? Math.ceil(parseFloat(netCommission)).toString() : ''} editable={false} />
           <Input label="Payment Amount" value={netAmount ? Math.ceil(parseFloat(netAmount)).toString() : ''} editable={false} />
 
-           <Input
-            label={'Total Premium'}
-            value={totalPremium}
-            onChangeText={setTotalPremium}
-            required
-            keyboardType="numeric"
-          />
-          <Input
-            label={'Servicing Cell Code'}
-            value={servicingCell}
-            onChangeText={setServicingCell}
-            keyboardType='numeric'
-            required
-          />
-          <Input
-            label={'Agent Mobile'}
-            value={agentMobile}
-            onChangeText={setAgentMobile}
-            keyboardType="phone-pad"
-            required
-          />
+          <Input label="Total Premium" value={totalPremium} onChangeText={setTotalPremium} keyboardType="numeric" required editable={!isInputDisabled} />
+          <Input label="Servicing Cell Code" value={servicingCell} onChangeText={setServicingCell} keyboardType="numeric" required editable={!isInputDisabled} />
+          <Input label="Agent Mobile" value={agentMobile} onChangeText={setAgentMobile} keyboardType="phone-pad" required editable={!isInputDisabled} />
 
           <Text style={styles.sectionTitle}>Personal & Nominee Details</Text>
-          <EnglishOnlyInput label="Father's / Husband's Name" value={fatherHusbandName} onChangeText={setFatherHusbandName} required />
-          <EnglishOnlyInput label="Mother's Name" value={motherName} onChangeText={setMotherName} required />
-          <EnglishOnlyInput
-            label="Address" 
-            value={address} 
-            onChangeText={setAddress} 
-            required
-            multiline={true}                     
-            numberOfLines={4}                   
-            textAlignVertical="top"             
-            style={{ paddingTop: 12 }}
-          />
-          <EnglishOnlyInput label="District" value={district} onChangeText={setDistrict} required/>
+          <EnglishOnlyInput label="Father's / Husband's Name" value={fatherHusbandName} onChangeText={setFatherHusbandName} required editable={!isInputDisabled} />
+          <EnglishOnlyInput label="Mother's Name" value={motherName} onChangeText={setMotherName} required editable={!isInputDisabled} />
+          <EnglishOnlyInput label="Address" value={address} onChangeText={setAddress} required multiline numberOfLines={4} textAlignVertical="top" style={{ paddingTop: 12 }} editable={!isInputDisabled} />
+          <EnglishOnlyInput label="District" value={district} onChangeText={setDistrict} required editable={!isInputDisabled} />
 
           <Text style={{ marginLeft: 15, marginTop: 10, fontWeight: '600', color: '#000' }}>Gender</Text>
           <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginVertical: 10 }}>
             {['Male', 'Female'].map(g => (
-              <TouchableOpacity key={g} onPress={() => setGender(g)} style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <TouchableOpacity key={g} onPress={() => setGender(g)} style={{ flexDirection: 'row', alignItems: 'center' }} disabled={isInputDisabled}>
                 <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: '#000', marginRight: 10, justifyContent: 'center', alignItems: 'center' }}>
                   {gender === g && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#000' }} />}
                 </View>
@@ -466,51 +515,34 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
           </View>
 
           <Text style={styles.sectionTitle}>Nominee Details</Text>
-          <EnglishOnlyInput label="Nominee 1 Name" value={nominee1Name} onChangeText={setNominee1Name} required />
-          <Input label="Nominee 1 Ratio %" value={nominee1Percent} onChangeText={handleNomineePercent(setNominee1Percent)} keyboardType="numeric" required />
-          <EnglishOnlyInput label="Nominee 2 Name" value={nominee2Name} onChangeText={setNominee2Name} />
-          <Input label="Nominee 2 Ratio %" value={nominee2Percent} onChangeText={handleNomineePercent(setNominee2Percent)} keyboardType="numeric" />
-          <EnglishOnlyInput label="Nominee 3 Name" value={nominee3Name} onChangeText={setNominee3Name} />
-          <Input label="Nominee 3 Ratio %" value={nominee3Percent} onChangeText={handleNomineePercent(setNominee3Percent)} keyboardType="numeric" />
+          <EnglishOnlyInput label="Nominee 1 Name" value={nominee1Name} onChangeText={setNominee1Name} required editable={!isInputDisabled} />
+          <Input label="Nominee 1 Ratio %" value={nominee1Percent} onChangeText={handleNomineePercent(setNominee1Percent)} keyboardType="numeric" required editable={!isInputDisabled} />
+          <EnglishOnlyInput label="Nominee 2 Name" value={nominee2Name} onChangeText={setNominee2Name} editable={!isInputDisabled} />
+          <Input label="Nominee 2 Ratio %" value={nominee2Percent} onChangeText={handleNomineePercent(setNominee2Percent)} keyboardType="numeric" editable={!isInputDisabled} />
+          <EnglishOnlyInput label="Nominee 3 Name" value={nominee3Name} onChangeText={setNominee3Name} editable={!isInputDisabled} />
+          <Input label="Nominee 3 Ratio %" value={nominee3Percent} onChangeText={handleNomineePercent(setNominee3Percent)} keyboardType="numeric" editable={!isInputDisabled} />
 
           <Text style={styles.sectionTitle}>Code Setup</Text>
           <Input
-            label={'FA'}
+            label="FA"
             value={fa}
-            onChangeText={(text) => {
-              setFa(text.replace(/[^0-9]/g, '').slice(0, 8)); // only numbers, max 8
-            }}
+            onChangeText={(text) => setFa(text.replace(/[^0-9]/g, '').slice(0, 8))}
             maxLength={8}
             keyboardType="numeric"
             required
             placeholder="Enter 8-digit FA code"
+            editable={!isInputDisabled} 
           />
-         <Input
-            label={'UM'}
-            value={um}
-            onChangeText={setUm}
-            maxLength={8}
-            editable={false}       
-            style={{ backgroundColor: '#f0f0f0' }} 
-          />
-          <Input
-            label={'BM'}
-            value={bm}
-            onChangeText={setBm}
-            maxLength={8}
-            editable={false}         
-            style={{ backgroundColor: '#f0f0f0' }}
-          />
-          <Input
-            label={'AGM'}
-            value={agm}
-            onChangeText={setAgm}
-            maxLength={8}
-            editable={false}         
-            style={{ backgroundColor: '#f0f0f0' }}
-          />
+          <Input label="UM" value={um} editable={false} style={{ backgroundColor: '#f0f0f0' }} />
+          <Input label="BM" value={bm} editable={false} style={{ backgroundColor: '#f0f0f0' }} />
+          <Input label="AGM" value={agm} editable={false} style={{ backgroundColor: '#f0f0f0' }} />
 
-          <FilledButton title="Submit" onPress={handleSubmit} style={styles.submitButton} />
+          <FilledButton 
+            title={isSubmitting ? 'Preparing Payment...' : 'Submit'} 
+            onPress={handleSubmit} 
+            style={styles.submitButton} 
+            disabled={isInputDisabled || !selectedProject} 
+          />
         </ScrollView>
       </ImageBackground>
     </View>

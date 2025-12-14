@@ -11,7 +11,7 @@ export const showPartialReceiptAlert = (trxNo: string): void => {
       {
         text: 'Download',
         onPress: () => {
-          const url = `${API}8/api/policy/short-pr-receipt/${trxNo}`;
+          const url = `${API}/api/policy/short-pr-receipt/${trxNo}`;
           Linking.openURL(url);
         },
       },

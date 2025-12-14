@@ -8,3 +8,10 @@
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
 # Add any project specific keep options here:
+
+-keep class com.facebook.soloader.** { *; }
+-keep class com.facebook.imagepipeline.** { *; }
+-keep class com.facebook.fresco.** { *; }
+-dontwarn com.facebook.**
+-keepnames class com.facebook.hermes.unicode.** { *; }
+-keepnames class com.facebook.jni.** { *; }

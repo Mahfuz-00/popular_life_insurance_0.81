@@ -3,6 +3,7 @@ import { View, Text, ScrollView, Image, Dimensions } from 'react-native';
 import Header from '../../components/Header';
 import globalStyle from '../../styles/globalStyle';
 import { FilledButton } from '../../components/FilledButton';
+import FooterContact from '../../components/FooterContact';
 
 const { width, height } = Dimensions.get('window');
 
@@ -55,6 +56,8 @@ const ContactUsScreen: React.FC<ContactUsScreenProps> = ({ navigation }) => {
           <Image source={require('../../assets/c.png')} />
         </View>
       </ScrollView>
+
+      <FooterContact/>
     </View>
   );
 };

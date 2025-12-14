@@ -6,6 +6,7 @@ export type PaymentMethod = 'bkash' | 'nagad' | 'ssl';
 interface PaymentMethodSelectorProps {
   selectedMethod: PaymentMethod;
   onSelect: (method: PaymentMethod) => void;
+  disabled?: boolean;
 }
 
 const gatewayOptions: Array<{ value: PaymentMethod; image: any }> = [
@@ -14,7 +15,7 @@ const gatewayOptions: Array<{ value: PaymentMethod; image: any }> = [
   { value: 'ssl', image: require('../assets/otherCards.png') },
 ];
 
-const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({ selectedMethod, onSelect }) => {
+const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({ selectedMethod, onSelect, disabled = false, }) => {
   return (
     <View style={styles.container}>
       {gatewayOptions.map((item) => {
@@ -26,12 +27,20 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({ selectedM
             style={[
               styles.row,
               isSelected && styles.selectedRow,
+              disabled && styles.disabledRow,
             ]}
-            onPress={() => onSelect(item.value)}
+            onPress={() => !disabled && onSelect(item.value)}
             activeOpacity={0.8}
+            disabled={disabled}
           >
             {/* Radio Button */}
-            <View style={[styles.radioCircle, isSelected && styles.radioCircleSelected]}>
+            <View
+              style={[
+                styles.radioCircle,
+                isSelected && styles.radioCircleSelected,
+                disabled && styles.radioDisabled,
+              ]}
+            >
               {isSelected && <View style={styles.radioDot} />}
             </View>
 
@@ -100,6 +109,13 @@ const styles = StyleSheet.create({
   image: {
     width: 108,        
     height: 44,        
+  },
+  disabledRow: {
+    opacity: 0.5,
+    backgroundColor: '#f2f2f2',
+  },
+  radioDisabled: {
+    borderColor: '#aaa',
   },
 });
 

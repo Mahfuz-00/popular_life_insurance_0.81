@@ -64,7 +64,7 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
               key={item.screen}
               icon={item.icon}
               label={item.label}
-              onPress={() => navigation.navigate('Stack', { screen: item.screen })}
+              onPress={() => navigation.navigate('MainStack', { screen: item.screen })}
               isActive={currentRouteName === item.screen}
             />
           ))}
@@ -76,7 +76,7 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
               key={item.screen}
               icon={item.icon}
               label={item.label}
-              onPress={() => navigation.navigate('Stack', { screen: item.screen })}
+              onPress={() => navigation.navigate('MainStack', { screen: item.screen })}
               isActive={currentRouteName === item.screen}
             />
           ))}
@@ -137,8 +137,8 @@ const aboutItems = [
 ];
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  drawer: { flex: 1 },
+  container: { flex: 1, backgroundColor: '#fff',  },
+  drawer: { flex: 1 , width: '100%' },
   header: { paddingHorizontal: scale(15), paddingTop: scale(10), paddingBottom: scale(15) },
   backIcon: { marginBottom: scale(10) },
   headerContent: { flexDirection: 'row', alignItems: 'center' },

@@ -2,12 +2,14 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { authReducer } from './reducers/userReducers';
 import { loadingReducer } from './reducers/commonReducers';
+import { payFirstPremiumReducer } from './reducers/payFirstPremiumReducer'; 
 
 // This is the new, official, shorter, safer way
 const store = configureStore({
   reducer: {
     auth: authReducer,
     loading: loadingReducer,
+    payFirstPremium: payFirstPremiumReducer,
   },
   // thunk is included automatically
   // devTools is auto-enabled in development

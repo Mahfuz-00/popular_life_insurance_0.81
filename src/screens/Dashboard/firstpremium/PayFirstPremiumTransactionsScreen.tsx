@@ -98,7 +98,7 @@ const FirstPremiumTransactionsScreen: React.FC<{ navigation: any }> = ({ navigat
                 editable={!isLoading} 
               />
               <FilledButton
-                title={isLoading ? "Fetching..." : "Fetch Transactions"} 
+                title={isLoading ? "Processing..." : "Search"} 
                 style={styles.fetchButton}
                 onPress={fetchTransactionHistory}
                 disabled={isLoading}

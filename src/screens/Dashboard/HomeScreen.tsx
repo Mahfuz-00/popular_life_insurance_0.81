@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-  View,
-  ScrollView,
-  StyleSheet,
-  Dimensions,
-  Modal,
-  ActivityIndicator,
-  Text,
-} from 'react-native';
+import { View, ScrollView, StyleSheet, Dimensions, Image} from 'react-native';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../store';
 import globalStyle from '../../styles/globalStyle';
@@ -15,17 +7,9 @@ import Header from '../../components/Header';
 import Slider from '../../components/Slider';
 import MenuComponent from '../../components/MenuComponent';
 import FooterContact from '../../components/FooterContact';
-import { COMPANY_NAME } from '../../config';
+import { COMPANY_LOGO } from '../../config';
 
-const { width } = Dimensions.get('window');
-const ITEM_WIDTH = width * 0.28;
-const COLUMNS = 3;
-
-interface MenuItem {
-  title: string;
-  navigateTo: string;
-  icon: any;
-}
+const { width, height } = Dimensions.get('window');
 
 const HomeScreen = ({ navigation }: { navigation: any }) => {
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
@@ -38,106 +22,45 @@ const HomeScreen = ({ navigation }: { navigation: any }) => {
     }
   };
 
-  const allMenus: MenuItem[] = [
-    // 1. New Policy (only for authenticated users)
+  const allMenus = [
     ...(isAuthenticated
       ? [
-          {
-            title: 'New Policy',
-            navigateTo: 'PhPayFirstPremium',
-            icon: require('../../assets/pay-first-premiums-menu.jpg'),
-          },
-        ]
+          { title: 'New Policy', navigateTo: 'PhPayFirstPremium', icon: require('../../assets/pay-first-premiums-menu.jpg'), zoomOut: true },
+       ]
       : []),
 
-    // 2. Pay Premium
-    {
-      title: 'Pay Premium',
-      navigateTo: 'PayPremium',
-      icon: require('../../assets/icon-online-payment.png'),
-    },
-
-    // 3. Premium Calculator
-    {
-      title: 'Premium Calculator',
-      navigateTo: 'PremiumCalculator',
-      icon: require('../../assets/icon-premium-calc.png'),
-    },
-
-    // 4. Policy Information
-    {
-      title: 'Policy Information',
-      navigateTo: isAuthenticated ? 'AuthPolicyInfo' : 'PolicyInfo',
-      icon: require('../../assets/icon-policy-info.png'),
-    },
-
-    // 5. Receipt Download (only for authenticated)
+    { title: 'Pay Premium', navigateTo: 'PayPremium', icon: require('../../assets/icon-online-payment.png') },
+    { title: 'Premium Calculator', navigateTo: 'PremiumCalculator', icon: require('../../assets/icon-premium-calc.png') },
+    { title: 'Policy Information', navigateTo: isAuthenticated ? 'AuthPolicyInfo' : 'PolicyInfo', icon: require('../../assets/icon-policy-info.png') },
     ...(isAuthenticated
       ? [
-          {
-            title: 'Receipt Download',
-            navigateTo: 'PayFirstPremiumTransaction',
-            icon: require('../../assets/icon-premium-calc.png'),
-          },
+          { title: 'Receipt Download', navigateTo: 'PayFirstPremiumTransaction', icon: require('../../assets/icon-premium-calc.png') },
         ]
       : []),
-
-    // 6. Phone No Update
-    {
-      title: 'Phone No Update',
-      navigateTo: 'PolicyPhoneUpdate',
-      icon: require('../../assets/product-engine.png'),
-    },
-
-    // 7. Company Information
-    {
-      title: 'Company Information',
-      navigateTo: 'CompanyInfo',
-      icon: require('../../assets/icon-company-info.png'),
-    },
-
-    // 8. Our Product
-    {
-      title: 'Our Product',
-      navigateTo: 'ProductInfo',
-      icon: require('../../assets/product-engine.png'),
-    },
-
-    // 9. Business Report (only for agents/producers)
+    { title: 'Phone No Update', navigateTo: 'PolicyPhoneUpdate', icon: require('../../assets/product-engine.png') },
+    { title: 'Company Information', navigateTo: 'CompanyInfo', icon: require('../../assets/icon-company-info.png') },
+    { title: 'Our Product', navigateTo: 'ProductInfo', icon: require('../../assets/product-engine.png') },
     ...(isAuthenticated
       ? [
-          {
-            title: 'Business Report',
-            navigateTo: 'CodeWiseCollectionScreen',
-            icon: require('../../assets/icon-claim-submission.png'),
-          },
+          { title: 'Business Report', navigateTo: 'CodeWiseCollectionScreen', icon: require('../../assets/icon-claim-submission.png') },
         ]
       : []),
   ];
 
-
-  // Login / Dashboard button (always first)
-  const loginMenu = isAuthenticated ? (
+  const loginMenu = (
     <MenuComponent
-      key="dashboard"
-      onPress={navigateToDashboard}
+      onPress={isAuthenticated ? navigateToDashboard : () => navigation.navigate('Login')}
       icon={require('../../assets/icon-login.png')}
-      title={user?.type === 'policy holder' ? 'Policy List' : 'Dashboard'}
-    />
-  ) : (
-    <MenuComponent
-      key="login"
-      onPress={() => navigation.navigate('Login')}
-      icon={require('../../assets/icon-login.png')}
-      title="Role base login"
+      title={isAuthenticated 
+        ? (user?.type === 'policy holder' ? 'Policy List' : 'Dashboard')
+        : 'Role base login'
+      }
     />
   );
 
-  // My Account (only if authenticated)
   const myAccountMenu = isAuthenticated ? (
     <MenuComponent
-      key="myaccount"
-      onPress={() =>
+      onPress={() => 
         user?.type === 'policy holder'
           ? navigation.navigate('PhMyProfile')
           : navigation.navigate('OrgMyProfile')
@@ -147,86 +70,61 @@ const HomeScreen = ({ navigation }: { navigation: any }) => {
     />
   ) : null;
 
-  // Total items excluding My Account
-  const totalItems = allMenus.length + 1; // +1 for login/dashboard
-  const totalWithMyAccount = isAuthenticated ? totalItems + 1 : totalItems;
-  const fullRows = Math.floor(totalItems / COLUMNS);
-  const itemsInLastRow = totalItems % COLUMNS;
-
-  // Decide My Account position
-  const shouldMyAccountBeRight = isAuthenticated && itemsInLastRow !== 0;
-  const placeholderCount = shouldMyAccountBeRight
-    ? COLUMNS - (itemsInLastRow + 1) // +1 because My Account takes one spot
-    : COLUMNS - itemsInLastRow;
-
-  const menuItems = allMenus.map((item, index) => (
-    <MenuComponent
-      key={index}
-      title={item.title}
-      icon={item.icon}
-      onPress={() => navigation.navigate(item.navigateTo)}
-    />
-  ));
+  // Final order: Login first → all menus → My Account last
+  const menuItems = [
+    loginMenu,
+    ...allMenus.map((item, i) => (
+      <MenuComponent
+        key={i}
+        title={item.title}
+        icon={item.icon}
+        zoomOut={item.zoomOut}
+        onPress={() => navigation.navigate(item.navigateTo)}
+      />
+    )),
+    myAccountMenu,
+  ].filter(Boolean);
 
   return (
     <View style={globalStyle.container}>
       <Header navigation={navigation} />
       <ScrollView showsVerticalScrollIndicator={false}>
         <Slider />
+        <View style={styles.logoContainer}>
+        <Image
+          source={COMPANY_LOGO}
+          style={styles.bigLogo}
+          resizeMode="contain"
+        />
+      </View>
 
         <View style={globalStyle.wrapper}>
-          <View style={styles.gridContainer}>
-            {/* First: Login/Dashboard */}
-            {loginMenu}
-
-            {/* All dynamic menus */}
+          <View style={styles.grid}>
             {menuItems}
-
-            {/* Fill last row with invisible placeholders if needed */}
-            {isAuthenticated &&
-              shouldMyAccountBeRight &&
-              placeholderCount > 0 &&
-              Array(placeholderCount)
-                .fill(null)
-                .map((_, i) => <View key={`placeholder-${i}`} style={styles.placeholder} />)}
-
-            {/* My Account - placed correctly */}
-            {myAccountMenu && (
-              <View style={shouldMyAccountBeRight ? styles.myAccountRight : styles.myAccountLeft}>
-                {myAccountMenu}
-              </View>
-            )}
-
-            {/* If no items in last row and no My Account, just let it flow naturally */}
           </View>
         </View>
       </ScrollView>
-
       <FooterContact />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  gridContainer: {
+  grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'flex-start',
-    paddingHorizontal: 8,
-    marginBottom: 20,
+    justifyContent: 'space-between',   
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
-  placeholder: {
-    width: ITEM_WIDTH,
-    height: ITEM_WIDTH,
-    margin: 8,
+  logoContainer: {
+    alignItems: 'center',
+    paddingVertical: 20,
+    backgroundColor: '#fff',
   },
-  myAccountRight: {
-    position: 'absolute',
-    bottom: 8,
-    right: 16,
-  },
-  myAccountLeft: {
-    // Will naturally go to next row start if no other items
+  bigLogo: {
+    width: width * 0.6,
+    height: height * 0.2,
   },
 });
 

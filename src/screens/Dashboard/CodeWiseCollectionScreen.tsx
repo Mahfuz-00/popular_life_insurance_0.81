@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, ImageBackground, Alert, StyleSheet } from 'react-native';
+import { View, ScrollView, ImageBackground, Alert, Text, StyleSheet } from 'react-native';
 import { useDispatch } from 'react-redux';
 
 import Header from '../../components/Header';
@@ -92,6 +92,11 @@ const CodeWiseCollectionScreen: React.FC<{ navigation: any }> = ({ navigation })
     loadDesignations();
   }, [dispatch]);
 
+  // Clear data when report type changes — prevents confusion
+  useEffect(() => {
+    setData(null);
+  }, [reportType]);
+
   // Fetch Report Data
   const fetchData = async () => {
     if (!selectedProject?.value || !selectedDesignation || !code.trim()) {
@@ -155,6 +160,12 @@ const CodeWiseCollectionScreen: React.FC<{ navigation: any }> = ({ navigation })
                 label="Report Type"
                 required
               />
+
+              {/* Disclaimer */}
+              <Text style={styles.disclaimer}>
+                Report ({reportType}) will show only current year's Transactions.
+              </Text>
+
               <FilledButton title="Fetch Data" onPress={fetchData} style={styles.fetchButton} />
             </View>
 
@@ -174,6 +185,13 @@ const CodeWiseCollectionScreen: React.FC<{ navigation: any }> = ({ navigation })
 const styles = StyleSheet.create({
   inputContainer: { marginVertical: 20 },
   fetchButton: { width: '50%', borderRadius: 50, alignSelf: 'center' },
+  disclaimer: {
+    textAlign: 'center',
+    fontSize: 14,
+    color: '#666',
+    marginVertical: 10,
+    fontStyle: 'italic',
+  },
 });
 
 export default CodeWiseCollectionScreen;

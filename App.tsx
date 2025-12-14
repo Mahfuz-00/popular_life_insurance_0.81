@@ -56,7 +56,7 @@ import PhPolicyPartialTransactionsScreen from './src/screens/User/policyHolder/P
 import AuthPolicyInfoScreen from './src/screens/Dashboard/AuthPolicyInfoScreen';
 import PhMyProfileScreen from './src/screens/User/policyHolder/PhMyProfileScreen';
 import PhClaimSubmissionScreen from './src/screens/User/policyHolder/PhClaimSubmissionScreen';
-import PhPRListScreen from './src/screens/User/policyHolder/PhPRListScreen copy';
+import PhPRListScreen from './src/screens/User/policyHolder/PhPRListScreen';
 
 // Producer screens
 import DashboardProducerScreen from './src/screens/User/producer/DashboardProducerScreen';

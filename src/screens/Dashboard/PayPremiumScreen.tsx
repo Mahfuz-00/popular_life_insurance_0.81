@@ -210,14 +210,11 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
                 />
 
                 {/* Terms & Conditions */}
-                <View style={styles.termsRow}>
+                 <View style={styles.termsRow}>
                   <Switch value={isEnabled} onValueChange={setIsEnabled} />
-                  <Text style={[globalStyle.fontMedium, { color: '#FFF', marginLeft: 10 }]}>
+                  <Text style={[globalStyle.fontMedium, { fontSize: 16 }]}>
                     I Agree to the{' '}
-                    <Text
-                      style={{ color: 'green', textDecorationLine: 'underline' }}
-                      onPress={() => Linking.openURL('https://signup.sslcommerz.com/term-condition')}
-                    >
+                    <Text style={{ color: 'green' }} onPress={() => Linking.openURL('https://signup.sslcommerz.com/term-condition')}>
                       Terms & Conditions
                     </Text>
                   </Text>

@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "PopularLifeInsuranceApp.app"
-               BlueprintName = "PopularLifeInsuranceApp"
-               ReferencedContainer = "container:PopularLifeInsuranceApp.xcodeproj">
+               BuildableName = "PopularLifeInsurance.app"
+               BlueprintName = "PopularLifeInsurance"
+               ReferencedContainer = "container:PopularLifeInsurance.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "PopularLifeInsuranceAppTests.xctest"
-               BlueprintName = "PopularLifeInsuranceAppTests"
-               ReferencedContainer = "container:PopularLifeInsuranceApp.xcodeproj">
+               BuildableName = "PopularLifeInsuranceTests.xctest"
+               BlueprintName = "PopularLifeInsuranceTests"
+               ReferencedContainer = "container:PopularLifeInsurance.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "PopularLifeInsuranceApp.app"
-            BlueprintName = "PopularLifeInsuranceApp"
-            ReferencedContainer = "container:PopularLifeInsuranceApp.xcodeproj">
+            BuildableName = "PopularLifeInsurance.app"
+            BlueprintName = "PopularLifeInsurance"
+            ReferencedContainer = "container:PopularLifeInsurance.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "PopularLifeInsuranceApp.app"
-            BlueprintName = "PopularLifeInsuranceApp"
-            ReferencedContainer = "container:PopularLifeInsuranceApp.xcodeproj">
+            BuildableName = "PopularLifeInsurance.app"
+            BlueprintName = "PopularLifeInsurance"
+            ReferencedContainer = "container:PopularLifeInsurance.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

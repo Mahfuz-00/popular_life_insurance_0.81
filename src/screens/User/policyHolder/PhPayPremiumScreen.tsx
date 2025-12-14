@@ -103,8 +103,8 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
 
     if (policyDetails.isLaps) return ToastAndroid.show('Policy is lapsed!', ToastAndroid.LONG);
     if (policyDetails.isMaturity) return ToastAndroid.show('Policy is matured!', ToastAndroid.LONG);
-    if (Number(amountToPay) % Number(policyDetails.totalpremium) !== 0)
-      return ToastAndroid.show('Amount must be multiple of premium', ToastAndroid.LONG);
+    // if (Number(amountToPay) % Number(policyDetails.totalpremium) !== 0)
+    //   return ToastAndroid.show('Amount must be multiple of premium', ToastAndroid.LONG);
 
     setIsSubmitting(true);
     dispatch({ type: SHOW_LOADING, payload: `Preparing ${method.toUpperCase()} payment...` });
@@ -123,7 +123,8 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
         // Reset submitting state only if we didn't successfully launch the modal (i.e., for SSL/error path)
         // If Bkash/Nagad launched, isSubmitting is reset in onSuccess/onClose handlers of those components.
         if (method === 'ssl') {
-           setIsSubmitting(false); // Reset for SSL or general error fallback
+           setIsSubmitting(false); 
+           Alert.alert('Payment Method', 'SSL Commerz is under maintanence.');
         }
     }
   };
@@ -141,6 +142,8 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
         policyDetails={policyDetails}
         onSuccess={(trxID) => {
           setIsSubmitting(false);
+          console.log('Bkash Payment Successful, TrxID:', trxID);
+          console.log('Payment Type:', paymentType);
           if (paymentType === 'partial') {
             showPartialReceiptAlert(trxID); 
           }
@@ -168,6 +171,8 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
         policyDetails={policyDetails}
         onSuccess={(trxID) => {
           setIsSubmitting(false);
+          console.log('Nagad Payment Successful, TrxID:', trxID);
+          console.log('Payment Type:', paymentType);
           if (paymentType === 'partial') {
             showPartialReceiptAlert(trxID);
           }
