@@ -97,6 +97,12 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
   const [nominee2Percent, setNominee2Percent] = useState<string>('');
   const [nominee3Name, setNominee3Name] = useState<string>('');
   const [nominee3Percent, setNominee3Percent] = useState<string>('');
+  const [isAgentFetched, setIsAgentFetched] = useState<boolean>(true);
+  const [isUmEditable, setIsUmEditable] = useState(false);
+  const [isBmEditable, setIsBmEditable] = useState(false);
+  const [isAgmEditable, setIsAgmEditable] = useState(false);
+
+
 
   const entrydate = moment().format('YYYY-MM-DD');
   const isSpecialProject = selectedProject?.code ? SPECIAL_PROJECTS.includes(selectedProject.code) : false;
@@ -319,9 +325,16 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
   // ⭐️ Agent codes validation - Now using useEffect and Redux Global Loading
   useEffect(() => {
     const faValidation = fa.replace(/[^0-9]/g, '').slice(0, 8);
+
+    console.log('Validating FA Code:', faValidation);
     
     if (!faValidation || faValidation.length !== 8 || !selectedProject?.code) {
-      setUm(''); setBm(''); setAgm('');
+      setUm(''); 
+      setBm(''); 
+      setAgm('');
+      setIsUmEditable(false);
+      setIsBmEditable(false);
+      setIsAgmEditable(false);
       return;
     }
 
@@ -334,13 +347,31 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             const res = await getAgentCodes(faValidation, selectedProject.code);
             console.log('Agent verification response:', res);
             if (res.success) {
-                setUm(res.um || '');
-                setBm(res.bm || '');
-                setAgm(res.agm || '');
+                const umVal = res.um ?? '';
+                const bmVal = res.bm ?? '';
+                const agmVal = res.agm ?? '';
+
+                setUm(umVal);
+                setBm(bmVal);
+                setAgm(agmVal);
+
+                setIsUmEditable(!umVal);
+                setIsBmEditable(!bmVal);
+                setIsAgmEditable(!agmVal);
+
+                setIsAgentFetched(true);
                 ToastAndroid.show('Agent verified!', ToastAndroid.SHORT);
             } else {
-                setUm(''); setBm(''); setAgm('');
-                ToastAndroid.show('Invalid FA Code', ToastAndroid.LONG);
+                setUm(''); 
+                setBm(''); 
+                setAgm('');
+
+                setIsUmEditable(true);
+                setIsBmEditable(true);
+                setIsAgmEditable(true);
+
+                setIsAgentFetched(false); 
+                ToastAndroid.show('Invalid FA Code, enter codes manually', ToastAndroid.LONG);
             }
         } catch (error) {
             console.error('Agent verification error:', error);
@@ -533,9 +564,33 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             placeholder="Enter 8-digit FA code"
             editable={!isInputDisabled} 
           />
-          <Input label="UM" value={um} editable={false} style={{ backgroundColor: '#f0f0f0' }} />
-          <Input label="BM" value={bm} editable={false} style={{ backgroundColor: '#f0f0f0' }} />
-          <Input label="AGM" value={agm} editable={false} style={{ backgroundColor: '#f0f0f0' }} />
+          <Input 
+            label="UM" 
+            value={um} 
+            onChangeText={setUm}
+            editable={isUmEditable && !isInputDisabled}
+            style={{
+              backgroundColor: isUmEditable && !isInputDisabled ? '#ffffff' : '#f0f0f0'
+            }}
+          />
+          <Input 
+            label="BM" 
+            value={bm} 
+            onChangeText={setUm}
+            editable={isBmEditable && !isInputDisabled}
+            style={{
+              backgroundColor: isBmEditable && !isInputDisabled ? '#ffffff' : '#f0f0f0'
+            }}
+          />
+          <Input 
+            label="AGM" 
+            value={agm} 
+            onChangeText={setUm}
+            editable={isAgmEditable && !isInputDisabled}
+            style={{
+              backgroundColor: isAgmEditable && !isInputDisabled ? '#ffffff' : '#f0f0f0'
+            }}
+          />
 
           <FilledButton 
             title={isSubmitting ? 'Preparing Payment...' : 'Submit'} 
