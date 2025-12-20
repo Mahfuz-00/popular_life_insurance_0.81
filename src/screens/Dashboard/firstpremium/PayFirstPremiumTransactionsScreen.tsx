@@ -136,7 +136,7 @@ const FirstPremiumTransactionsScreen: React.FC<{ navigation: any }> = ({ navigat
                       <TouchableOpacity
                         style={styles.downloadCell}
                         // Assume downloadFirstPremiumReceipt handles the download asynchronously
-                        onPress={() => downloadFirstPremiumReceipt(item.transaction_no, item.NID_NO)}
+                        onPress={() => downloadFirstPremiumReceipt(item.NID_NO, item.transaction_no)}
                       >
                         <Text style={globalStyle.tableText}>
                           <Icon name="download-outline" size={26} color="blue" />

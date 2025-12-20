@@ -278,16 +278,41 @@ export const fetchDesignations = async () => {
 // ──────────────────────────────────────────────────────────────
 export const login = (postData: any): any => async (dispatch: any) => {
   try {
+    console.log('🔵 Login attempt started with:', postData);
     dispatch({ type: SHOW_LOADING });
     dispatch({ type: LOGIN_REQUEST });
 
+    console.log('🌐 Making request to:', `${API}/api/login`);
     const { data } = await axios.post(`${API}/api/login`, postData);
 
-    if (data.errors) {
+    console.log('📨 Response received:', data);
+
+     if (data.errors) {
+      const formattedErrors: Record<string, string> = {};
+
+      Object.keys(data.errors).forEach(key => {
+        formattedErrors[key] = Array.isArray(data.errors[key])
+          ? data.errors[key][0]
+          : data.errors[key];
+      });
+
+      dispatch({ type: LOGIN_FAIL, payload: 'Validation failed' });
       dispatch({ type: HIDE_LOADING });
-      return data; // let screen handle errors
+
+      // ✅ THROW instead of return
+      throw { errors: formattedErrors };
     }
 
+    if (data.errorMessage) {
+      dispatch({ type: LOGIN_FAIL, payload: 'Validation failed' });
+      dispatch({ type: HIDE_LOADING });
+
+      throw {
+        errors: { password: data.errorMessage },
+      };
+    }
+
+    console.log('✅ Login successful, saving to storage');
     await AsyncStorage.setItem('user', JSON.stringify(data.data.user));
     await AsyncStorage.setItem('token', JSON.stringify(data.data.token));
 
@@ -308,9 +333,16 @@ export const login = (postData: any): any => async (dispatch: any) => {
     dispatch({ type: HIDE_LOADING });
     return data;
   } catch (error: any) {
+    console.log('💥 Login failed with error:', error); 
+    console.log('Error response:', error.response?.data);
+    console.log('Error message:', error.message);
+
+
     dispatch({ type: LOGIN_FAIL, payload: error.message || 'Login failed' });
     dispatch({ type: HIDE_LOADING });
-    return { errors: { general: error.response?.data?.message || error.message || 'Login failed' } };  
+    throw error?.errors
+      ? error
+      : { errors: { general: error.message || 'Login failed' } };
   }
 };
 

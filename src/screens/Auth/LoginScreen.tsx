@@ -59,16 +59,34 @@ const LoginScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     dispatch({ type: SHOW_LOADING, payload: 'Logging in...' }); 
 
     try {
-        const resultAction = await dispatch(login({ phone: userName, password, isRemember }));
-        unwrapResult(resultAction); 
-    } catch (apiError: any) {
+        // const resultAction = await dispatch(login({ phone: userName, password, isRemember }));
+        // unwrapResult(resultAction); 
 
-        if (apiError?.errors) {
-             setErrors(apiError.errors);
-        }
+        await dispatch(login({ phone: userName, password, isRemember }));
+
+        // Success — no errors
+        console.log('🟢 Login successful');
+        // Navigation will happen in useEffect watching isAuthenticated
+      
+    } catch (apiError: any) {
+      console.log('🔴 Caught error in handleSubmit:', apiError);
+      console.log('🔴 apiError.errors:', apiError?.errors);
+      console.log('🔴 About to call setErrors with:', apiError?.errors);
+
+      if (apiError?.errors) {
+        setErrors(apiError.errors);
+        console.log('🟢 setErrors called');
+      }
         
         if (typeof apiError === 'string') {
             ToastAndroid.show(apiError, ToastAndroid.LONG);
+        }
+
+        if (apiError.errors.general) {
+          ToastAndroid.show(
+            apiError.errors.general,
+            ToastAndroid.LONG
+          );
         }
         
         dispatch(clearErrors());

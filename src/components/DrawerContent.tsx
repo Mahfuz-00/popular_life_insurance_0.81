@@ -85,8 +85,8 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           <Text style={styles.sectionTitle}>Account</Text>
           {!isAuthenticated ? (
             <>
-              <MenuItem icon="log-in-outline" label="Login" onPress={() => navigation.navigate('Login')} />
-              <MenuItem icon="person-add-outline" label="Register" onPress={() => navigation.navigate('Registration')} />
+              <MenuItem icon="log-in-outline" label="Login" onPress={() => navigation.navigate('MainStack', { screen: 'Login' })} />
+              <MenuItem icon="person-add-outline" label="Register" onPress={() => navigation.navigate('MainStack', { screen: 'Registration' })} />
             </>
           ) : (
             <MenuItem

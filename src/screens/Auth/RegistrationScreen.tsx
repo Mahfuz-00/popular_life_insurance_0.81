@@ -136,24 +136,8 @@ const RegistrationScreen: React.FC<RegistrationScreenProps> = ({ navigation }) =
   return (
     <View style={globalStyle.container}>
       {/* Top Background */}
-      <View style={{ height: '40%' }}>
+      <View style={{ height: '30%' }}>
         <ImageBackground source={BackgroundImage} style={{ flex: 1 }} resizeMode="stretch">
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', padding: 15 }}>
-            <Icon
-              name="ios-menu"
-              size={24}
-              color="#000"
-              style={{ backgroundColor: '#FFF', padding: 3, borderRadius: 8 }}
-              onPress={() => navigation.toggleDrawer()}
-            />
-            <Icon
-              name="ios-search"
-              size={24}
-              color="#000"
-              style={{ backgroundColor: '#FFF', padding: 3, borderRadius: 8 }}
-            />
-          </View>
-
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
             <View style={{ width: 85, height: 85 }}>
               <Image style={{ height: '100%', width: '100%' }} source={COMPANY_LOGO} />

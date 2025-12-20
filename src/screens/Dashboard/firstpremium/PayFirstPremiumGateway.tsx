@@ -164,8 +164,11 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
       nominee_3_percentage: nominee3Percent,
     };
 
+    console.log('First Premium Payment Post Data:', postData);
+
     try {
       const result = await userPayFirstPremium(postData);
+      console.log('First Premium Payment Result:', result);
       return result.success;
     } catch (error) {
       console.error('Payment submission failed:', error);
@@ -213,6 +216,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
         policyDetails={{}}
         onSuccess={async (trxID) => {
           const success = await handleFirstPremiumSubmission(trxID);
+          console.log('Bkash Payment Successful, TrxID:', trxID);
           if (success) {
             Alert.alert(
               'Payment Successful',
@@ -242,6 +246,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
         policyDetails={{}}
         onSuccess={async (trxID) => {
           const success = await handleFirstPremiumSubmission(trxID);
+          console.log('Nagad Payment Successful, TrxID:', trxID);
           if (success) {
             Alert.alert(
               'Payment Successful',
