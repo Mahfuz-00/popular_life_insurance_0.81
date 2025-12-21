@@ -576,7 +576,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
           <Input 
             label="BM" 
             value={bm} 
-            onChangeText={setUm}
+            onChangeText={setBm}
             editable={isBmEditable && !isInputDisabled}
             style={{
               backgroundColor: isBmEditable && !isInputDisabled ? '#ffffff' : '#f0f0f0'
@@ -585,7 +585,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
           <Input 
             label="AGM" 
             value={agm} 
-            onChangeText={setUm}
+            onChangeText={setAgm}
             editable={isAgmEditable && !isInputDisabled}
             style={{
               backgroundColor: isAgmEditable && !isInputDisabled ? '#ffffff' : '#f0f0f0'
