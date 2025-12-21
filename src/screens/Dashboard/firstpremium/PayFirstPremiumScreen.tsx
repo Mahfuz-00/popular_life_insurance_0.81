@@ -402,13 +402,28 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
     return true;
   };
 
+  const normalize6DigitCode = (value?: string | null): string | null => {
+    if (!value || value.trim() === '') return null;
+
+    const digitsOnly = value.replace(/[^0-9]/g, '');
+
+    if (digitsOnly.length === 0) return null;
+
+    return digitsOnly.padStart(6, '0');
+  };
+
+
   const handleSubmit = async () => {
     if (isInputDisabled) return; 
 
     if (!checkNomineeTotal()) return;
     if (age < 18) return Alert.alert('Error', 'Age must be 18 or above');
-    if (!fatherHusbandName || !motherName || !nominee1Name || !nominee1Percent || !fa || !um)
+    if (!fatherHusbandName || !motherName || !nominee1Name || !nominee1Percent || !fa)
       return Alert.alert('Error', 'Please fill all required fields including FA/UM codes');
+
+    const normalizedUM = normalize6DigitCode(um);
+    const normalizedBM = normalize6DigitCode(bm);
+    const normalizedAGM = normalize6DigitCode(agm);
 
     if (!netAmount || !code6Digit || !commission)
       return Alert.alert('Error', 'Premium calculation incomplete. Check Project, Plan, Term, Mode, SA.');
@@ -427,7 +442,10 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             planlabel: selectedPlanLabel,
             age, term, mode, sumAssured,
             totalPremium, servicingCell, agentMobile,
-            fa, um, bm, agm,
+            fa, 
+            um: normalizedUM,
+            bm: normalizedBM,
+            agm: normalizedAGM,
             rateCode: code6Digit,
             basePremium: premium,
             commission: netCommission,
@@ -568,6 +586,8 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             label="UM" 
             value={um} 
             onChangeText={setUm}
+            maxLength={6}
+            keyboardType="numeric"
             editable={isUmEditable && !isInputDisabled}
             style={{
               backgroundColor: isUmEditable && !isInputDisabled ? '#ffffff' : '#f0f0f0'
@@ -577,6 +597,8 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             label="BM" 
             value={bm} 
             onChangeText={setBm}
+            maxLength={6}
+            keyboardType="numeric"
             editable={isBmEditable && !isInputDisabled}
             style={{
               backgroundColor: isBmEditable && !isInputDisabled ? '#ffffff' : '#f0f0f0'
@@ -586,6 +608,8 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             label="AGM" 
             value={agm} 
             onChangeText={setAgm}
+            maxLength={6}
+            keyboardType="numeric"
             editable={isAgmEditable && !isInputDisabled}
             style={{
               backgroundColor: isAgmEditable && !isInputDisabled ? '#ffffff' : '#f0f0f0'
