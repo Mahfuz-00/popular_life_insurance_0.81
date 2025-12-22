@@ -48,7 +48,7 @@ export const NagadPayment: React.FC<NagadPaymentProps> = ({
 
   const handleSuccess = async () => {
     const partialFields = paymentType === 'partial' ? {
-      partial_amount: partialAmount, 
+      partial_amount: partialAmount,
       adjust_with: adjustWith,
       cause: cause?.trim(),
     } : {};
@@ -62,9 +62,9 @@ export const NagadPayment: React.FC<NagadPaymentProps> = ({
       transaction_no: trxNo,
       date_time: moment().format('DD-MM-YYYY HH:mm:ss'),
 
-       //SPREAD THE PARTIAL FIELDS: Only exists if paymentType is 'partial'
+      //SPREAD THE PARTIAL FIELDS: Only exists if paymentType is 'partial'
       ...partialFields,
-      
+
       service_cell_code: policyDetails?.service_cell_code || '',
       branch_code: policyDetails?.branch_code || '',
     };

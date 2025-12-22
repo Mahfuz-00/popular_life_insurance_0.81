@@ -43,17 +43,18 @@ const getAuthHeaders = async () => {
 // ──────────────────────────────────────────────────────────────
 // 1. PAYMENT & POLICY ACTIONS (USED HEAVILY)
 // ──────────────────────────────────────────────────────────────
-export const userPayPremium = async (postData: any): Promise<boolean> => {
+export const userPayPremium = async (postData: any): Promise<{ data: any; success: boolean }> => {
   try {
     const headers = await getAuthHeaders();
     const { data } = await axios.post(`${API}/api/payment`, postData, { headers });
 
     ToastAndroid.show(data.message || 'Payment successful', ToastAndroid.LONG);
-    return true;
+
+    return { data, success: true };
   } catch (error: any) {
     ToastAndroid.show('Payment failed. Try again.', ToastAndroid.LONG);
     console.error('userPayPremium error:', error.response?.data || error.message);
-    return false;
+    return { data: null, success: false };
   }
 };
 

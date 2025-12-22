@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
   },
   row: {
     width: '100%',
-    height: 55,                    
+    height: 55,
     backgroundColor: '#fff',
     borderRadius: 12,
     borderWidth: 1.2,
@@ -104,11 +104,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#EE4E89',
   },
   spacer: {
-    flex: 1,  
+    flex: 1,
   },
   image: {
-    width: 108,        
-    height: 44,        
+    width: 108,
+    height: 44,
   },
   disabledRow: {
     opacity: 0.5,

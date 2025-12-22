@@ -35,34 +35,34 @@ const FirstPremiumTransactionsScreen: React.FC<{ navigation: any }> = ({ navigat
   const dispatch = useDispatch();
   const [nid, setNid] = useState<string>('');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [isLoading, setIsLoading] = useState(false); 
+  const [isLoading, setIsLoading] = useState(false);
 
   const fetchTransactionHistory = async () => {
-    if (isLoading) return; 
+    if (isLoading) return;
 
     if (!nid.trim()) {
       Alert.alert('Error', 'Please enter a valid NID.', [{ text: 'OK', style: 'cancel' }]);
       return;
     }
 
-    setIsLoading(true); 
-    setTransactions([]); 
-    dispatch({ type: SHOW_LOADING, payload: 'Fetching transaction history...' }); 
+    setIsLoading(true);
+    setTransactions([]);
+    dispatch({ type: SHOW_LOADING, payload: 'Fetching transaction history...' });
 
     try {
-        // Assuming fetchFirstPremiumTransactions is a function that returns { success: boolean, data: Transaction[], message?: string }
-        const result = await fetchFirstPremiumTransactions(nid);
+      // Assuming fetchFirstPremiumTransactions is a function that returns { success: boolean, data: Transaction[], message?: string }
+      const result = await fetchFirstPremiumTransactions(nid);
 
-        if (result.success) {
-            setTransactions(result.data);
-            if (result.data.length === 0) {
-                // We keep the alert but let the rendering handle the "No Data" message
-                // Alert.alert('No Data', 'No transactions found for this NID.', [{ text: 'OK', style: 'cancel' }]);
-            }
-        } else {
-            Alert.alert('Error', result.message || 'Failed to fetch transactions', [{ text: 'OK', style: 'cancel' }]);
-            setTransactions([]);
+      if (result.success) {
+        setTransactions(result.data);
+        if (result.data.length === 0) {
+          // We keep the alert but let the rendering handle the "No Data" message
+          // Alert.alert('No Data', 'No transactions found for this NID.', [{ text: 'OK', style: 'cancel' }]);
         }
+      } else {
+        Alert.alert('Error', result.message || 'Failed to fetch transactions', [{ text: 'OK', style: 'cancel' }]);
+        setTransactions([]);
+      }
     } catch (error: any) {
       Alert.alert(
         'Error',
@@ -71,8 +71,8 @@ const FirstPremiumTransactionsScreen: React.FC<{ navigation: any }> = ({ navigat
       );
       setTransactions([]);
     } finally {
-      setIsLoading(false); 
-      dispatch({ type: HIDE_LOADING }); 
+      setIsLoading(false);
+      dispatch({ type: HIDE_LOADING });
     }
   };
 
@@ -95,10 +95,10 @@ const FirstPremiumTransactionsScreen: React.FC<{ navigation: any }> = ({ navigat
                 placeholder="Enter NID"
                 placeholderTextColor="#808080"
                 keyboardType="numeric"
-                editable={!isLoading} 
+                editable={!isLoading}
               />
               <FilledButton
-                title={isLoading ? "Processing..." : "Search"} 
+                title={isLoading ? "Processing..." : "Search"}
                 style={styles.fetchButton}
                 onPress={fetchTransactionHistory}
                 disabled={isLoading}
@@ -147,7 +147,7 @@ const FirstPremiumTransactionsScreen: React.FC<{ navigation: any }> = ({ navigat
                 ) : (
                   <View style={[styles.rowWrapper, { borderBottomWidth: 0 }]}>
                     <Text style={[styles.rowValue, { flex: 5, textAlign: 'center', paddingVertical: 15 }]}>
-                        No transactions found for this NID.
+                      No transactions found for this NID.
                     </Text>
                   </View>
                 )}

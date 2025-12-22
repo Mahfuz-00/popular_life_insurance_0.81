@@ -37,7 +37,7 @@ const MyTransactionScreen: React.FC<MyTransactionScreenProps> = ({ navigation })
 
   const handleSubmit = async () => {
     if (isPolicy) {
-        const res: any = await dispatch(getPolicyDetails(number));
+      const res: any = await dispatch(getPolicyDetails(number));
 
       if (res) {
         setPolicyDetails({

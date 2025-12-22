@@ -9,7 +9,7 @@ import {
   ToastAndroid,
   StyleSheet,
   Alert,
-  Linking 
+  Linking
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { Image } from 'react-native';
@@ -23,15 +23,15 @@ import { BkashPayment } from '../../components/payment/BkashPayment';
 import { NagadPayment } from '../../components/payment/NagadPayment';
 import { getDuePremiumDetails } from '../../actions/userActions';
 import PaymentMethodSelector, { PaymentMethod } from '../../components/PaymentMethodRadio';
-import { SHOW_LOADING, HIDE_LOADING } from '../../store/constants/commonConstants'; 
+import { SHOW_LOADING, HIDE_LOADING } from '../../store/constants/commonConstants';
 
 
 const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const dispatch = useDispatch();
   const { isAuthenticated, user } = useSelector((state: any) => state.auth);
 
-  const [number, setNumber] = useState<string>(''); 
-  const [amount, setAmount] = useState<string>(''); 
+  const [number, setNumber] = useState<string>('');
+  const [amount, setAmount] = useState<string>('');
   const [policyDetails, setPolicyDetails] = useState<any>({});
 
   const [isEnabled, setIsEnabled] = useState(false);
@@ -40,31 +40,31 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [showBkash, setShowBkash] = useState(false);
   const [showNagad, setShowNagad] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const amountToPay = amount; 
+
+  const amountToPay = amount;
 
   const handleGetPolicyDetails = async () => {
     if (!number) return ToastAndroid.show('Please enter Policy Number', ToastAndroid.LONG);
 
     dispatch({ type: SHOW_LOADING, payload: `Fetching details for ${number}...` });
-    
+
     try {
       const res = await getDuePremiumDetails(number);
       if (res?.Policyno) {
         setPolicyDetails(res);
         if (res.DueAmount) {
-            setAmount(String(res.DueAmount));
+          setAmount(String(res.DueAmount));
         }
       } else {
         setPolicyDetails({});
-        setAmount(''); 
+        setAmount('');
         Alert.alert('Policy Not Found', 'No policy details could be retrieved for this number.');
       }
     } catch (error) {
-        console.error('Failed to fetch details:', error);
-        Alert.alert('Error', 'Failed to fetch policy details. Please try again.');
+      console.error('Failed to fetch details:', error);
+      Alert.alert('Error', 'Failed to fetch policy details. Please try again.');
     } finally {
-        dispatch({ type: HIDE_LOADING });
+      dispatch({ type: HIDE_LOADING });
     }
   };
 
@@ -95,22 +95,22 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     dispatch({ type: SHOW_LOADING, payload: `Initiating ${method.toUpperCase()} payment...` });
 
     try {
-        if (method === 'bkash') {
-            setShowBkash(true);
-        } else if (method === 'nagad') {
-            setShowNagad(true);
-        } else if (method === 'ssl') {
-            ToastAndroid.show('SSL payment gateway under maintenance.', ToastAndroid.LONG);
-        }
+      if (method === 'bkash') {
+        setShowBkash(true);
+      } else if (method === 'nagad') {
+        setShowNagad(true);
+      } else if (method === 'ssl') {
+        ToastAndroid.show('SSL payment gateway under maintenance.', ToastAndroid.LONG);
+      }
     } catch (error) {
-        console.error('Payment initiation failed:', error);
-        ToastAndroid.show('Failed to start payment process.', ToastAndroid.LONG);
+      console.error('Payment initiation failed:', error);
+      ToastAndroid.show('Failed to start payment process.', ToastAndroid.LONG);
     } finally {
-        dispatch({ type: HIDE_LOADING }); 
-        
-        if (method === 'ssl') {
-           setIsSubmitting(false); 
-        }
+      dispatch({ type: HIDE_LOADING });
+
+      if (method === 'ssl') {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -126,15 +126,15 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       <BkashPayment
         amount={amountToPay}
         number={number}
-        paymentType="full" 
+        paymentType="full"
         policyDetails={policyDetails}
         onSuccess={() => {
-            setIsSubmitting(false);
-            navigation.pop();
+          setIsSubmitting(false);
+          navigation.pop();
         }}
         onClose={() => {
-            setIsSubmitting(false);
-            setShowBkash(false);
+          setIsSubmitting(false);
+          setShowBkash(false);
         }}
       />
     );
@@ -147,15 +147,15 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
         amount={amountToPay}
         number={number}
         mobileNo={user?.phone || ''}
-        paymentType="full" 
+        paymentType="full"
         policyDetails={policyDetails}
         onSuccess={() => {
-            setIsSubmitting(false);
-            navigation.pop();
+          setIsSubmitting(false);
+          navigation.pop();
         }}
         onClose={() => {
-            setIsSubmitting(false);
-            setShowNagad(false);
+          setIsSubmitting(false);
+          setShowNagad(false);
         }}
       />
     );
@@ -180,10 +180,10 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 
             {/* Next Button */}
             {Object.keys(policyDetails).length === 0 ? (
-              <FilledButton 
-                title="Next" 
-                onPress={handleGetPolicyDetails} 
-                style={styles.btn} 
+              <FilledButton
+                title="Next"
+                onPress={handleGetPolicyDetails}
+                style={styles.btn}
               />
             ) : (
               <>
@@ -193,7 +193,7 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
                 {/* Amount Input */}
                 <Input
                   label="Amount to Pay"
-                  value={amount} 
+                  value={amount}
                   onChangeText={setAmount}
                   keyboardType="numeric"
                   labelStyle={[globalStyle.fontMedium, { color: '#FFF', marginTop: 15 }]}
@@ -205,12 +205,12 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
                 </Text>
 
                 <PaymentMethodSelector
-                    selectedMethod={method}
-                    onSelect={(m: PaymentMethod) => setMethod(m)}
+                  selectedMethod={method}
+                  onSelect={(m: PaymentMethod) => setMethod(m)}
                 />
 
                 {/* Terms & Conditions */}
-                 <View style={styles.termsRow}>
+                <View style={styles.termsRow}>
                   <Switch value={isEnabled} onValueChange={setIsEnabled} />
                   <Text style={[globalStyle.fontMedium, { fontSize: 16 }]}>
                     I Agree to the{' '}

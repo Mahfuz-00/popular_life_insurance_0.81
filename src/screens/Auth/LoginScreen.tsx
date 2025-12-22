@@ -26,7 +26,7 @@ import { COMPANY_NAME, COMPANY_LOGO } from '../../config';
 import { useDispatch, useSelector } from 'react-redux';
 import { login, clearErrors } from '../../actions/userActions';
 import type { RootState, AppDispatch } from '../../store';
-import { SHOW_LOADING, HIDE_LOADING } from '../../store/constants/commonConstants'; 
+import { SHOW_LOADING, HIDE_LOADING } from '../../store/constants/commonConstants';
 
 const { height } = Dimensions.get('window');
 
@@ -51,23 +51,23 @@ const LoginScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     if (isSubmitting) return;
 
     if (!userName || !password) {
-        setErrors({ phone: 'Phone number is required.', password: 'Password is required.' });
-        return;
+      setErrors({ phone: 'Phone number is required.', password: 'Password is required.' });
+      return;
     }
     setErrors({});
     setIsSubmitting(true);
-    dispatch({ type: SHOW_LOADING, payload: 'Logging in...' }); 
+    dispatch({ type: SHOW_LOADING, payload: 'Logging in...' });
 
     try {
-        // const resultAction = await dispatch(login({ phone: userName, password, isRemember }));
-        // unwrapResult(resultAction); 
+      // const resultAction = await dispatch(login({ phone: userName, password, isRemember }));
+      // unwrapResult(resultAction); 
 
-        await dispatch(login({ phone: userName, password, isRemember }));
+      await dispatch(login({ phone: userName, password, isRemember }));
 
-        // Success — no errors
-        console.log('🟢 Login successful');
-        // Navigation will happen in useEffect watching isAuthenticated
-      
+      // Success — no errors
+      console.log('🟢 Login successful');
+      // Navigation will happen in useEffect watching isAuthenticated
+
     } catch (apiError: any) {
       console.log('🔴 Caught error in handleSubmit:', apiError);
       console.log('🔴 apiError.errors:', apiError?.errors);
@@ -77,23 +77,23 @@ const LoginScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
         setErrors(apiError.errors);
         console.log('🟢 setErrors called');
       }
-        
-        if (typeof apiError === 'string') {
-            ToastAndroid.show(apiError, ToastAndroid.LONG);
-        }
 
-        if (apiError.errors.general) {
-          ToastAndroid.show(
-            apiError.errors.general,
-            ToastAndroid.LONG
-          );
-        }
-        
-        dispatch(clearErrors());
+      if (typeof apiError === 'string') {
+        ToastAndroid.show(apiError, ToastAndroid.LONG);
+      }
+
+      if (apiError.errors.general) {
+        ToastAndroid.show(
+          apiError.errors.general,
+          ToastAndroid.LONG
+        );
+      }
+
+      dispatch(clearErrors());
 
     } finally {
-        setIsSubmitting(false); 
-        dispatch({ type: HIDE_LOADING }); 
+      setIsSubmitting(false);
+      dispatch({ type: HIDE_LOADING });
     }
   };
 
@@ -261,11 +261,11 @@ const styles = StyleSheet.create({
     borderRadius: 45,
     overflow: 'hidden',
   },
-  logo: { 
-    width: '100%', 
+  logo: {
+    width: '100%',
     height: '100%',
     resizeMode: 'contain',
-   },
+  },
   companyName: {
     ...globalStyle.fontFjallaOne,
     fontSize: 26,

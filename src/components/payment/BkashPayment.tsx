@@ -74,7 +74,7 @@ export const BkashPayment: React.FC<BkashPaymentProps> = ({
 
   const handleSuccess = async (trxID: string) => {
     const partialFields = paymentType === 'partial' ? {
-      partial_amount: partialAmount, 
+      partial_amount: partialAmount,
       adjust_with: adjustWith,
       cause: cause?.trim(),
     } : {};
@@ -84,17 +84,17 @@ export const BkashPayment: React.FC<BkashPaymentProps> = ({
       policy_no: number,
       method: 'bkash',
       // If full payment, use the amount prop, otherwise nullify the main amount field.
-      amount: paymentType === 'full' ? amount : null, 
+      amount: paymentType === 'full' ? amount : null,
       transaction_no: trxID,
       date_time: moment().format('DD-MM-YYYY HH:mm:ss'),
-      
+
       //SPREAD THE PARTIAL FIELDS: Only exists if paymentType is 'partial'
       ...partialFields,
 
       service_cell_code: policyDetails?.service_cell_code || '',
       branch_code: policyDetails?.branch_code || '',
     };
-    
+
     console.log('BKASH PAYMENT POST DATA:', postData);
 
     const saved = JSON.parse((await AsyncStorage.getItem('syncPayments')) || '[]');

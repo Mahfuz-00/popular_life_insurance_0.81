@@ -23,6 +23,8 @@ import PaymentMethodSelector from '../../../components/PaymentMethodRadio';
 import { userPayFirstPremium, downloadFirstPremiumReceipt } from '../../../actions/userActions';
 import { clearFirstPremiumData } from '../../../actions/payFirstPremiumActions'; // Assuming this path
 import { SHOW_LOADING, HIDE_LOADING } from '../../../store/constants/commonConstants';
+import { FirstPremiumBkashPayment } from '../../../components/payment/FirstPremiumBkashPayment';
+import { FirstPremiumNagadPayment } from '../../../components/payment/FirstPremiumNagadPayment';
 
 type PaymentMethod = 'bkash' | 'nagad' | 'ssl';
 
@@ -174,7 +176,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
       console.error('Payment submission failed:', error);
       return false;
     } finally {
-      setIsSubmitting(false); 
+      setIsSubmitting(false);
       dispatch({ type: HIDE_LOADING });
     }
   };
@@ -186,6 +188,8 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
     }
 
     setIsSubmitting(true);
+    dispatch({ type: SHOW_LOADING, payload: 'Processing payment...' });
+    dispatch({ type: HIDE_LOADING });
     if (method === 'bkash') setShowBkash(true);
     if (method === 'nagad') setShowNagad(true);
     if (method === 'ssl') {
@@ -206,61 +210,101 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
     return () => backHandler.remove();
   }, [showBkash, showNagad]);
 
-  // Bkash Payment
+  // Bkash Payment Success
   if (showBkash) {
     return (
-      <BkashPayment
+      <FirstPremiumBkashPayment
         amount={netAmount}
-        number={nid}
-        paymentType="full"
-        policyDetails={{}}
-        onSuccess={async (trxID) => {
-          const success = await handleFirstPremiumSubmission(trxID);
-          console.log('Bkash Payment Successful, TrxID:', trxID);
-          if (success) {
-            Alert.alert(
-              'Payment Successful',
-              'Download your eReceipt',
-              [{ text: 'Download', onPress: () => downloadFirstPremiumReceipt(nid, trxID) }]
-            );
-            dispatch(clearFirstPremiumData());
-            navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
-          } else {
-             // Handle case where gateway succeeds but server submission fails
-             Alert.alert('Error', 'Payment recorded by gateway but failed to process on server. Please check your policy status and contact support with Transaction ID: ' + trxID);
-          }
+        nid={nid}
+        proposalData={{
+          nid,
+          project: projectCode.toString(),
+          code: code.toString(),
+          name,
+          entrydate,
+          mobile,
+          plan,
+          age,
+          term,
+          mode,
+          sumAssured,
+          totalPremium,
+          servicingCell,
+          fa,
+          um: um || null,
+          bm: bm || null,
+          agm: agm || null,
+          agentMobile,
+          commission: commission || '0',
+          net_pay: netAmount || '0',
+          father_or_husband_name: fatherHusbandName,
+          mother_name: motherName,
+          address,
+          district,
+          gender,
+          nominee_1_name: nominee1Name,
+          nominee_1_percentage: nominee1Percent,
+          nominee_2_name: nominee2Name,
+          nominee_2_percentage: nominee2Percent,
+          nominee_3_name: nominee3Name,
+          nominee_3_percentage: nominee3Percent,
+        }}
+        onSuccess={() => {
+          dispatch(clearFirstPremiumData());
+          navigation.pop();
         }}
         onClose={() => setShowBkash(false)}
+        navigation={navigation}
       />
     );
   }
 
-  // Nagad Payment
+  // Nagad Payment Success
   if (showNagad) {
     return (
-      <NagadPayment
+      <FirstPremiumNagadPayment
         amount={netAmount}
-        number={nid}
+        nid={nid}
         mobileNo={mobile}
-        paymentType="full"
-        policyDetails={{}}
-        onSuccess={async (trxID) => {
-          const success = await handleFirstPremiumSubmission(trxID);
-          console.log('Nagad Payment Successful, TrxID:', trxID);
-          if (success) {
-            Alert.alert(
-              'Payment Successful',
-              'Download your eReceipt',
-              [{ text: 'Download', onPress: () => downloadFirstPremiumReceipt(nid, trxID) }]
-            );
-            dispatch(clearFirstPremiumData());
-            navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
-          } else {
-             // Handle case where gateway succeeds but server submission fails
-             Alert.alert('Error', 'Payment recorded by gateway but failed to process on server. Please check your policy status and contact support with Transaction ID: ' + trxID);
-          }
+        proposalData={{
+          nid,
+          project: projectCode.toString(),
+          code: code.toString(),
+          name,
+          entrydate,
+          mobile,
+          plan,
+          age,
+          term,
+          mode,
+          sumAssured,
+          totalPremium,
+          servicingCell,
+          fa,
+          um: um || null,
+          bm: bm || null,
+          agm: agm || null,
+          agentMobile,
+          commission: commission || '0',
+          net_pay: netAmount || '0',
+          father_or_husband_name: fatherHusbandName,
+          mother_name: motherName,
+          address,
+          district,
+          gender,
+          nominee_1_name: nominee1Name,
+          nominee_1_percentage: nominee1Percent,
+          nominee_2_name: nominee2Name,
+          nominee_2_percentage: nominee2Percent,
+          nominee_3_name: nominee3Name,
+          nominee_3_percentage: nominee3Percent,
+        }}
+        onSuccess={() => {
+          dispatch(clearFirstPremiumData());
+          navigation.pop();
         }}
         onClose={() => setShowNagad(false)}
+        navigation={navigation}
       />
     );
   }
@@ -305,7 +349,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
 
             {/* Pay Button */}
             <FilledButton
-              title={isSubmitting ? 'Processing...' : `Pay ${Math.ceil(Number(netAmount))}`} 
+              title={isSubmitting ? 'Processing...' : `Pay ${Math.ceil(Number(netAmount))}`}
               style={styles.payBtn}
               onPress={handleSubmit}
               disabled={isSubmitting}
