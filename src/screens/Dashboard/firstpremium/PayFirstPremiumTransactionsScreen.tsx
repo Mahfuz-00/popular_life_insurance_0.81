@@ -14,6 +14,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useDispatch } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import moment from 'moment';
 
 import Header from '../../../components/Header';
 import globalStyle from '../../../styles/globalStyle';
@@ -24,9 +25,8 @@ import { fetchFirstPremiumTransactions, downloadFirstPremiumReceipt } from '../.
 
 
 type Transaction = {
-  Project_Name: string;
   transaction_no: string;
-  method: string;
+  entrydate: string;
   Total_Premium: string;
   NID_NO: string;
 };
@@ -54,6 +54,7 @@ const FirstPremiumTransactionsScreen: React.FC<{ navigation: any }> = ({ navigat
       const result = await fetchFirstPremiumTransactions(nid);
 
       if (result.success) {
+        console.log('Fetched Transactions:', result.data);
         setTransactions(result.data);
         if (result.data.length === 0) {
           // We keep the alert but let the rendering handle the "No Data" message
@@ -109,9 +110,8 @@ const FirstPremiumTransactionsScreen: React.FC<{ navigation: any }> = ({ navigat
               <View style={styles.table}>
                 {/* Table Header Row (renders always when table container is visible) */}
                 <View style={styles.rowWrapper}>
-                  <Text style={[styles.rowLable, globalStyle.tableText]}>Project Name</Text>
                   <Text style={[styles.rowLable, globalStyle.tableText]}>Trns. No</Text>
-                  <Text style={[styles.rowLable, globalStyle.tableText]}>Method</Text>
+                  <Text style={[styles.rowLable, globalStyle.tableText]}>Date</Text>
                   <Text style={[styles.rowLable, globalStyle.tableText]}>Premium</Text>
                   <Text style={[styles.rowLable, globalStyle.tableText]}>Receipt</Text>
                 </View>
@@ -121,13 +121,10 @@ const FirstPremiumTransactionsScreen: React.FC<{ navigation: any }> = ({ navigat
                   transactions.map((item, index) => (
                     <View style={styles.rowWrapper} key={index}>
                       <Text style={[styles.rowValue, globalStyle.tableText]}>
-                        {item.Project_Name}
-                      </Text>
-                      <Text style={[styles.rowValue, globalStyle.tableText]}>
                         {item.transaction_no}
                       </Text>
                       <Text style={[styles.rowValue, globalStyle.tableText]}>
-                        {item.method}
+                        {moment(item.entrydate).format('DD-MM-YYYY')}
                       </Text>
                       <Text style={[styles.rowValue, globalStyle.tableText]}>
                         {parseFloat(item.Total_Premium).toFixed(2)}
