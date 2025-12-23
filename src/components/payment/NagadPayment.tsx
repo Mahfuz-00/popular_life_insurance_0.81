@@ -34,7 +34,8 @@ export const NagadPayment: React.FC<NagadPaymentProps> = ({
   onClose,
 }) => {
   const [url, setUrl] = useState<string>('');
-  const trxNo = moment().format('YYYYMMDDHHmmss');
+  const trxNoRef = React.useRef(moment().format('YYYYMMDDHHmmss'));
+  const trxNo = trxNoRef.current;
 
   useEffect(() => {
     const init = async () => {

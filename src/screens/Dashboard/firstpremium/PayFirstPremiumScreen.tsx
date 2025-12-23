@@ -488,7 +488,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
     const normalizedBM = normalize6DigitCode(bm);
     const normalizedAGM = normalize6DigitCode(agm);
 
-    if (!netAmount || !code6Digit || !commission)
+    if (!netAmount || !code6Digit || !commission || netAmount === '0')
       return Alert.alert('Error', 'Premium calculation incomplete. Check Project, Plan, Term, Mode, SA.');
 
     setIsSubmitting(true);
@@ -534,7 +534,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0} // adjust if header overlaps
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
       >
         <ImageBackground source={BackgroundImage} style={{ flex: 1 }}>
           <Header navigation={navigation} title="Pay First Premium" />
@@ -560,7 +560,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             <Input label="Date" value={entrydate} editable={false} />
             <EnglishOnlyInput label="Proposer's Name" value={name} onChangeText={setName} required editable={!isInputDisabled} />
             {errors.name && <Text style={styles.error}>{errors.name}</Text>}
-            <Input label="Mobile No." value={mobile} onChangeText={setMobile} keyboardType="phone-pad" required editable={!isInputDisabled} />
+            <Input label="Mobile No." value={mobile} onChangeText={setMobile} keyboardType="phone-pad" maxLength={11} required editable={!isInputDisabled} />
             {errors.mobile && <Text style={styles.error}>{errors.mobile}</Text>}
 
             <PickerComponent
@@ -624,7 +624,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             {errors.totalPremium && <Text style={styles.error}>{errors.totalPremium}</Text>}
             <Input label="Servicing Cell Code" value={servicingCell} onChangeText={setServicingCell} maxLength={10} keyboardType="numeric" required editable={!isInputDisabled} />
             {errors.servicingCell && <Text style={styles.error}>{errors.servicingCell}</Text>}
-            <Input label="Agent Mobile" value={agentMobile} onChangeText={setAgentMobile} keyboardType="phone-pad" required editable={!isInputDisabled} />
+            <Input label="Agent Mobile" value={agentMobile} onChangeText={setAgentMobile} keyboardType="phone-pad" maxLength={11} required editable={!isInputDisabled} />
             {errors.agentMobile && <Text style={styles.error}>{errors.agentMobile}</Text>}
             <Text style={styles.sectionTitle}>Personal & Nominee Details</Text>
             <EnglishOnlyInput label="Father's / Husband's Name" value={fatherHusbandName} onChangeText={setFatherHusbandName} required editable={!isInputDisabled} />
