@@ -9,138 +9,161 @@ import { useDispatch } from 'react-redux';
 import { SHOW_LOADING, HIDE_LOADING } from '../../store/constants/commonConstants';
 
 type FirstPremiumNagadProps = {
-  amount: string;
-  nid: string;
-  mobileNo: string;
-  proposalData: any;
-  onSuccess: () => void;
-  onClose: () => void;
-  navigation: any;
+    amount: string;
+    nid: string;
+    mobileNo: string;
+    proposalData: any;
+    onSuccess: () => void;
+    onClose: () => void;
+    navigation: any;
+};
+
+const getApiErrorMessage = (errorResponse: any, fallback: string) => {
+    if (!errorResponse) return fallback;
+
+    const directKey = Object.keys(errorResponse).find(
+        key => Array.isArray(errorResponse[key])
+    );
+
+    if (directKey) {
+        return errorResponse[directKey][0];
+    }
+
+    if (errorResponse.errors) {
+        const errorKey = Object.keys(errorResponse.errors)[0];
+        return errorResponse.errors[errorKey][0];
+    }
+
+    return fallback;
 };
 
 export const FirstPremiumNagadPayment: React.FC<FirstPremiumNagadProps> = ({
-  amount,
-  nid,
-  mobileNo,
-  proposalData,
-  onSuccess,
-  onClose,
-  navigation,
+    amount,
+    nid,
+    mobileNo,
+    proposalData,
+    onSuccess,
+    onClose,
+    navigation,
 }) => {
-  const dispatch = useDispatch();
-  const [url, setUrl] = useState<string>('');
-  const trxNoRef = React.useRef(moment().format('YYYYMMDDHHmmss'));
-  const trxNo = trxNoRef.current;
+    const dispatch = useDispatch();
+    const [url, setUrl] = useState<string>('');
+    const trxNoRef = React.useRef(moment().format('YYYYMMDDHHmmss'));
+    const trxNo = trxNoRef.current;
 
-  useEffect(() => {
-    const init = async () => {
-      const postData = {
-        policyNo: nid,
-        amount,
-        mobileNo,
-        transactionNo: trxNo,
-      };
-      const paymentUrl = await nagadPaymentUrl(postData);
-      if (paymentUrl) {
-        setUrl(paymentUrl);
-      } else {
-        Alert.alert('Error', 'Failed to initialize payment');
-        onClose();
-      }
-    };
-    init();
-  }, []);
+    useEffect(() => {
+        const init = async () => {
+            const postData = {
+                policyNo: nid,
+                amount,
+                mobileNo,
+                transactionNo: trxNo,
+            };
+            const paymentUrl = await nagadPaymentUrl(postData);
+            if (paymentUrl) {
+                setUrl(paymentUrl);
+            } else {
+                Alert.alert('Error', 'Failed to initialize payment');
+                onClose();
+            }
+        };
+        init();
+    }, []);
 
-  const handleSuccess = async () => {
-    try {
-      // Immediately pop back to gateway for instant feedback
-      navigation.pop();
+    const handleSuccess = async () => {
+        try {
+            // Immediately pop back to gateway for instant feedback
+            navigation.pop();
 
-      // Show meaningful loading while processing the two APIs
-      dispatch({ type: SHOW_LOADING, payload: 'Completing your payment...' });
+            // Show meaningful loading while processing the two APIs
+            dispatch({ type: SHOW_LOADING, payload: 'Completing your payment...' });
 
-      // Step 1: Record the payment (minimal data) via userPayPremium
-      const paymentPostData = {
-        project_name: proposalData.project,
-        policy_no: proposalData.nid,
-        method: 'nagad',
-        amount: amount,
-        transaction_no: trxNo,
-        date_time: moment().format('DD-MM-YYYY HH:mm:ss'),
-      };
+            // Step 1: Record the payment (minimal data) via userPayPremium
+            const paymentPostData = {
+                project_name: proposalData.project,
+                policy_no: proposalData.nid,
+                method: 'nagad',
+                amount: amount,
+                transaction_no: trxNo,
+                date_time: moment().format('DD-MM-YYYY HH:mm:ss'),
+            };
 
-      const paymentResult = await userPayPremium(paymentPostData);
+            const paymentResult = await userPayPremium(paymentPostData);
 
-      if (!paymentResult?.data?.data?.id) {
-        dispatch({ type: HIDE_LOADING });
-        Alert.alert(
-          'Processing Error',
-          'Payment was successful at Nagad but no confirmation ID received.\n\nPlease contact support with Transaction No: ' + trxNo
-        );
-        return;
-      }
+            if (!paymentResult?.data?.data?.id) {
+                dispatch({ type: HIDE_LOADING });
+                const apiMsg = getApiErrorMessage(
+                    paymentResult?.data,
+                    `Payment succeeded at bKash but no confirmation ID received.\n\nPlease contact support with TrxID: ${trxNo}`
+                );
 
-      // Step 2: Submit full first premium with payment_id
-      const fullPostData = {
-        payment_id: paymentResult.data.data.id,
-        ...proposalData,
-      };
+                Alert.alert('Processing Error', apiMsg);
+                return;
+            }
 
-      const firstPremiumResult = await userPayFirstPremium(fullPostData);
+            // Step 2: Submit full first premium with payment_id
+            const fullPostData = {
+                payment_id: paymentResult.data.data.id,
+                ...proposalData,
+            };
 
-      dispatch({ type: HIDE_LOADING });
+            const firstPremiumResult = await userPayFirstPremium(fullPostData);
 
-      if (firstPremiumResult.success) {
-        Alert.alert(
-          'Payment Successful!',
-          'Your first premium has been processed.\n\nDownload your e-Receipt below.',
-          [
-            {
-              text: 'Download Receipt',
-              onPress: () => downloadFirstPremiumReceipt(nid, trxNo),
-            },
-            {
-              text: 'Done',
-              onPress: onSuccess,
-            },
-          ],
-          { cancelable: false }
-        );
-      } else {
-        Alert.alert(
-          'Processing Error',
-          'Payment succeeded at Nagad but final processing failed.\n\nPlease contact support with Transaction No: ' + trxNo
-        );
-      }
-    } catch (err: any) {
-      dispatch({ type: HIDE_LOADING });
-      Alert.alert('Error', 'Something went wrong during processing. Please contact support.');
-      console.error('Nagad first premium error:', err);
-    }
-  };
+            dispatch({ type: HIDE_LOADING });
 
-  if (!url) {
-    return null;
-  }
+            if (firstPremiumResult.success) {
+                Alert.alert(
+                    'Payment Successful!',
+                    'Your first premium has been processed.\n\nDownload your e-Receipt below.',
+                    [
+                        {
+                            text: 'Download Receipt',
+                            onPress: () => downloadFirstPremiumReceipt(nid, trxNo),
+                        },
+                        {
+                            text: 'Done',
+                            onPress: onSuccess,
+                        },
+                    ],
+                    { cancelable: false }
+                );
+            } else {
+                const apiMsg = getApiErrorMessage(
+                    paymentResult?.data,
+                    `Payment succeeded at bKash but no confirmation ID received.\n\nPlease contact support with TrxID: ${trxNo}`
+                );
 
-  return (
-    <WebView
-      source={{ uri: url, method: 'post' }}
-      style={{ flex: 1, marginTop: 20 }}
-      onNavigationStateChange={(navState) => {
-        const pageUrl = navState.url;
-
-        if (pageUrl.includes('Success')) {
-          handleSuccess();
-        } else if (pageUrl.includes('Failed') || pageUrl.includes('Aborted')) {
-          navigation.pop();
-          Alert.alert(
-            'Payment Failed',
-            pageUrl.includes('Aborted') ? 'Transaction was cancelled.' : 'Transaction failed.'
-          );
-          onClose();
+                Alert.alert('Processing Error', apiMsg);
+            }
+        } catch (err: any) {
+            dispatch({ type: HIDE_LOADING });
+            Alert.alert('Error', 'Something went wrong during processing. Please contact support.');
+            console.error('Nagad first premium error:', err);
         }
-      }}
-    />
-  );
+    };
+
+    if (!url) {
+        return null;
+    }
+
+    return (
+        <WebView
+            source={{ uri: url, method: 'post' }}
+            style={{ flex: 1, marginTop: 20 }}
+            onNavigationStateChange={(navState) => {
+                const pageUrl = navState.url;
+
+                if (pageUrl.includes('Success')) {
+                    handleSuccess();
+                } else if (pageUrl.includes('Failed') || pageUrl.includes('Aborted')) {
+                    navigation.pop();
+                    Alert.alert(
+                        'Payment Failed',
+                        pageUrl.includes('Aborted') ? 'Transaction was cancelled.' : 'Transaction failed.'
+                    );
+                    onClose();
+                }
+            }}
+        />
+    );
 };

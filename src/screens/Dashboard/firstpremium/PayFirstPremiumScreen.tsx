@@ -321,6 +321,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       setCommission(grossComm.toFixed(2));
       setNetCommission(netComm.toFixed(2));
       setNetAmount(finalNet.toString());
+      setTotalPremium(roundedPremium.toString());
     };
 
     const timer = setTimeout(calculate, 500);
@@ -619,7 +620,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             <Input label="Payment Amount" value={netAmount ? Math.ceil(parseFloat(netAmount)).toString() : ''} editable={false} />
 
 
-            <Input label="Total Premium" value={premium ? Math.ceil(parseFloat(premium)).toString() : ''} editable={false} />
+            <Input label="Total Premium" value={totalPremium ? Math.ceil(parseFloat(totalPremium)).toString() : ''} editable={false} />
             <Input label="Servicing Cell Code" value={servicingCell} onChangeText={setServicingCell} maxLength={10} keyboardType="numeric" required editable={!isInputDisabled} />
             {errors.servicingCell && <Text style={styles.error}>{errors.servicingCell}</Text>}
             <Input label="Agent Mobile" value={agentMobile} onChangeText={setAgentMobile} keyboardType="phone-pad" maxLength={11} required editable={!isInputDisabled} />
