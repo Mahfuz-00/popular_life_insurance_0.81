@@ -446,7 +446,6 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
     if (!term) newErrors.term = 'Term is required';
     if (!mode) newErrors.mode = 'Mode is required';
     if (!sumAssured) newErrors.sumAssured = 'Sum Assured is required';
-    if (!totalPremium) newErrors.totalPremium = 'Total Premium is required';
     if (!servicingCell) newErrors.servicingCell = 'Servicing Cell is required';
     if (!agentMobile) newErrors.agentMobile = 'Agent Mobile is required';
 
@@ -620,8 +619,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             <Input label="Payment Amount" value={netAmount ? Math.ceil(parseFloat(netAmount)).toString() : ''} editable={false} />
 
 
-            <Input label="Total Premium" value={totalPremium} onChangeText={setTotalPremium} keyboardType="numeric" required editable={!isInputDisabled} />
-            {errors.totalPremium && <Text style={styles.error}>{errors.totalPremium}</Text>}
+            <Input label="Total Premium" value={premium ? Math.ceil(parseFloat(premium)).toString() : ''} editable={false} />
             <Input label="Servicing Cell Code" value={servicingCell} onChangeText={setServicingCell} maxLength={10} keyboardType="numeric" required editable={!isInputDisabled} />
             {errors.servicingCell && <Text style={styles.error}>{errors.servicingCell}</Text>}
             <Input label="Agent Mobile" value={agentMobile} onChangeText={setAgentMobile} keyboardType="phone-pad" maxLength={11} required editable={!isInputDisabled} />
