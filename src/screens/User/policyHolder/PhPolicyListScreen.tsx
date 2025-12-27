@@ -13,11 +13,14 @@ import Header from '../../../components/Header';
 import { PRIMARY_BUTTON_BG } from '../../../store/constants/colorConstants';
 import { getPolicyListByUser } from '../../../actions/userActions';
 import { useDispatch } from 'react-redux';
-import { SHOW_LOADING, HIDE_LOADING } from '../../../store/constants/commonConstants'; 
+import { SHOW_LOADING, HIDE_LOADING } from '../../../store/constants/commonConstants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type PhPolicyListScreenProps = {
   navigation: any;
 };
+
+const STORAGE_KEY = '@last_selected_policy';
 
 const PhPolicyListScreen: React.FC<PhPolicyListScreenProps> = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -25,26 +28,53 @@ const PhPolicyListScreen: React.FC<PhPolicyListScreenProps> = ({ navigation }) =
 
   useEffect(() => {
     async function fetchData() {
-      dispatch({ type: SHOW_LOADING, payload: 'Fetching your policy list...' }); 
-      
+      dispatch({ type: SHOW_LOADING, payload: 'Fetching your policy list...' });
+
       try {
         const response = await getPolicyListByUser();
         console.log('Policy List Response:', response);
-        if (response) {
-          setPolicies(response);
-        } else {
-          setPolicies([]);
-          Alert.alert("Info", "No policies found for your account.");
+
+        let policyList: string[] = response || [];
+
+        // Get last selected policy from AsyncStorage
+        const lastSelectedPolicy = await AsyncStorage.getItem(STORAGE_KEY);
+
+        if (lastSelectedPolicy && policyList.includes(lastSelectedPolicy)) {
+          // Move last selected policy to top
+          policyList = [
+            lastSelectedPolicy,
+            ...policyList.filter((p) => p !== lastSelectedPolicy),
+          ];
+        }
+
+        setPolicies(policyList);
+
+        if (policyList.length === 0) {
+          Alert.alert('Info', 'No policies found for your account.');
         }
       } catch (error) {
         console.error('Failed to fetch policy list:', error);
-        Alert.alert("Connection Error", "Unable to load policy list. Please try again.");
+        Alert.alert('Connection Error', 'Unable to load policy list. Please try again.');
       } finally {
-        dispatch({ type: HIDE_LOADING }); 
+        dispatch({ type: HIDE_LOADING });
       }
     }
+
     fetchData();
   }, [dispatch]);
+
+  const handlePolicyPress = async (policy: string) => {
+    // Save selected policy to AsyncStorage
+    await AsyncStorage.setItem(STORAGE_KEY, policy);
+
+    // Move the selected policy to top immediately
+    setPolicies((prevPolicies) => [
+      policy,
+      ...prevPolicies.filter((p) => p !== policy),
+    ]);
+
+    navigation.navigate('DashboardPh', { policyNo: policy });
+  };
 
   return (
     <View style={globalStyle.container}>
@@ -55,7 +85,7 @@ const PhPolicyListScreen: React.FC<PhPolicyListScreenProps> = ({ navigation }) =
           policies.map((policy, index) => (
             <TouchableOpacity
               key={index}
-              onPress={() => navigation.navigate('DashboardPh', { policyNo: policy })}
+              onPress={() => handlePolicyPress(policy)}
               style={{
                 marginVertical: 15,
                 flexDirection: 'row',

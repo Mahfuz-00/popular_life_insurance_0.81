@@ -4,6 +4,7 @@ import Header from '../../components/Header';
 import globalStyle from '../../styles/globalStyle';
 import { FilledButton } from '../../components/FilledButton';
 import FooterContact from '../../components/FooterContact';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
 
@@ -13,6 +14,7 @@ type ContactUsScreenProps = {
 
 const ContactUsScreen: React.FC<ContactUsScreenProps> = ({ navigation }) => {
   return (
+    <SafeAreaView style={{ flex: 1}}>
     <View style={[globalStyle.container, { backgroundColor: '#D5EDE3' }]}>
       <Header navigation={navigation} title={'Contact Us'} />
       <ScrollView>
@@ -59,6 +61,7 @@ const ContactUsScreen: React.FC<ContactUsScreenProps> = ({ navigation }) => {
 
       <FooterContact/>
     </View>
+    </SafeAreaView>
   );
 };
 

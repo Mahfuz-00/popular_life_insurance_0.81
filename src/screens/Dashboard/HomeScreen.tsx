@@ -8,6 +8,7 @@ import Slider from '../../components/Slider';
 import MenuComponent from '../../components/MenuComponent';
 import FooterContact from '../../components/FooterContact';
 import { COMPANY_LOGO } from '../../config';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
 
@@ -86,6 +87,7 @@ const HomeScreen = ({ navigation }: { navigation: any }) => {
   ].filter(Boolean);
 
   return (
+    <SafeAreaView style={{ flex: 1}}>
     <View style={globalStyle.container}>
       <Header navigation={navigation} />
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -106,6 +108,7 @@ const HomeScreen = ({ navigation }: { navigation: any }) => {
       </ScrollView>
       <FooterContact />
     </View>
+    </SafeAreaView>
   );
 };
 
