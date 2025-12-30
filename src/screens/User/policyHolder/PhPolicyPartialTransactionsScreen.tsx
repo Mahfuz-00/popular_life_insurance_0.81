@@ -46,7 +46,7 @@ const PhPolicyPartialTransactionsScreen: React.FC<PhPolicyPartialTransactionsScr
 
   useEffect(() => {
     async function fetchData() {
-      dispatch({ type: SHOW_LOADING, payload: 'Fetching partial payment transactions...' }); // ⭐️ START LOADING
+      dispatch({ type: SHOW_LOADING, payload: 'Fetching payment transactions...' }); 
       
       try {
         const postData = { policy_no: policyNo };
