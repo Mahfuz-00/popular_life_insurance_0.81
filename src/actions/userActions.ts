@@ -41,6 +41,57 @@ const getAuthHeaders = async () => {
 };
 
 // ──────────────────────────────────────────────────────────────
+// APP HEALTH CHECK — DB CONNECTION BEFORE PAYMENT
+// ──────────────────────────────────────────────────────────────
+export const checkDatabaseConnection = async (): Promise<boolean> => {
+  console.log('🔍 [Health Check] Checking database connection...');
+
+  const startTime = Date.now();
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    const response = await axios.get(`${API}/api/check-db-conn`, {
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    const duration = Date.now() - startTime;
+
+    console.log(`✅ [Health Check] Response received in ${duration}ms`);
+    console.log('Response data:', response.data);
+    console.log('HTTP Status:', response.status);
+
+    // The real truth is in response.data.error
+    const isConnected = response.data?.error === false;
+
+    if (isConnected) {
+      console.log('🎉 Database connection: OK');
+    } else {
+      console.log('❌ Database connection: FAILED (error: true)');
+      ToastAndroid.show('Server database issue. Please try again later.', ToastAndroid.LONG);
+    }
+
+    return isConnected;
+  } catch (error: any) {
+    const duration = Date.now() - startTime;
+
+    if (error.name === 'AbortError') {
+      console.log(`⏰ [Health Check] Timeout after 30s`);
+      ToastAndroid.show('Server timeout. Please check your connection.', ToastAndroid.LONG);
+    } else {
+      console.log(`🌐 [Health Check] Network/request error in ${duration}ms:`, error.message);
+      ToastAndroid.show('Cannot reach server. Please try again later.', ToastAndroid.LONG);
+    }
+
+    return false;
+  }
+};
+
+
+// ──────────────────────────────────────────────────────────────
 // 1. PAYMENT & POLICY ACTIONS (USED HEAVILY)
 // ──────────────────────────────────────────────────────────────
 export const userPayPremium = async (postData: any): Promise<{ data: any; success: boolean }> => {

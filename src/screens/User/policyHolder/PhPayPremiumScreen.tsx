@@ -1,4 +1,3 @@
-// src/screens/policyHolder/PhPayPremiumScreen.tsx
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -11,7 +10,7 @@ import {
   ToastAndroid,
   StyleSheet,
   Linking,
-  Alert 
+  Alert
 } from 'react-native';
 import RadioButtonRN from 'radio-buttons-react-native';
 import { Image } from 'react-native';
@@ -24,7 +23,7 @@ import { Input } from '../../../components/input/Input';
 import { FilledButton } from '../../../components/FilledButton';
 import { BkashPayment } from '../../../components/payment/BkashPayment';
 import { NagadPayment } from '../../../components/payment/NagadPayment';
-import { getDuePremiumDetails } from '../../../actions/userActions';
+import { checkDatabaseConnection, getDuePremiumDetails } from '../../../actions/userActions';
 import PaymentMethodSelector, { PaymentMethod } from '../../../components/PaymentMethodRadio';
 import { useSelector, useDispatch } from 'react-redux';
 import { SHOW_LOADING, HIDE_LOADING } from '../../../store/constants/commonConstants';
@@ -70,7 +69,7 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
         console.error('Failed to fetch due premium details:', error);
         Alert.alert("Error", "Failed to fetch policy details. Please try again.");
       } finally {
-        dispatch({ type: HIDE_LOADING }); 
+        dispatch({ type: HIDE_LOADING });
       }
     };
     fetchData();
@@ -103,29 +102,48 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
 
     if (policyDetails.isLaps) return ToastAndroid.show('Policy is lapsed!', ToastAndroid.LONG);
     if (policyDetails.isMaturity) return ToastAndroid.show('Policy is matured!', ToastAndroid.LONG);
-    // if (Number(amountToPay) % Number(policyDetails.totalpremium) !== 0)
-    //   return ToastAndroid.show('Amount must be multiple of premium', ToastAndroid.LONG);
+    if (paymentType === 'full') {
+      const dueTotal = Number(policyDetails.totalpremium);
+      const entered = Number(amountToPay);
+
+      if (entered > dueTotal) {
+        return ToastAndroid.show(`Cannot pay more than premium: ${dueTotal}`, ToastAndroid.LONG);
+      }
+
+      if (entered % dueTotal !== 0) {
+        return ToastAndroid.show('Amount must be multiple of premium', ToastAndroid.LONG);
+      }
+    }
 
     setIsSubmitting(true);
     dispatch({ type: SHOW_LOADING, payload: `Preparing ${method.toUpperCase()} payment...` });
 
+    const isServerOk = await checkDatabaseConnection();
+
+    if (!isServerOk) {
+      dispatch({ type: HIDE_LOADING });
+      setIsSubmitting(false);
+      ToastAndroid.show('Server is currently unavailable. Please try again later.', ToastAndroid.LONG);
+      return;
+    }
+
     try {
-        if (method === 'bkash') setShowBkash(true);
-        if (method === 'nagad') setShowNagad(true);
+      if (method === 'bkash') setShowBkash(true);
+      if (method === 'nagad') setShowNagad(true);
     } catch (error) {
-        console.error('Payment initiation failed:', error);
-        ToastAndroid.show('Failed to start payment process.', ToastAndroid.LONG);
+      console.error('Payment initiation failed:', error);
+      ToastAndroid.show('Failed to start payment process.', ToastAndroid.LONG);
     } finally {
-        // HIDE_LOADING right before showing the payment modal (Bkash/Nagad) 
-        // as the modal is expected to handle its own loading UI.
-        dispatch({ type: HIDE_LOADING }); 
-        
-        // Reset submitting state only if we didn't successfully launch the modal (i.e., for SSL/error path)
-        // If Bkash/Nagad launched, isSubmitting is reset in onSuccess/onClose handlers of those components.
-        if (method === 'ssl') {
-           setIsSubmitting(false); 
-           Alert.alert('Payment Method', 'SSL Commerz is under maintanence.');
-        }
+      // HIDE_LOADING right before showing the payment modal (Bkash/Nagad) 
+      // as the modal is expected to handle its own loading UI.
+      dispatch({ type: HIDE_LOADING });
+
+      // Reset submitting state only if we didn't successfully launch the modal (i.e., for SSL/error path)
+      // If Bkash/Nagad launched, isSubmitting is reset in onSuccess/onClose handlers of those components.
+      if (method === 'ssl') {
+        setIsSubmitting(false);
+        Alert.alert('Payment Method', 'SSL Commerz is under maintanence.');
+      }
     }
   };
 
@@ -145,12 +163,12 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
           console.log('Bkash Payment Successful, TrxID:', trxID);
           console.log('Payment Type:', paymentType);
           if (paymentType === 'partial') {
-            showPartialReceiptAlert(trxID); 
+            showPartialReceiptAlert(trxID);
           }
           navigation.pop();
         }}
         onClose={() => {
-          setIsSubmitting(false); 
+          setIsSubmitting(false);
           setShowBkash(false);
         }}
       />
@@ -179,7 +197,7 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
           navigation.pop();
         }}
         onClose={() => {
-          setIsSubmitting(false); 
+          setIsSubmitting(false);
           setShowNagad(false);
         }}
       />
@@ -208,55 +226,55 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
                   </View>
 
                   <View style={styles.rowWrapper}>
-                      <Text style={[styles.rowLable, globalStyle.tableText]}>Installment</Text>
-                      <Text style={[styles.rowValue, globalStyle.tableText]}>
-                        {policyDetails.NoofInstolment}
-                      </Text>
-                    </View>
+                    <Text style={[styles.rowLable, globalStyle.tableText]}>Installment</Text>
+                    <Text style={[styles.rowValue, globalStyle.tableText]}>
+                      {policyDetails.NoofInstolment}
+                    </Text>
+                  </View>
 
-                    <View style={styles.rowWrapper}>
-                      <Text style={[styles.rowLable, globalStyle.tableText]}>Instalment Expected</Text>
-                      <Text style={[styles.rowValue, globalStyle.tableText]}>
-                        {policyDetails.ins_expected}
-                      </Text>
-                    </View>
+                  <View style={styles.rowWrapper}>
+                    <Text style={[styles.rowLable, globalStyle.tableText]}>Instalment Expected</Text>
+                    <Text style={[styles.rowValue, globalStyle.tableText]}>
+                      {policyDetails.ins_expected}
+                    </Text>
+                  </View>
 
-                    <View style={styles.rowWrapper}>
-                      <Text style={[styles.rowLable, globalStyle.tableText]}>Due Per Instalment</Text>
-                      <Text style={[styles.rowValue, globalStyle.tableText]}>
-                        {Number(policyDetails.DuePerInstalMent).toFixed(2)}
-                      </Text>
-                    </View>
+                  <View style={styles.rowWrapper}>
+                    <Text style={[styles.rowLable, globalStyle.tableText]}>Due Per Instalment</Text>
+                    <Text style={[styles.rowValue, globalStyle.tableText]}>
+                      {Number(policyDetails.DuePerInstalMent).toFixed(2)}
+                    </Text>
+                  </View>
 
-                    <View style={styles.rowWrapper}>
-                      <Text style={[styles.rowLable, globalStyle.tableText]}>Total Premium</Text>
-                      <Text style={[styles.rowValue, globalStyle.tableText]}>
-                        {Number(policyDetails.totalpremium).toFixed(2)}
-                      </Text>
-                    </View>
+                  <View style={styles.rowWrapper}>
+                    <Text style={[styles.rowLable, globalStyle.tableText]}>Total Premium</Text>
+                    <Text style={[styles.rowValue, globalStyle.tableText]}>
+                      {Number(policyDetails.totalpremium).toFixed(2)}
+                    </Text>
+                  </View>
 
-                    <View style={styles.rowWrapper}>
-                      <Text style={[styles.rowLable, globalStyle.tableText]}>Due Amount</Text>
-                      <Text style={[styles.rowValue, globalStyle.tableText]}>
-                        {policyDetails.DueAmount}
-                      </Text>
-                    </View>
+                  <View style={styles.rowWrapper}>
+                    <Text style={[styles.rowLable, globalStyle.tableText]}>Due Amount</Text>
+                    <Text style={[styles.rowValue, globalStyle.tableText]}>
+                      {policyDetails.DueAmount}
+                    </Text>
+                  </View>
 
-                    <View style={styles.rowWrapper}>
-                      <Text style={[styles.rowLable, globalStyle.tableText]}>Mode</Text>
-                      <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.mode}</Text>
-                    </View>
+                  <View style={styles.rowWrapper}>
+                    <Text style={[styles.rowLable, globalStyle.tableText]}>Mode</Text>
+                    <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.mode}</Text>
+                  </View>
 
 
-                    <View style={styles.rowWrapper}>
-                      <Text style={[styles.rowLable, globalStyle.tableText]}>Service Cell</Text>
-                      <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.service_cell_code || 0}</Text>
-                    </View>
+                  <View style={styles.rowWrapper}>
+                    <Text style={[styles.rowLable, globalStyle.tableText]}>Service Cell</Text>
+                    <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.service_cell_code || 0}</Text>
+                  </View>
 
-                    <View style={styles.rowWrapperLast}>
-                      <Text style={[styles.rowLable, globalStyle.tableText]}>Branch</Text>
-                      <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.branch_code || 0}</Text>
-                    </View>
+                  <View style={styles.rowWrapperLast}>
+                    <Text style={[styles.rowLable, globalStyle.tableText]}>Branch</Text>
+                    <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.branch_code || 0}</Text>
+                  </View>
                 </View>
 
                 {/* Payment Type Toggle */}
@@ -299,9 +317,9 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
                         </TouchableOpacity>
                       ))}
                     </View>
-                    <EnglishOnlyInput 
-                      label= "Cause / Reason" 
-                      value={cause} 
+                    <EnglishOnlyInput
+                      label="Cause / Reason"
+                      value={cause}
                       onChangeText={setCause} />
                   </>
                 )}
@@ -311,9 +329,9 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
                   Choose Payment Method
                 </Text>
 
-                 <PaymentMethodSelector
-                    selectedMethod={method}
-                    onSelect={(m: PaymentMethod) => setMethod(m)}
+                <PaymentMethodSelector
+                  selectedMethod={method}
+                  onSelect={(m: PaymentMethod) => setMethod(m)}
                 />
 
                 {/* Terms */}
@@ -371,7 +389,7 @@ const styles = StyleSheet.create({
     fontFamily: globalStyle.fontMedium.fontFamily,
   },
   rowValue: {
-    flex:1,
+    flex: 1,
     textAlign: 'center',
     padding: 5,
     fontFamily: globalStyle.fontMedium.fontFamily,

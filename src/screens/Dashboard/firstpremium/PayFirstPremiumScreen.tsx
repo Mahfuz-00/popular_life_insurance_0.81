@@ -107,6 +107,10 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showFaFormatModal, setShowFaFormatModal] = useState(false);
   const [faExample, setFaExample] = useState('');
+  const [installments, setInstallments] = useState<'6' | '12' | ''>('');
+  const [feOeOption, setFeOeOption] = useState<'F/E' | 'O/E' | ''>('');
+  const [feOeAmount, setFeOeAmount] = useState<string>('0');
+  const feOeOptions = ['F/E', 'O/E'] as const;
 
 
   const entrydate = moment().format('YYYY-MM-DD');
@@ -262,7 +266,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
     const calculate = async () => {
       setCode6Digit(''); setRate(''); setPremium(''); setCommission(''); setNetAmount('');
 
-      if (!selectedProject?.code || !plan || !term || age < 0 || !sumAssured || !mode) return;
+      if (!selectedProject?.code || !plan || !term || age < 0 || !sumAssured || !mode || !installments || !feOeOption) return;
 
       const sa = parseFloat(sumAssured);
       const paddedAge = age.toString().padStart(2, '0');
@@ -272,6 +276,8 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
 
       let basePremiumFinal = 0;
       let fetchedRate = 0;
+      let extraCharge = 0;
+
       let commRate = parseInt(term) < 15 ? 0.38 : 0.48;
       if (plan === '10' || plan === '15') commRate = 0.06;
 
@@ -311,22 +317,37 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         basePremiumFinal = sa / (12 * parseInt(term));
       }
 
-      const roundedPremium = Math.floor(basePremiumFinal) + (basePremiumFinal % 1 >= 0.5 ? 1 : 0);
+      let adjustedPremium = basePremiumFinal;
+
+      if (mode === 'mly' && installments) {
+        const multiplier = installments === '6' ? 6 : 12;
+        adjustedPremium = basePremiumFinal * multiplier;
+      }
+
+      if (feOeOption && adjustedPremium > 0) {
+        const ratePerThousand = feOeOption === 'F/E' ? 3 : 2;
+        extraCharge = Math.floor((adjustedPremium / 1000) * ratePerThousand);
+      }
+
+      setFeOeAmount(extraCharge.toString());
+
+      const roundedPremium = Math.floor(adjustedPremium) + (adjustedPremium % 1 >= 0.5 ? 1 : 0);
       const grossComm = roundedPremium * commRate;
       const tax = grossComm * 0.05;
       const netComm = grossComm - tax;
-      const finalNet = Math.floor(roundedPremium - netComm) + ((roundedPremium - netComm) % 1 >= 0.5 ? 1 : 0);
+      const finalNet = Math.floor(roundedPremium - netComm) + ((roundedPremium - netComm) % 1 >= 0.5 ? 1 : 0) + extraCharge;
+      const finalTotalPremium = roundedPremium + extraCharge;
 
       setPremium(roundedPremium.toString());
       setCommission(grossComm.toFixed(2));
       setNetCommission(netComm.toFixed(2));
       setNetAmount(finalNet.toString());
-      setTotalPremium(roundedPremium.toString());
+      setTotalPremium(finalTotalPremium.toString());
     };
 
     const timer = setTimeout(calculate, 500);
     return () => clearTimeout(timer);
-  }, [selectedProject?.code, plan, term, age, sumAssured, mode]);
+  }, [selectedProject?.code, plan, term, age, sumAssured, mode, installments, feOeOption,]);
 
   useEffect(() => {
     if (!fa) return;
@@ -446,7 +467,9 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
     if (!plan) newErrors.plan = 'Plan is required';
     if (!term) newErrors.term = 'Term is required';
     if (!mode) newErrors.mode = 'Mode is required';
+
     if (!sumAssured) newErrors.sumAssured = 'Sum Assured is required';
+    if (!feOeOption) newErrors.feOeOption = 'F/E or O/E option is required';
     if (!servicingCell) newErrors.servicingCell = 'Servicing Cell is required';
     if (!agentMobile) newErrors.agentMobile = 'Agent Mobile is required';
 
@@ -517,6 +540,9 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         fatherHusbandName, motherName, address, district, gender,
         nominee1Name, nominee1Percent, nominee2Name, nominee2Percent,
         nominee3Name, nominee3Percent,
+        feOeOption,
+        feOeAmount,
+        installments: mode === 'mly' ? installments : null,
       }));
 
       navigation.navigate('PayfirstPremiumGateways');
@@ -609,13 +635,50 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             />
             {errors.mode && <Text style={styles.error}>{errors.mode}</Text>}
 
+            {mode === 'mly' && (
+              <>
+                <PickerComponent
+                  items={[
+                    { label: '6', value: '6' },
+                    { label: '12', value: '12' },
+                  ]}
+                  value={installments}
+                  setValue={setInstallments}
+                  label="Installments"
+                  placeholder="Select installments"
+                  required
+                  disabled={isInputDisabled}
+                />
+                {errors.installments && <Text style={styles.error}>{errors.installments}</Text>}
+              </>
+            )}
+
             <Input label="Sum Assured" value={sumAssured} onChangeText={setSumAssured} keyboardType="numeric" required editable={!isInputDisabled} />
             {errors.sumAssured && <Text style={styles.error}>{errors.sumAssured}</Text>}
+
+            <Text style={styles.sectionTitle}>Extra Charge</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginVertical: 10 }}>
+              {feOeOptions.map((option) => (
+                <TouchableOpacity
+                  key={option}
+                  onPress={() => setFeOeOption(option)}
+                  style={{ flexDirection: 'row', alignItems: 'center' }}
+                  disabled={isInputDisabled}
+                >
+                  <View style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: '#0066CC', marginRight: 12, justifyContent: 'center', alignItems: 'center' }}>
+                    {feOeOption === option && <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: '#0066CC' }} />}
+                  </View>
+                  <Text style={{ fontSize: 16 }}>{option}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            {errors.feOe && <Text style={styles.error}>{errors.feOe}</Text>}
 
             <Text style={styles.sectionTitle}>Premium Details (Auto Calculated)</Text>
             <Input label="Code (Auto)" value={code6Digit} editable={false} />
             <Input label="Rate" value={isSpecialProject ? rate : '0'} editable={false} />
             <Input label="Premium" value={premium ? Math.ceil(parseFloat(premium)).toString() : ''} editable={false} />
+            <Input label="F/E or O/E Amount" value={feOeAmount} editable={false} />
             <Input label="Commission" value={netCommission ? Math.ceil(parseFloat(netCommission)).toString() : ''} editable={false} />
             <Input label="Payment Amount" value={netAmount ? Math.ceil(parseFloat(netAmount)).toString() : ''} editable={false} />
 

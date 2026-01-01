@@ -21,7 +21,7 @@ import { Input } from '../../components/input/Input';
 import { FilledButton } from '../../components/FilledButton';
 import { BkashPayment } from '../../components/payment/BkashPayment';
 import { NagadPayment } from '../../components/payment/NagadPayment';
-import { getDuePremiumDetails } from '../../actions/userActions';
+import { checkDatabaseConnection, getDuePremiumDetails } from '../../actions/userActions';
 import PaymentMethodSelector, { PaymentMethod } from '../../components/PaymentMethodRadio';
 import { SHOW_LOADING, HIDE_LOADING } from '../../store/constants/commonConstants';
 
@@ -93,6 +93,15 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 
     setIsSubmitting(true);
     dispatch({ type: SHOW_LOADING, payload: `Initiating ${method.toUpperCase()} payment...` });
+
+    const isServerOk = await checkDatabaseConnection();
+
+    if (!isServerOk) {
+      dispatch({ type: HIDE_LOADING });
+      setIsSubmitting(false);
+      ToastAndroid.show('Server is currently unavailable. Please try again later.', ToastAndroid.LONG);
+      return;
+    }
 
     try {
       if (method === 'bkash') {

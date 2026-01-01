@@ -20,7 +20,7 @@ import globalStyle from '../../../styles/globalStyle';
 import BackgroundImage from '../../../assets/BackgroundImage.png';
 import { FilledButton } from '../../../components/FilledButton';
 import PaymentMethodSelector from '../../../components/PaymentMethodRadio';
-import { userPayFirstPremium, downloadFirstPremiumReceipt } from '../../../actions/userActions';
+import { userPayFirstPremium, downloadFirstPremiumReceipt, checkDatabaseConnection } from '../../../actions/userActions';
 import { clearFirstPremiumData } from '../../../actions/payFirstPremiumActions'; // Assuming this path
 import { SHOW_LOADING, HIDE_LOADING } from '../../../store/constants/commonConstants';
 import { FirstPremiumBkashPayment } from '../../../components/payment/FirstPremiumBkashPayment';
@@ -81,6 +81,9 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
     nominee2Percent,
     nominee3Name,
     nominee3Percent,
+    feOeOption,
+    feOeAmount,
+    installments
   } = formData;
 
   const [method, setMethod] = useState<PaymentMethod>('bkash');
@@ -101,13 +104,17 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
     { label: 'Age', value: age },
     { label: 'Term', value: term },
     { label: 'Mode', value: mode },
+    // ← Only show Installments row when mode is monthly
+    ...(mode === 'mly' ? [{ label: 'Installments', value: installments || '-' }] : []),
     { label: 'Sum Assured', value: sumAssured },
-    { label: 'Total Premium', value: totalPremium },
+    { label: 'F/E or O/E', value: feOeOption },
     { label: 'Rate Code', value: rateCode },
     { label: 'Rate', value: rate },
     { label: 'Base Premium', value: basePremium },
+    { label: 'F/E or O/E Amount', value: feOeAmount },
     { label: 'Commission', value: commission },
     { label: 'Payment Amount', value: netAmount },
+    { label: 'Total Premium', value: totalPremium },
     { label: 'Father/Husband Name', value: fatherHusbandName },
     { label: 'Mother Name', value: motherName },
     { label: 'Address', value: address },
@@ -127,61 +134,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
     { label: 'AGM', value: agm },
   ];
 
-  const handleFirstPremiumSubmission = async (transactionID: string) => {
-    setIsSubmitting(true);
-    dispatch({ type: SHOW_LOADING, payload: 'Processing payment...' });
-
-    const postData = {
-      payment_id: transactionID,
-      nid,
-      project: projectCode.toString(),
-      code: code.toString(),
-      name,
-      entrydate,
-      mobile,
-      plan,
-      age,
-      term,
-      mode,
-      sumAssured,
-      totalPremium,
-      servicingCell,
-      fa,
-      um: um || null,
-      bm: bm || null,
-      agm: agm || null,
-      agentMobile,
-      commission: commission || '0',
-      net_pay: netAmount || '0',
-      father_or_husband_name: fatherHusbandName,
-      mother_name: motherName,
-      address,
-      district,
-      gender,
-      nominee_1_name: nominee1Name,
-      nominee_1_percentage: nominee1Percent,
-      nominee_2_name: nominee2Name,
-      nominee_2_percentage: nominee2Percent,
-      nominee_3_name: nominee3Name,
-      nominee_3_percentage: nominee3Percent,
-    };
-
-    console.log('First Premium Payment Post Data:', postData);
-
-    try {
-      const result = await userPayFirstPremium(postData);
-      console.log('First Premium Payment Result:', result);
-      return result.success;
-    } catch (error) {
-      console.error('Payment submission failed:', error);
-      return false;
-    } finally {
-      setIsSubmitting(false);
-      dispatch({ type: HIDE_LOADING });
-    }
-  };
-
-  const handleSubmit = () => {
+  const handleSubmit = async() => {
     if (!isEnabled) {
       ToastAndroid.show('Please agree to terms', ToastAndroid.LONG);
       return;
@@ -190,6 +143,16 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
     setIsSubmitting(true);
     dispatch({ type: SHOW_LOADING, payload: 'Processing payment...' });
     dispatch({ type: HIDE_LOADING });
+
+    const isServerOk = await checkDatabaseConnection();
+
+    if (!isServerOk) {
+      dispatch({ type: HIDE_LOADING });
+      setIsSubmitting(false);
+      ToastAndroid.show('Server is currently unavailable. Please try again later.', ToastAndroid.LONG);
+      return;
+    }
+
     if (method === 'bkash') setShowBkash(true);
     if (method === 'nagad') setShowNagad(true);
     if (method === 'ssl') {
@@ -248,6 +211,8 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
           nominee_2_percentage: nominee2Percent,
           nominee_3_name: nominee3Name,
           nominee_3_percentage: nominee3Percent,
+          feOeOption,
+          installments
         }}
         onSuccess={() => {
           dispatch(clearFirstPremiumData());
@@ -298,6 +263,8 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
           nominee_2_percentage: nominee2Percent,
           nominee_3_name: nominee3Name,
           nominee_3_percentage: nominee3Percent,
+          feOeOption,
+          installments
         }}
         onSuccess={() => {
           dispatch(clearFirstPremiumData());
