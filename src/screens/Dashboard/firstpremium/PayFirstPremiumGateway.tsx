@@ -188,6 +188,9 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
       nominee_3_name: nominee3Name,
       nominee_3_percentage: nominee3Percent,
       missing: false,
+      F_E_O_E: feOeOption,
+      No_Of_Ins: installments,
+      Total_Paid: null,
     };
 
     // Try save first
