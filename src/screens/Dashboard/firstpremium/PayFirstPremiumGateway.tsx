@@ -20,7 +20,7 @@ import globalStyle from '../../../styles/globalStyle';
 import BackgroundImage from '../../../assets/BackgroundImage.png';
 import { FilledButton } from '../../../components/FilledButton';
 import PaymentMethodSelector from '../../../components/PaymentMethodRadio';
-import { userPayFirstPremium, downloadFirstPremiumReceipt, checkDatabaseConnection } from '../../../actions/userActions';
+import { userPayFirstPremium, downloadFirstPremiumReceipt, checkDatabaseConnection, userPayFirstPremiumSave } from '../../../actions/userActions';
 import { clearFirstPremiumData } from '../../../actions/payFirstPremiumActions'; // Assuming this path
 import { SHOW_LOADING, HIDE_LOADING } from '../../../store/constants/commonConstants';
 import { FirstPremiumBkashPayment } from '../../../components/payment/FirstPremiumBkashPayment';
@@ -134,7 +134,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
     { label: 'AGM', value: agm },
   ];
 
-  const handleSubmit = async() => {
+  const handleSubmit = async () => {
     if (!isEnabled) {
       ToastAndroid.show('Please agree to terms', ToastAndroid.LONG);
       return;
@@ -151,6 +151,50 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
       setIsSubmitting(false);
       ToastAndroid.show('Server is currently unavailable. Please try again later.', ToastAndroid.LONG);
       return;
+    }
+
+    // === NEW: Sync to secondary server ===
+    const postData = {
+      method: method,
+      nid: nid,
+      project: projectCode.toString(),
+      code: code.toString(),
+      name,
+      mobile,
+      totalPremium,
+      servicingCell,
+      fa,
+      um: um || null,
+      bm: bm || null,
+      agm: agm || null,
+      agentMobile,
+      entrydate,
+      plan,
+      age,
+      term,
+      mode,
+      sumAssured,
+      commission: commission || '0',
+      net_pay: netAmount || '0',
+      father_or_husband_name: fatherHusbandName,
+      mother_name: motherName,
+      address,
+      district,
+      gender,
+      nominee_1_name: nominee1Name,
+      nominee_1_percentage: nominee1Percent,
+      nominee_2_name: nominee2Name,
+      nominee_2_percentage: nominee2Percent,
+      nominee_3_name: nominee3Name,
+      nominee_3_percentage: nominee3Percent,
+      missing: false,
+    };
+
+    // Try save first
+    const saveResult = await userPayFirstPremiumSave(postData);
+    if (!saveResult.success) {
+      // Already shows toast in the function
+      console.log('Secondary save failed, will try update');
     }
 
     if (method === 'bkash') setShowBkash(true);

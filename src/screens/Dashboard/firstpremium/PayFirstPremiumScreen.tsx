@@ -107,7 +107,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showFaFormatModal, setShowFaFormatModal] = useState(false);
   const [faExample, setFaExample] = useState('');
-  const [installments, setInstallments] = useState<'6' | '12' | ''>('');
+  const [installments, setInstallments] = useState<'1' | '6' | '12' | ''>('');
   const [feOeOption, setFeOeOption] = useState<'F/E' | 'O/E' | ''>('');
   const [feOeAmount, setFeOeAmount] = useState<string>('0');
   const feOeOptions = ['F/E', 'O/E'] as const;
@@ -266,7 +266,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
     const calculate = async () => {
       setCode6Digit(''); setRate(''); setPremium(''); setCommission(''); setNetAmount('');
 
-      if (!selectedProject?.code || !plan || !term || age < 0 || !sumAssured || !mode || !installments || !feOeOption) return;
+      if (!selectedProject?.code || !plan || !term || age < 0 || !sumAssured || !mode) return;
 
       const sa = parseFloat(sumAssured);
       const paddedAge = age.toString().padStart(2, '0');
@@ -317,22 +317,42 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         basePremiumFinal = sa / (12 * parseInt(term));
       }
 
+      console.log('Base Premium before adjustments:', basePremiumFinal);
+
       let adjustedPremium = basePremiumFinal;
 
       if (mode === 'mly' && installments) {
-        const multiplier = installments === '6' ? 6 : 12;
-        adjustedPremium = basePremiumFinal * multiplier;
+        const installmentCount = Number(installments);
+        adjustedPremium = basePremiumFinal * installmentCount;
       }
 
-      if (feOeOption && adjustedPremium > 0) {
+      console.log('Adjusted Premium after mode/installments:', adjustedPremium);
+
+      if (feOeOption && sa > 0) {
         const ratePerThousand = feOeOption === 'F/E' ? 3 : 2;
-        extraCharge = Math.floor((adjustedPremium / 1000) * ratePerThousand);
+        const annualExtra = (sa / 1000) * ratePerThousand;
+
+        console.log('Annual Extra Charge for F/E or O/E:', annualExtra);
+
+        let monthsPaid = 12;
+        if (mode === 'hly') monthsPaid = 6;
+        else if (mode === 'qly') monthsPaid = 4;
+        else if (mode === 'yly') monthsPaid = 12;
+        else if (mode === 'mly' && installments) monthsPaid = Number(installments);
+
+
+        console.log('Months Paid for Extra Charge calculation:', monthsPaid);
+
+        extraCharge = Math.round((annualExtra / 12) * monthsPaid);
+
+        console.log('Final Extra Charge added to Premium:', extraCharge);
       }
 
       setFeOeAmount(extraCharge.toString());
 
       const roundedPremium = Math.floor(adjustedPremium) + (adjustedPremium % 1 >= 0.5 ? 1 : 0);
       const grossComm = roundedPremium * commRate;
+      
       const tax = grossComm * 0.05;
       const netComm = grossComm - tax;
       const finalNet = Math.floor(roundedPremium - netComm) + ((roundedPremium - netComm) % 1 >= 0.5 ? 1 : 0) + extraCharge;
@@ -459,7 +479,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!nid) newErrors.nid = 'NID is required';
+    if (!nid) newErrors.nid = 'NID/Birth Reg/Passport is required';
     if (!name) newErrors.name = 'Proposer name is required';
     if (!mobile) newErrors.mobile = 'Mobile number is required';
 
@@ -581,7 +601,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             />
             {errors.project && <Text style={styles.error}>{errors.project}</Text>}
 
-            <Input label="NID" value={nid} onChangeText={setNid} keyboardType="numeric" required editable={!isInputDisabled} />
+            <Input label="NID/Birth Reg/Passport" value={nid} onChangeText={setNid} keyboardType="numeric" required editable={!isInputDisabled} />
             {errors.nid && <Text style={styles.error}>{errors.nid}</Text>}
             <Input label="Date" value={entrydate} editable={false} />
             <EnglishOnlyInput label="Proposer's Name" value={name} onChangeText={setName} required editable={!isInputDisabled} />
@@ -639,6 +659,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
               <>
                 <PickerComponent
                   items={[
+                    { label: '1', value: '1' },
                     { label: '6', value: '6' },
                     { label: '12', value: '12' },
                   ]}

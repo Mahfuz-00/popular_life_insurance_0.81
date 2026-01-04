@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { Image } from 'react-native';
+import moment from 'moment';
 
 import Header from '../../components/Header';
 import globalStyle from '../../styles/globalStyle';
@@ -21,7 +22,7 @@ import { Input } from '../../components/input/Input';
 import { FilledButton } from '../../components/FilledButton';
 import { BkashPayment } from '../../components/payment/BkashPayment';
 import { NagadPayment } from '../../components/payment/NagadPayment';
-import { checkDatabaseConnection, getDuePremiumDetails } from '../../actions/userActions';
+import { checkDatabaseConnection, getDuePremiumDetails, userPayPremiumSave } from '../../actions/userActions';
 import PaymentMethodSelector, { PaymentMethod } from '../../components/PaymentMethodRadio';
 import { SHOW_LOADING, HIDE_LOADING } from '../../store/constants/commonConstants';
 
@@ -30,7 +31,7 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const dispatch = useDispatch();
   const { isAuthenticated, user } = useSelector((state: any) => state.auth);
 
-  const [number, setNumber] = useState<string>('');
+  const [policyNumber, setPolicyNumber] = useState<string>('');
   const [amount, setAmount] = useState<string>('');
   const [policyDetails, setPolicyDetails] = useState<any>({});
 
@@ -44,12 +45,12 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const amountToPay = amount;
 
   const handleGetPolicyDetails = async () => {
-    if (!number) return ToastAndroid.show('Please enter Policy Number', ToastAndroid.LONG);
+    if (!policyNumber) return ToastAndroid.show('Please enter Policy Number', ToastAndroid.LONG);
 
-    dispatch({ type: SHOW_LOADING, payload: `Fetching details for ${number}...` });
+    dispatch({ type: SHOW_LOADING, payload: `Fetching details for ${policyNumber}...` });
 
     try {
-      const res = await getDuePremiumDetails(number);
+      const res = await getDuePremiumDetails(policyNumber);
       if (res?.Policyno) {
         setPolicyDetails(res);
         if (res.DueAmount) {
@@ -103,6 +104,29 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       return;
     }
 
+    // === NEW: Sync to secondary server ===
+    const postData = {
+      policy_no: policyNumber,
+      method: method,
+      amount: amountToPay,
+      transaction_no: null,
+      project_name: policyDetails?.project_name || '',
+      date_time: moment().format('DD-MM-YYYY HH:mm:ss'),
+      partial_amount: null,
+      adjust_with: null,
+      cause: null,
+      service_cell_code: policyDetails?.service_cell_code || '',
+      branch_code: policyDetails?.branch_code || '',
+      missing: false,
+    };
+
+    // Try save first
+    const saveResult = await userPayPremiumSave(postData);
+    if (!saveResult.success) {
+      // Already shows toast in the function
+      console.log('Secondary save failed, will try update');
+    }
+
     try {
       if (method === 'bkash') {
         setShowBkash(true);
@@ -134,7 +158,7 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     return (
       <BkashPayment
         amount={amountToPay}
-        number={number}
+        number={policyNumber}
         paymentType="full"
         policyDetails={policyDetails}
         onSuccess={() => {
@@ -154,7 +178,7 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     return (
       <NagadPayment
         amount={amountToPay}
-        number={number}
+        number={policyNumber}
         mobileNo={user?.phone || ''}
         paymentType="full"
         policyDetails={policyDetails}
@@ -180,9 +204,9 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
             {/* Policy Number Input */}
             <Input
               label="Proposal or Policy Number"
-              value={number}
+              value={policyNumber}
               keyboardType='numeric'
-              onChangeText={setNumber}
+              onChangeText={setPolicyNumber}
               editable={Object.keys(policyDetails).length === 0}
               labelStyle={[globalStyle.fontMedium, { color: '#FFF', marginTop: 15 }]}
             />

@@ -8,7 +8,7 @@ import {
   bkashCreatePayment,
   bkashExecutePayment,
 } from '../../actions/paymentServiceActions';
-import { userPayPremium } from '../../actions/userActions';
+import { userPayPremium, userPayPremiumUpdate } from '../../actions/userActions';
 
 type PaymentType = 'full' | 'partial';
 
@@ -79,7 +79,22 @@ export const BkashPayment: React.FC<BkashPaymentProps> = ({
       cause: cause?.trim(),
     } : {};
 
+    /* ---------------- SECONDARY UPDATE (FIRST & ALWAYS) ---------------- */
+    const updatePostData = {
+      policy_no: number,
+      method: 'bkash',
+      amount: paymentType === 'full' ? amount : partialAmount,
+      transaction_no: trxID,
+      date_time: moment().format('DD-MM-YYYY HH:mm:ss'),
+    };
+    const successUpdate = await userPayPremiumUpdate(updatePostData);
+    if (successUpdate) {
+      console.log('Secondary server updated');
+    } else {
+      console.warn('Secondary update failed — should be retried later');
+    }
 
+    /* ---------------- PRIMARY PAYLOAD ---------------- */
     const postData: any = {
       policy_no: number,
       method: 'bkash',
@@ -108,6 +123,7 @@ export const BkashPayment: React.FC<BkashPaymentProps> = ({
     } else {
       ToastAndroid.show('Payment recorded. Will sync when online.', ToastAndroid.LONG);
     }
+
   };
 
   if (!bkashUrl) return null;

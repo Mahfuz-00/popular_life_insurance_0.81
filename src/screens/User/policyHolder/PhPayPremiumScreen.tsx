@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import RadioButtonRN from 'radio-buttons-react-native';
 import { Image } from 'react-native';
+import moment from 'moment';
 
 import Header from '../../../components/Header';
 import { showPartialReceiptAlert } from '../../../components/PremiumReceipt';
@@ -23,7 +24,7 @@ import { Input } from '../../../components/input/Input';
 import { FilledButton } from '../../../components/FilledButton';
 import { BkashPayment } from '../../../components/payment/BkashPayment';
 import { NagadPayment } from '../../../components/payment/NagadPayment';
-import { checkDatabaseConnection, getDuePremiumDetails } from '../../../actions/userActions';
+import { checkDatabaseConnection, getDuePremiumDetails, userPayPremiumSave } from '../../../actions/userActions';
 import PaymentMethodSelector, { PaymentMethod } from '../../../components/PaymentMethodRadio';
 import { useSelector, useDispatch } from 'react-redux';
 import { SHOW_LOADING, HIDE_LOADING } from '../../../store/constants/commonConstants';
@@ -106,9 +107,9 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
       const dueTotal = Number(policyDetails.totalpremium);
       const entered = Number(amountToPay);
 
-      if (entered > dueTotal) {
-        return ToastAndroid.show(`Cannot pay more than premium: ${dueTotal}`, ToastAndroid.LONG);
-      }
+      // if (entered > dueTotal) {
+      //   return ToastAndroid.show(`Cannot pay more than premium: ${dueTotal}`, ToastAndroid.LONG);
+      // }
 
       if (entered % dueTotal !== 0) {
         return ToastAndroid.show('Amount must be multiple of premium', ToastAndroid.LONG);
@@ -125,6 +126,29 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
       setIsSubmitting(false);
       ToastAndroid.show('Server is currently unavailable. Please try again later.', ToastAndroid.LONG);
       return;
+    }
+
+    // === NEW: Sync to secondary server ===
+    const postData = {
+      policy_no: policyNo,
+      method: method,
+      amount: amountToPay,
+      transaction_no: null,
+      project_name: policyDetails?.project_name || '',
+      date_time: moment().format('DD-MM-YYYY HH:mm:ss'),
+      partial_amount: paymentType === 'partial' ? partialAmount : null,
+      adjust_with: paymentType === 'partial' ? adjustWith : null,
+      cause: paymentType === 'partial' ? cause?.trim() : null,
+      service_cell_code: policyDetails?.service_cell_code || '',
+      branch_code: policyDetails?.branch_code || '',
+      missing: false, 
+    };
+
+    // Try save first
+    const saveResult = await userPayPremiumSave(postData);
+    if (!saveResult.success) {
+      // Already shows toast in the function
+      console.log('Secondary save failed, will try update');
     }
 
     try {

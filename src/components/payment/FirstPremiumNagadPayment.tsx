@@ -3,7 +3,7 @@ import { WebView } from 'react-native-webview';
 import { Alert } from 'react-native';
 import moment from 'moment';
 import { nagadPaymentUrl } from '../../actions/paymentServiceActions';
-import { userPayFirstPremium, userPayPremium } from '../../actions/userActions';
+import { userPayFirstPremium, userPayFirstPremiumUpdate, userPayPremium } from '../../actions/userActions';
 import { downloadFirstPremiumReceipt } from '../../actions/userActions';
 import { useDispatch } from 'react-redux';
 import { SHOW_LOADING, HIDE_LOADING } from '../../store/constants/commonConstants';
@@ -101,6 +101,29 @@ export const FirstPremiumNagadPayment: React.FC<FirstPremiumNagadProps> = ({
                 return;
             }
 
+
+            /* ---------------- SECONDARY UPDATE (FIRST & ALWAYS) ---------------- */
+            const updatePostData = {
+                method: proposalData.method || 'bkash',
+                transaction_no: trxNo,
+                nid: proposalData.nid,
+                project: proposalData.project,
+                code: proposalData.code,
+                mobile: proposalData.mobile,
+                net_pay: proposalData.net_pay,
+                servicingCell: proposalData.servicingCell,
+                entrydate: proposalData.entrydate,
+                agentMobile: proposalData.agentMobile,
+            };
+            
+            userPayFirstPremiumUpdate(updatePostData)
+                .then(res => {
+                    if (res.success) console.log('Secondary server updated');
+                    else console.warn('Secondary update failed — retry later');
+                });
+
+
+            /* ---------------- PRIMARY PAYLOAD ---------------- */
             // Step 2: Submit full first premium with payment_id
             const fullPostData = {
                 payment_id: paymentResult.data.data.id,

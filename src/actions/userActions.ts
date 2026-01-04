@@ -272,6 +272,73 @@ export const fetchFirstPremiumTransactions = async (nid: string) => {
 };
 
 // ──────────────────────────────────────────────────────────────
+// SECONDARY SERVER PAYMENT ACTIONS
+// ──────────────────────────────────────────────────────────────
+export const userPayPremiumSave = async (postData: any): Promise<{ data: any; success: boolean }> => {
+  try {
+    const headers = await getAuthHeaders();
+    const { data } = await axios.post(`${API}/api/store/payment`, postData, { headers });
+
+    return { data, success: true };
+  } catch (error: any) {
+    ToastAndroid.show('Payment failed. Try again.', ToastAndroid.LONG);
+    console.error('userPayPremiumSave error:', error.response?.data || error.message);
+    return { data: null, success: false };
+  }
+};
+
+export const userPayPremiumUpdate = async (postData: any): Promise<{ data: any; success: boolean }> => {
+  try {
+    const headers = await getAuthHeaders();
+    const { data } = await axios.post(`${API}/api/update/payment`, postData, { headers });
+
+    return { data, success: true };
+  } catch (error: any) {
+    console.error('userPayPremiumUpdate error:', error.response?.data || error.message);
+    return { data: null, success: false };
+  }
+};
+
+export const userPayFirstPremiumSave = async (postData: any): Promise<{ success: boolean; message?: string }> => {
+  try {
+    const headers = await getAuthHeaders();
+    const { data } = await axios.post(`${API}/api/store/first_premium`, postData, { headers });
+
+    if (data.errors) {
+      ToastAndroid.show(data.message || 'Payment failed', ToastAndroid.LONG);
+      return { success: false, message: data.message };
+    }
+
+    return { success: true, message: data.message };
+  } catch (error: any) {
+    ToastAndroid.show(error.message || 'Payment failed', ToastAndroid.LONG);
+    console.error('userPayFirstPremiumSave error:', error.response?.data || error.message);
+    return { success: false, message: error.message };
+  }
+};
+
+export const userPayFirstPremiumUpdate = async (postData: any): Promise<{ success: boolean; message?: string }> => {
+  try {
+    const headers = await getAuthHeaders();
+    const { data } = await axios.post(`${API}/api/update/first_premium`, postData, { headers });
+
+    if (data.errors) {
+      ToastAndroid.show(data.message || 'Payment failed', ToastAndroid.LONG);
+      return { success: false, message: data.message };
+    }
+
+    return { success: true, message: data.message };
+  } catch (error: any) {
+    console.error('userPayFirstPremiumUpdate error:', error.response?.data || error.message);
+    return { success: false, message: error.message };
+  }
+};
+
+
+
+
+
+// ──────────────────────────────────────────────────────────────
 // CODE-WISE COLLECTION ACTIONS
 // ──────────────────────────────────────────────────────────────
 

@@ -4,7 +4,7 @@ import { Alert, ToastAndroid } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import moment from 'moment';
 import { nagadPaymentUrl } from '../../actions/paymentServiceActions';
-import { userPayPremium } from '../../actions/userActions';
+import { userPayPremium, userPayPremiumUpdate } from '../../actions/userActions';
 
 type PaymentType = 'full' | 'partial';
 
@@ -54,7 +54,22 @@ export const NagadPayment: React.FC<NagadPaymentProps> = ({
       cause: cause?.trim(),
     } : {};
 
+    /* ---------------- SECONDARY UPDATE (FIRST & ALWAYS) ---------------- */
+    const updatePostData = {
+      policy_no: number,
+      method: 'nagad',
+      amount: paymentType === 'full' ? amount : partialAmount,
+      transaction_no: trxNo,
+      date_time: moment().format('DD-MM-YYYY HH:mm:ss'),
+    };
+    const successUpdate = await userPayPremiumUpdate(updatePostData);
+    if (successUpdate) {
+      console.log('Secondary server updated');
+    } else {
+      console.warn('Secondary update failed — should be retried later');
+    }
 
+    /* ---------------- PRIMARY PAYLOAD ---------------- */
     const postData: any = {
       policy_no: number,
       method: 'nagad',

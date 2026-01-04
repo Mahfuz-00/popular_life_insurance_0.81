@@ -7,7 +7,7 @@ import {
     bkashCreatePayment,
     bkashExecutePayment,
 } from '../../actions/paymentServiceActions';
-import { userPayPremium, userPayFirstPremium } from '../../actions/userActions';
+import { userPayPremium, userPayFirstPremium, userPayFirstPremiumUpdate } from '../../actions/userActions';
 import { downloadFirstPremiumReceipt } from '../../actions/userActions';
 import moment from 'moment';
 import { useDispatch } from 'react-redux';
@@ -117,6 +117,28 @@ export const FirstPremiumBkashPayment: React.FC<FirstPremiumBkashProps> = ({
                 return;
             }
 
+            /* ---------------- SECONDARY UPDATE (FIRST & ALWAYS) ---------------- */
+            const updatePostData = {
+                method: proposalData.method || 'bkash',
+                transaction_no: trxID,
+                nid: proposalData.nid,
+                project: proposalData.project,
+                code: proposalData.code,
+                mobile: proposalData.mobile,
+                net_pay: proposalData.net_pay,
+                servicingCell: proposalData.servicingCell,
+                entrydate: proposalData.entrydate,
+                agentMobile: proposalData.agentMobile,
+            };
+            
+            userPayFirstPremiumUpdate(updatePostData)
+                .then(res => {
+                    if (res.success) console.log('Secondary server updated');
+                    else console.warn('Secondary update failed — retry later');
+                });
+
+
+            /* ---------------- PRIMARY PAYLOAD ---------------- */
             // Step 2: Submit full first premium with payment_id
             const fullPostData = {
                 payment_id: paymentResult.data.data.id,
