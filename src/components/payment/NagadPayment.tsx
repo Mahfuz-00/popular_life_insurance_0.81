@@ -60,7 +60,7 @@ export const NagadPayment: React.FC<NagadPaymentProps> = ({
       method: 'nagad',
       amount: paymentType === 'full' ? amount : partialAmount,
       transaction_no: trxNo,
-      date_time: moment().format('DD-MM-YYYY HH:mm:ss'),
+      date_time: trxNo,
     };
     const successUpdate = await userPayPremiumUpdate(updatePostData);
     if (successUpdate) {
@@ -76,7 +76,7 @@ export const NagadPayment: React.FC<NagadPaymentProps> = ({
       // If full payment, use the amount prop, otherwise nullify the main amount field.
       amount: paymentType === 'full' ? amount : null,
       transaction_no: trxNo,
-      date_time: moment().format('DD-MM-YYYY HH:mm:ss'),
+      date_time: trxNo,
 
       //SPREAD THE PARTIAL FIELDS: Only exists if paymentType is 'partial'
       ...partialFields,

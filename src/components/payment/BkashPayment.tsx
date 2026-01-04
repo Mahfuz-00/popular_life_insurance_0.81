@@ -39,6 +39,9 @@ export const BkashPayment: React.FC<BkashPaymentProps> = ({
   const [bkashToken, setBkashToken] = useState<string>('');
   const [bkashPaymentId, setBkashPaymentId] = useState<string>('');
 
+  const trxNoRef = React.useRef(moment().format('YYYYMMDDHHmmss'));
+  const currentDay = trxNoRef.current;
+
   const startPayment = async () => {
     try {
       let token = await AsyncStorage.getItem('bkashToken');
@@ -85,7 +88,7 @@ export const BkashPayment: React.FC<BkashPaymentProps> = ({
       method: 'bkash',
       amount: paymentType === 'full' ? amount : partialAmount,
       transaction_no: trxID,
-      date_time: moment().format('DD-MM-YYYY HH:mm:ss'),
+      date_time: currentDay,
     };
     const successUpdate = await userPayPremiumUpdate(updatePostData);
     if (successUpdate) {
@@ -101,7 +104,7 @@ export const BkashPayment: React.FC<BkashPaymentProps> = ({
       // If full payment, use the amount prop, otherwise nullify the main amount field.
       amount: paymentType === 'full' ? amount : null,
       transaction_no: trxID,
-      date_time: moment().format('DD-MM-YYYY HH:mm:ss'),
+      date_time: currentDay,
 
       //SPREAD THE PARTIAL FIELDS: Only exists if paymentType is 'partial'
       ...partialFields,
