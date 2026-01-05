@@ -28,6 +28,7 @@ import EnglishOnlyInput from '../../../components/input/EnglishOnlyInput';
 import { saveFirstPremiumData } from '../../../actions/payFirstPremiumActions';
 import { SHOW_LOADING, HIDE_LOADING } from '../../../store/constants/commonConstants';
 import InfoModal from '../../../components/InfoModal';
+import { PRIMARY_BUTTON_BG } from '../../../store/constants/colorConstants';
 
 const SPECIAL_PROJECTS = ['ABA', 'AKOK', 'ALA', 'IA', 'JBA', 'JBAK', 'IBT'];
 const MODE_MULTIPLIER: Record<string, number> = { yly: 1, hly: 2, qly: 4, mly: 12, single: 1 };
@@ -73,14 +74,14 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
   const [term, setTerm] = useState<string>('');
   const [mode, setMode] = useState<string>('');
   const [sumAssured, setSumAssured] = useState<string>('');
-  const [totalPremium, setTotalPremium] = useState<string>('');
+  const [totalPremium, setTotalPremium] = useState<string>('0');
 
-  const [code6Digit, setCode6Digit] = useState<string>('');
-  const [rate, setRate] = useState<string>('');
-  const [premium, setPremium] = useState<string>('');
-  const [commission, setCommission] = useState<string>('');
-  const [netCommission, setNetCommission] = useState<string>('');
-  const [netAmount, setNetAmount] = useState<string>('');
+  const [code6Digit, setCode6Digit] = useState<string>('0');
+  const [rate, setRate] = useState<string>('0');
+  const [premium, setPremium] = useState<string>('0');
+  const [commission, setCommission] = useState<string>('0');
+  const [netCommission, setNetCommission] = useState<string>('0');
+  const [netAmount, setNetAmount] = useState<string>('0');
 
   const [servicingCell, setServicingCell] = useState<string>('');
   const [agentMobile, setAgentMobile] = useState<string>('');
@@ -129,7 +130,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       const projectRes = await fetchProjects();
       if (projectRes?.data) {
         const formatted = projectRes.data.map((p: any) => ({
-          label: p.name,
+          label: p.name === 'Islami Bima Khudra' ? 'IDPS' : p.name,
           value: p.id,
           code: p.code,
         }));
@@ -264,9 +265,18 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
   // Premium calculation (same as before)
   useEffect(() => {
     const calculate = async () => {
-      setCode6Digit(''); setRate(''); setPremium(''); setCommission(''); setNetAmount('');
-
       if (!selectedProject?.code || !plan || !term || age < 0 || !sumAssured || !mode) return;
+
+      dispatch({ type: SHOW_LOADING, payload: 'Calculating premium...' });
+
+      setCode6Digit('0');
+      setRate('0');
+      setPremium('0');
+      setCommission('0');
+      setNetCommission('0');
+      setNetAmount('0');
+      setTotalPremium('0');
+      setFeOeAmount('0');
 
       const sa = parseFloat(sumAssured);
       const paddedAge = age.toString().padStart(2, '0');
@@ -285,6 +295,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         const result = await getRate(selectedProject.code, plan, term, age);
 
         if (!result?.success || result.rate <= 0) {
+          dispatch({ type: HIDE_LOADING });
           setRate('Not Found');
           return;
         }
@@ -352,7 +363,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
 
       const roundedPremium = Math.floor(adjustedPremium) + (adjustedPremium % 1 >= 0.5 ? 1 : 0);
       const grossComm = roundedPremium * commRate;
-      
+
       const tax = grossComm * 0.05;
       const netComm = grossComm - tax;
       const finalNet = Math.floor(roundedPremium - netComm) + ((roundedPremium - netComm) % 1 >= 0.5 ? 1 : 0) + extraCharge;
@@ -363,6 +374,8 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       setNetCommission(netComm.toFixed(2));
       setNetAmount(finalNet.toString());
       setTotalPremium(finalTotalPremium.toString());
+
+      dispatch({ type: HIDE_LOADING });
     };
 
     const timer = setTimeout(calculate, 500);
@@ -473,6 +486,11 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
     if (digitsOnly.length === 0) return null;
 
     return digitsOnly.padStart(6, '0');
+  };
+
+  const clearExtraCharge = () => {
+    setFeOeOption('');
+    setFeOeAmount('0');
   };
 
 
@@ -678,22 +696,39 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             {errors.sumAssured && <Text style={styles.error}>{errors.sumAssured}</Text>}
 
             <Text style={styles.sectionTitle}>Extra Charge</Text>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginVertical: 10 }}>
-              {feOeOptions.map((option) => (
-                <TouchableOpacity
-                  key={option}
-                  onPress={() => setFeOeOption(option)}
-                  style={{ flexDirection: 'row', alignItems: 'center' }}
-                  disabled={isInputDisabled}
-                >
-                  <View style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: '#0066CC', marginRight: 12, justifyContent: 'center', alignItems: 'center' }}>
-                    {feOeOption === option && <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: '#0066CC' }} />}
-                  </View>
-                  <Text style={{ fontSize: 16 }}>{option}</Text>
-                </TouchableOpacity>
-              ))}
+
+            <View style={styles.toggleRow}>
+              {feOeOptions.map(option => {
+                const isActive = feOeOption === option;
+
+                return (
+                  <TouchableOpacity
+                    key={option}
+                    disabled={isInputDisabled}
+                    onPress={() => {
+                      // toggle behavior
+                      setFeOeOption(prev => (prev === option ? '' : option));
+                    }}
+                    style={[
+                      styles.toggleButton,
+                      isActive && styles.toggleButtonActive,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.toggleText,
+                        isActive && styles.toggleTextActive,
+                      ]}
+                    >
+                      {option}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
-            {errors.feOe && <Text style={styles.error}>{errors.feOe}</Text>}
+
+            {errors.feOeOption && <Text style={styles.error}>{errors.feOeOption}</Text>}
+
 
             <Text style={styles.sectionTitle}>Premium Details (Auto Calculated)</Text>
             <Input label="Code (Auto)" value={code6Digit} editable={false} />
@@ -866,6 +901,36 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontWeight: '600',
   },
+  toggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+
+  toggleButton: {
+    flex: 1,
+    marginHorizontal: 6,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: PRIMARY_BUTTON_BG,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+  },
+
+  toggleButtonActive: {
+    backgroundColor: PRIMARY_BUTTON_BG,
+  },
+
+  toggleText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: PRIMARY_BUTTON_BG,
+  },
+
+  toggleTextActive: {
+    color: '#fff',
+  },
+
 });
 
 export default PayFirstPremiumScreen;

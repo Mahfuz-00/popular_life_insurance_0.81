@@ -1,7 +1,7 @@
 import { Alert, ToastAndroid, Linking } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from '../utils/axios';
-import { API } from '../config';
+import { API, SECONDARYAPI } from '../config';
 import {
   LOGIN_REQUEST,
   LOGIN_SUCCESS,
@@ -277,12 +277,16 @@ export const fetchFirstPremiumTransactions = async (nid: string) => {
 export const userPayPremiumSave = async (postData: any): Promise<{ data: any; success: boolean }> => {
   try {
     const headers = await getAuthHeaders();
-    const { data } = await axios.post(`${API}/api/store/payment`, postData, { headers });
+    const { data } = await axios.post(`${SECONDARYAPI}/api/store/payment`, postData, { headers });
+
+    console.log('Primary payment saved:', data);
 
     return { data, success: true };
   } catch (error: any) {
     ToastAndroid.show('Payment failed. Try again.', ToastAndroid.LONG);
     console.error('userPayPremiumSave error:', error.response?.data || error.message);
+    console.log('Failed payment data:', postData);
+    console.log('Error details:', error);
     return { data: null, success: false };
   }
 };
@@ -290,7 +294,7 @@ export const userPayPremiumSave = async (postData: any): Promise<{ data: any; su
 export const userPayPremiumUpdate = async (postData: any): Promise<{ data: any; success: boolean }> => {
   try {
     const headers = await getAuthHeaders();
-    const { data } = await axios.post(`${API}/api/update/payment`, postData, { headers });
+    const { data } = await axios.post(`${SECONDARYAPI}/api/update/payment`, postData, { headers });
 
     return { data, success: true };
   } catch (error: any) {
@@ -302,7 +306,7 @@ export const userPayPremiumUpdate = async (postData: any): Promise<{ data: any; 
 export const userPayFirstPremiumSave = async (postData: any): Promise<{ success: boolean; message?: string }> => {
   try {
     const headers = await getAuthHeaders();
-    const { data } = await axios.post(`${API}/api/store/first_premium`, postData, { headers });
+    const { data } = await axios.post(`${SECONDARYAPI}/api/store/first_premium`, postData, { headers });
 
     if (data.errors) {
       ToastAndroid.show(data.message || 'Payment failed', ToastAndroid.LONG);
@@ -320,7 +324,7 @@ export const userPayFirstPremiumSave = async (postData: any): Promise<{ success:
 export const userPayFirstPremiumUpdate = async (postData: any): Promise<{ success: boolean; message?: string }> => {
   try {
     const headers = await getAuthHeaders();
-    const { data } = await axios.post(`${API}/api/update/first_premium`, postData, { headers });
+    const { data } = await axios.post(`${SECONDARYAPI}/api/update/first_premium`, postData, { headers });
 
     if (data.errors) {
       ToastAndroid.show(data.message || 'Payment failed', ToastAndroid.LONG);
