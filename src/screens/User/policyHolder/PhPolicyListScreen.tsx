@@ -25,6 +25,8 @@ const STORAGE_KEY = '@last_selected_policy';
 const PhPolicyListScreen: React.FC<PhPolicyListScreenProps> = ({ navigation }) => {
   const dispatch = useDispatch();
   const [policies, setPolicies] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+
 
   useEffect(() => {
     async function fetchData() {
@@ -34,28 +36,44 @@ const PhPolicyListScreen: React.FC<PhPolicyListScreenProps> = ({ navigation }) =
         const response = await getPolicyListByUser();
         console.log('Policy List Response:', response);
 
-        let policyList: string[] = response || [];
+        // API returns array directly
+        const policyList: string[] = Array.isArray(response) ? response : [];
 
-        // Get last selected policy from AsyncStorage
-        const lastSelectedPolicy = await AsyncStorage.getItem(STORAGE_KEY);
-
-        if (lastSelectedPolicy && policyList.includes(lastSelectedPolicy)) {
-          // Move last selected policy to top
-          policyList = [
-            lastSelectedPolicy,
-            ...policyList.filter((p) => p !== lastSelectedPolicy),
-          ];
+        // Read stored history safely
+        let storedPolicies: string[] = [];
+        try {
+          const stored = await AsyncStorage.getItem(STORAGE_KEY);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed)) storedPolicies = parsed;
+            else if (typeof parsed === 'string') storedPolicies = [parsed];
+          }
+        } catch (e) {
+          console.warn('Failed to parse stored policies, resetting...', e);
+          storedPolicies = [];
         }
 
-        setPolicies(policyList);
+        console.log('📦 Stored policy history:', storedPolicies);
+        console.log('🌐 API policy list:', policyList);
 
-        if (policyList.length === 0) {
-          Alert.alert('Info', 'No policies found for your account.');
+        // Order UI: stored first (if exists), then remaining API
+        const orderedPolicies = [
+          ...storedPolicies.filter((p) => policyList.includes(p)),
+          ...policyList.filter((p) => !storedPolicies.includes(p)),
+        ];
+
+        console.log('🖥 Final UI policy order:', orderedPolicies);
+
+        setPolicies(orderedPolicies);
+
+        if (orderedPolicies.length === 0) {
+          Alert.alert('Info', 'No active policies were found. You can try again later.');
         }
       } catch (error) {
         console.error('Failed to fetch policy list:', error);
-        Alert.alert('Connection Error', 'Unable to load policy list. Please try again.');
+        Alert.alert('Connection Error', 'Unable to load your policy list. Please check your connection.');
       } finally {
+        setLoading(false);
         dispatch({ type: HIDE_LOADING });
       }
     }
@@ -63,25 +81,69 @@ const PhPolicyListScreen: React.FC<PhPolicyListScreenProps> = ({ navigation }) =
     fetchData();
   }, [dispatch]);
 
-  const handlePolicyPress = async (policy: string) => {
-    // Save selected policy to AsyncStorage
-    await AsyncStorage.setItem(STORAGE_KEY, policy);
 
-    // Move the selected policy to top immediately
-    setPolicies((prevPolicies) => [
+
+  const handlePolicyPress = async (policy: string) => {
+    console.log('👉 Pressed policy:', policy);
+
+    let storedPolicies: string[] = [];
+
+    try {
+      const stored = await AsyncStorage.getItem(STORAGE_KEY);
+      console.log('Stored raw:', stored);
+
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          storedPolicies = parsed;
+        } else if (typeof parsed === 'string') {
+          storedPolicies = [parsed]; 
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to parse stored policies, resetting...', e);
+      storedPolicies = [];
+    }
+
+    console.log('📦 Before update:', storedPolicies);
+
+    // Move pressed policy to top
+    storedPolicies = storedPolicies.filter((p) => p !== policy);
+    storedPolicies.unshift(policy);
+
+    // Max 20
+    if (storedPolicies.length > 20) {
+      storedPolicies = storedPolicies.slice(0, 20);
+    }
+
+    console.log('📦 After update:', storedPolicies);
+
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(storedPolicies));
+
+    // Update UI
+    setPolicies((prev) => [
       policy,
-      ...prevPolicies.filter((p) => p !== policy),
+      ...prev.filter((p) => p !== policy),
     ]);
 
-    navigation.navigate('DashboardPh', { policyNo: policy });
+    console.log('➡️ Navigating to DashboardPh:', policy);
+
+    navigation.navigate('DashboardPh', { policyNo: policy }); 
   };
+
+
+
 
   return (
     <View style={globalStyle.container}>
       <Header navigation={navigation} title={'Policy List'} />
 
       <ScrollView style={globalStyle.wrapper}>
-        {policies.length > 0 ? (
+        {loading ? (
+          <Text style={{ textAlign: 'center', marginTop: 50, fontSize: 18, color: '#555' }}>
+            Loading your policies...
+          </Text>
+        ) : policies.length > 0 ? (
           policies.map((policy, index) => (
             <TouchableOpacity
               key={index}
@@ -125,7 +187,7 @@ const PhPolicyListScreen: React.FC<PhPolicyListScreenProps> = ({ navigation }) =
           ))
         ) : (
           <Text style={{ textAlign: 'center', marginTop: 50, fontSize: 18, color: '#555' }}>
-            No policies found under your account.
+            No active policies were found. Please try again later or contact support.
           </Text>
         )}
       </ScrollView>

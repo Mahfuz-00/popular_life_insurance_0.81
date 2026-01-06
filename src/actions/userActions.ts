@@ -210,7 +210,7 @@ export const userPolicyPaymentList = async (postData: any) => {
 
 export const userPolicyPartialPaymentList = async (postData: any) => {
   try {
-    const headers = await getAuthHeaders(); 
+    const headers = await getAuthHeaders();
 
     const { data } = await axios.post(
       `${API}/api/policy/partial-payment`,
@@ -274,14 +274,18 @@ export const fetchFirstPremiumTransactions = async (nid: string) => {
 // ──────────────────────────────────────────────────────────────
 // SECONDARY SERVER PAYMENT ACTIONS
 // ──────────────────────────────────────────────────────────────
-export const userPayPremiumSave = async (postData: any): Promise<{ data: any; success: boolean }> => {
+export const userPayPremiumSave = async (postData: any): Promise<{ data: any; success: boolean; id?: number; }> => {
   try {
     const headers = await getAuthHeaders();
     const { data } = await axios.post(`${SECONDARYAPI}/api/store/payment`, postData, { headers });
 
     console.log('Primary payment saved:', data);
 
-    return { data, success: true };
+    return { 
+      data, 
+      success: true, 
+      id: data?.data?.id, 
+    };
   } catch (error: any) {
     ToastAndroid.show('Payment failed. Try again.', ToastAndroid.LONG);
     console.error('userPayPremiumSave error:', error.response?.data || error.message);
@@ -303,7 +307,7 @@ export const userPayPremiumUpdate = async (postData: any): Promise<{ data: any; 
   }
 };
 
-export const userPayFirstPremiumSave = async (postData: any): Promise<{ success: boolean; message?: string }> => {
+export const userPayFirstPremiumSave = async (postData: any): Promise<{ success: boolean; message?: string; id?: number; }> => {
   try {
     const headers = await getAuthHeaders();
     const { data } = await axios.post(`${SECONDARYAPI}/api/store/first_premium`, postData, { headers });
@@ -313,7 +317,11 @@ export const userPayFirstPremiumSave = async (postData: any): Promise<{ success:
       return { success: false, message: data.message };
     }
 
-    return { success: true, message: data.message };
+    return { 
+      success: true, 
+      message: data.message, 
+      id: data?.data?.id, 
+    };
   } catch (error: any) {
     ToastAndroid.show(error.message || 'Payment failed', ToastAndroid.LONG);
     console.error('userPayFirstPremiumSave error:', error.response?.data || error.message);
@@ -410,7 +418,7 @@ export const login = (postData: any): any => async (dispatch: any) => {
 
     console.log('📨 Response received:', data);
 
-     if (data.errors) {
+    if (data.errors) {
       const formattedErrors: Record<string, string> = {};
 
       Object.keys(data.errors).forEach(key => {
@@ -456,7 +464,7 @@ export const login = (postData: any): any => async (dispatch: any) => {
     dispatch({ type: HIDE_LOADING });
     return data;
   } catch (error: any) {
-    console.log('💥 Login failed with error:', error); 
+    console.log('💥 Login failed with error:', error);
     console.log('Error response:', error.response?.data);
     console.log('Error message:', error.message);
 
@@ -562,7 +570,7 @@ export const verifyForgotPasswordOtp = async (postData: any) => {
   } catch (error: any) {
     ToastAndroid.show('Invalid OTP', ToastAndroid.LONG);
     return false;
-  false;
+    false;
   }
 };
 
@@ -580,7 +588,7 @@ export const getforgotPasswordOtp = async (postData: any) => {
 // ──────────────────────────────────────────────────────────────
 // 4. RATE & AGENT CODES (USED IN PREMIUM CALCULATOR)
 // ──────────────────────────────────────────────────────────────
-export const getRate = async (projectCode: string, plan: string, term:  string, age: number) => {
+export const getRate = async (projectCode: string, plan: string, term: string, age: number) => {
   try {
     if (!projectCode || !plan || !term || !age) return { success: false, rate: 0 };
 

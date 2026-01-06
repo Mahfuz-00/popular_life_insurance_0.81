@@ -91,6 +91,8 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
   const [showBkash, setShowBkash] = useState(false);
   const [showNagad, setShowNagad] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [secondaryPaymentId, setSecondaryPaymentId] = useState<number | null>(null);
+
 
   const tableData = [
     { label: 'Project', value: project },
@@ -195,9 +197,11 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
 
     // Try save first
     const saveResult = await userPayFirstPremiumSave(postData);
-    if (!saveResult.success) {
-      // Already shows toast in the function
-      console.log('Secondary save failed, will try update');
+    if (saveResult.success && saveResult.id) {
+      setSecondaryPaymentId(saveResult.id);
+      console.log('Secondary payment ID:', saveResult.id);
+    } else {
+      console.log('Secondary save failed');
     }
 
     if (method === 'bkash') setShowBkash(true);
@@ -226,6 +230,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
       <FirstPremiumBkashPayment
         amount={netAmount}
         nid={nid}
+        secondaryPaymentId={secondaryPaymentId}
         proposalData={{
           nid,
           project: projectCode.toString(),
@@ -278,6 +283,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
         amount={netAmount}
         nid={nid}
         mobileNo={mobile}
+        secondaryPaymentId={secondaryPaymentId}
         proposalData={{
           nid,
           project: projectCode.toString(),

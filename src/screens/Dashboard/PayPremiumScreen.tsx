@@ -41,6 +41,7 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [showBkash, setShowBkash] = useState(false);
   const [showNagad, setShowNagad] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [secondaryPaymentId, setSecondaryPaymentId] = useState<number | null>(null);
 
   const amountToPay = amount;
 
@@ -122,9 +123,11 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 
     // Try save first
     const saveResult = await userPayPremiumSave(postData);
-    if (!saveResult.success) {
-      // Already shows toast in the function
-      console.log('Secondary save failed, will try update');
+    if (saveResult.success && saveResult.id) {
+      setSecondaryPaymentId(saveResult.id);
+      console.log('Secondary payment ID:', saveResult.id);
+    } else {
+      console.log('Secondary save failed');
     }
 
     try {
@@ -159,6 +162,7 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       <BkashPayment
         amount={amountToPay}
         number={policyNumber}
+        secondaryPaymentId={secondaryPaymentId}
         paymentType="full"
         policyDetails={policyDetails}
         onSuccess={() => {
@@ -179,6 +183,7 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       <NagadPayment
         amount={amountToPay}
         number={policyNumber}
+        secondaryPaymentId={secondaryPaymentId}
         mobileNo={user?.phone || ''}
         paymentType="full"
         policyDetails={policyDetails}

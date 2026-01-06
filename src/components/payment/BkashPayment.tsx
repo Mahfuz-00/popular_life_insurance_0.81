@@ -22,6 +22,7 @@ type BkashPaymentProps = {
   policyDetails: any;
   onSuccess: (trxID: string) => void;
   onClose: () => void;
+  secondaryPaymentId?: number | null;
 };
 
 export const BkashPayment: React.FC<BkashPaymentProps> = ({
@@ -34,6 +35,7 @@ export const BkashPayment: React.FC<BkashPaymentProps> = ({
   policyDetails,
   onSuccess,
   onClose,
+  secondaryPaymentId,
 }) => {
   const [bkashUrl, setBkashUrl] = useState<string>('');
   const [bkashToken, setBkashToken] = useState<string>('');
@@ -89,6 +91,7 @@ export const BkashPayment: React.FC<BkashPaymentProps> = ({
       amount: paymentType === 'full' ? amount : partialAmount,
       transaction_no: trxID,
       date_time: currentDay,
+      id: secondaryPaymentId,
     };
     const successUpdate = await userPayPremiumUpdate(updatePostData);
     if (successUpdate) {

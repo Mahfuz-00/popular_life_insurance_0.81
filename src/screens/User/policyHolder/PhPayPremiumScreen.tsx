@@ -51,6 +51,7 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
   const [showBkash, setShowBkash] = useState(false);
   const [showNagad, setShowNagad] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [secondaryPaymentId, setSecondaryPaymentId] = useState<number | null>(null);
 
 
   const amountToPay = paymentType === 'partial' ? partialAmount : amount;
@@ -141,14 +142,16 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
       cause: paymentType === 'partial' ? cause?.trim() : null,
       service_cell_code: policyDetails?.service_cell_code || '',
       branch_code: policyDetails?.branch_code || '',
-      missing: false, 
+      missing: false,
     };
 
     // Try save first
     const saveResult = await userPayPremiumSave(postData);
-    if (!saveResult.success) {
-      // Already shows toast in the function
-      console.log('Secondary save failed, will try update');
+    if (saveResult.success && saveResult.id) {
+      setSecondaryPaymentId(saveResult.id);
+      console.log('Secondary payment ID:', saveResult.id);
+    } else {
+      console.log('Secondary save failed');
     }
 
     try {
@@ -177,6 +180,7 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
       <BkashPayment
         amount={amountToPay}
         number={policyNo}
+        secondaryPaymentId={secondaryPaymentId}
         paymentType={paymentType}
         partialAmount={paymentType === 'partial' ? partialAmount : undefined}
         adjustWith={paymentType === 'partial' ? adjustWith : undefined}
@@ -206,6 +210,7 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
         amount={amountToPay}
         number={policyNo}
         mobileNo={user?.phone || ''}
+        secondaryPaymentId={secondaryPaymentId}
         paymentType={paymentType}
         partialAmount={paymentType === 'partial' ? partialAmount : undefined}
         adjustWith={paymentType === 'partial' ? adjustWith : undefined}

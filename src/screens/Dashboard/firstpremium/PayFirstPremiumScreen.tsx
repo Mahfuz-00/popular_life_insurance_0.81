@@ -120,6 +120,14 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
   // ⭐️ Combined Loading state (use isSubmitting for button/input disabling)
   const isInputDisabled = isSubmitting || isProjectLoading;
 
+  const PROJECT_LABEL_MAP: Record<string, string> = {
+    'Islami Bima Khudra': 'IDPS',
+    'Popular DPS Khudra': 'PDPS',
+    'Janapriya Bima Khudra': 'Janapriya Bima',
+    'Alamin Bima Khudra': 'Alamin Bima',
+  };
+
+
 
   // Fetch Projects and Plans
   useEffect(() => {
@@ -130,7 +138,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       const projectRes = await fetchProjects();
       if (projectRes?.data) {
         const formatted = projectRes.data.map((p: any) => ({
-          label: p.name === 'Islami Bima Khudra' ? 'IDPS' : p.name,
+          label: PROJECT_LABEL_MAP[p.name] ?? p.name,
           value: p.id,
           code: p.code,
         }));
@@ -697,37 +705,31 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
 
             <Text style={styles.sectionTitle}>Extra Charge</Text>
 
-            <View style={styles.toggleRow}>
+            <View style={styles.checkboxRow}>
               {feOeOptions.map(option => {
-                const isActive = feOeOption === option;
+                const checked = feOeOption === option;
 
                 return (
                   <TouchableOpacity
                     key={option}
                     disabled={isInputDisabled}
                     onPress={() => {
-                      // toggle behavior
                       setFeOeOption(prev => (prev === option ? '' : option));
                     }}
-                    style={[
-                      styles.toggleButton,
-                      isActive && styles.toggleButtonActive,
-                    ]}
+                    style={styles.checkboxItem}
+                    activeOpacity={0.7}
                   >
-                    <Text
-                      style={[
-                        styles.toggleText,
-                        isActive && styles.toggleTextActive,
-                      ]}
-                    >
-                      {option}
-                    </Text>
+                    <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
+                      {checked && <Text style={styles.checkMark}>✓</Text>}
+                    </View>
+                    <Text style={styles.checkboxLabel}>{option}</Text>
                   </TouchableOpacity>
                 );
               })}
             </View>
 
             {errors.feOeOption && <Text style={styles.error}>{errors.feOeOption}</Text>}
+
 
 
             <Text style={styles.sectionTitle}>Premium Details (Auto Calculated)</Text>
@@ -906,30 +908,54 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
 
-  toggleButton: {
-    flex: 1,
-    marginHorizontal: 6,
-    paddingVertical: 12,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: PRIMARY_BUTTON_BG,
-    backgroundColor: '#fff',
+  checkboxRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
+    marginVertical: 10,
   },
 
-  toggleButtonActive: {
+  checkboxItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 30,
+  },
+
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderWidth: 2,
+    borderColor: PRIMARY_BUTTON_BG,
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+
+  checkMark: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    lineHeight: 18,
+    textAlign: 'center',
+  },
+
+  checkboxChecked: {
     backgroundColor: PRIMARY_BUTTON_BG,
   },
 
-  toggleText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: PRIMARY_BUTTON_BG,
+  checkboxInner: {
+    width: 12,
+    height: 12,
+    backgroundColor: '#fff',
   },
 
-  toggleTextActive: {
-    color: '#fff',
+  checkboxLabel: {
+    marginLeft: 10,
+    fontSize: 16,
+    color: '#000',
   },
+
 
 });
 

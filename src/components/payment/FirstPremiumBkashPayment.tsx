@@ -20,6 +20,7 @@ type FirstPremiumBkashProps = {
     onSuccess: () => void;
     onClose: () => void;
     navigation: any;
+    secondaryPaymentId?: number | null;
 };
 
 const getApiErrorMessage = (errorResponse: any, fallback: string) => {
@@ -48,6 +49,7 @@ export const FirstPremiumBkashPayment: React.FC<FirstPremiumBkashProps> = ({
     onSuccess,
     onClose,
     navigation,
+    secondaryPaymentId,
 }) => {
     const dispatch = useDispatch();
 
@@ -129,8 +131,9 @@ export const FirstPremiumBkashPayment: React.FC<FirstPremiumBkashProps> = ({
                 servicingCell: proposalData.servicingCell,
                 entrydate: proposalData.entrydate,
                 agentMobile: proposalData.agentMobile,
+                id: secondaryPaymentId,
             };
-            
+
             userPayFirstPremiumUpdate(updatePostData)
                 .then(res => {
                     if (res.success) console.log('Secondary server updated');

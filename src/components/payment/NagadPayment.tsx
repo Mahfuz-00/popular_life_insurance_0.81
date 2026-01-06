@@ -19,6 +19,7 @@ type NagadPaymentProps = {
   policyDetails: any;
   onSuccess: (trxID: string) => void;
   onClose: () => void;
+  secondaryPaymentId?: number | null;
 };
 
 export const NagadPayment: React.FC<NagadPaymentProps> = ({
@@ -32,6 +33,7 @@ export const NagadPayment: React.FC<NagadPaymentProps> = ({
   policyDetails,
   onSuccess,
   onClose,
+  secondaryPaymentId,
 }) => {
   const [url, setUrl] = useState<string>('');
   const trxNoRef = React.useRef(moment().format('YYYYMMDDHHmmss'));
@@ -61,6 +63,7 @@ export const NagadPayment: React.FC<NagadPaymentProps> = ({
       amount: paymentType === 'full' ? amount : partialAmount,
       transaction_no: trxNo,
       date_time: trxNo,
+      id: secondaryPaymentId,
     };
     const successUpdate = await userPayPremiumUpdate(updatePostData);
     if (successUpdate) {
