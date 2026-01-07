@@ -33,6 +33,20 @@ import { PRIMARY_BUTTON_BG } from '../../../store/constants/colorConstants';
 const SPECIAL_PROJECTS = ['ABA', 'AKOK', 'ALA', 'IA', 'JBA', 'JBAK', 'IBT'];
 const MODE_MULTIPLIER: Record<string, number> = { yly: 1, hly: 2, qly: 4, mly: 12, single: 1 };
 const PLAN_72_FACTOR: Record<string, number> = { mly: 1, qly: 3, hly: 6, yly: 12, single: 1 };
+const PROJECT_LABEL_MAP: Record<string, string> = {
+  'Islami Bima Khudra': 'IDPS',
+  'Popular DPS Khudra': 'PDPS',
+  'Janapriya Bima Khudra': 'Janapriya Bima',
+  'Alamin Bima Khudra': 'Alamin Bima',
+};
+const PLAN_72_COMMISSION: Record<string, number> = {
+  '06': 0.156,
+  '07': 0.182,
+  '08': 0.208,
+  '09': 0.234,
+  '10': 0.286,
+  '11': 0.286,
+};
 
 interface ProjectItem {
   label: string;
@@ -68,6 +82,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
   const [name, setName] = useState<string>('');
   const [mobile, setMobile] = useState<string>('');
   const [plan, setPlan] = useState<string>('');
+  const [allPlans, setAllPlans] = useState<PlanItem[]>([]);
   const [selectedPlanLabel, setSelectedPlanLabel] = useState<string>('');
   const [dateOfBirth, setDateOfBirth] = useState<Date>(new Date('1990-01-01'));
   const [age, setAge] = useState<number>(0);
@@ -112,6 +127,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
   const [feOeOption, setFeOeOption] = useState<'F/E' | 'O/E' | ''>('');
   const [feOeAmount, setFeOeAmount] = useState<string>('0');
   const feOeOptions = ['F/E', 'O/E'] as const;
+  const [guardianName, setGuardianName] = useState<string>('');
 
 
   const entrydate = moment().format('YYYY-MM-DD');
@@ -119,15 +135,6 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
 
   // ⭐️ Combined Loading state (use isSubmitting for button/input disabling)
   const isInputDisabled = isSubmitting || isProjectLoading;
-
-  const PROJECT_LABEL_MAP: Record<string, string> = {
-    'Islami Bima Khudra': 'IDPS',
-    'Popular DPS Khudra': 'PDPS',
-    'Janapriya Bima Khudra': 'Janapriya Bima',
-    'Alamin Bima Khudra': 'Alamin Bima',
-  };
-
-
 
   // Fetch Projects and Plans
   useEffect(() => {
@@ -159,7 +166,9 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
               value: m.value || m,
             })),
         }));
+        setAllPlans(formattedPlans);
         setPlans(formattedPlans);
+
       }
 
       setIsProjectLoading(false);
@@ -171,17 +180,31 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
   useEffect(() => {
     if (isProjectLoading) return;
 
-    let allowed = plans;
-    if (selectedProject?.code && !SPECIAL_PROJECTS.includes(selectedProject.code)) {
-      allowed = plans.filter((p: PlanItem) => ['28', '57', '72'].includes(p.value));
+    if (!selectedProject?.code) {
+      setPlans(allPlans);
+      return;
+    }
 
-      if (plan && !allowed.some((p: PlanItem) => p.value === plan)) {
+    // Non-special projects → only limited plans
+    if (!SPECIAL_PROJECTS.includes(selectedProject.code)) {
+      const filtered = allPlans.filter(p =>
+        ['28', '57', '72'].includes(p.value)
+      );
+
+      setPlans(filtered);
+
+      // Reset invalid selection
+      if (plan && !filtered.some(p => p.value === plan)) {
         setPlan('');
         setModes([]);
         setMode('');
       }
+    } else {
+      // Special projects → all plans
+      setPlans(allPlans);
     }
-  }, [selectedProject?.code, plans, isProjectLoading]);
+  }, [selectedProject?.code, allPlans, isProjectLoading]);
+
 
   // Reset on project change
   useEffect(() => {
@@ -262,13 +285,36 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
   // Age calculation
   useEffect(() => {
     if (!dateOfBirth) return;
+
     const birth = moment(dateOfBirth);
     const today = moment();
-    const july1 = moment().year(today.year()).month(6).date(1);
-    let calculatedAge = today.diff(birth, 'years');
-    if (today.isSameOrAfter(july1)) calculatedAge += 1;
-    setAge(calculatedAge);
+
+    // Full years lived
+    let years = today.diff(birth, 'years');
+
+    // Last birthday
+    const lastBirthday = birth.clone().add(years, 'years');
+
+    // Months & days after last birthday
+    const months = today.diff(lastBirthday, 'months');
+    const days = today.diff(lastBirthday.clone().add(months, 'months'), 'days');
+
+    // 🔑 Insurance rule: 6 months or more → round up
+    const roundedAge = months >= 6 ? years + 1 : years;
+
+    console.log('Calculated Age:', {
+      yearsCompleted: years,
+      monthsAfterBirthday: months,
+      daysAfterMonth: days,
+      dateOfBirth: birth.format('YYYY-MM-DD'),
+      today: today.format('YYYY-MM-DD'),
+      roundupAge: roundedAge,
+    });
+
+    setAge(roundedAge);
   }, [dateOfBirth]);
+
+
 
   // Premium calculation (same as before)
   useEffect(() => {
@@ -298,6 +344,17 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
 
       let commRate = parseInt(term) < 15 ? 0.38 : 0.48;
       if (plan === '10' || plan === '15') commRate = 0.06;
+
+      if (plan === '72') {
+        commRate = PLAN_72_COMMISSION[term] ?? 0;
+      }
+
+      console.log('Commission Rate:', {
+        plan,
+        term,
+        commRate,
+      });
+
 
       if (isSpecialProject) {
         const result = await getRate(selectedProject.code, plan, term, age);
@@ -386,7 +443,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       dispatch({ type: HIDE_LOADING });
     };
 
-    const timer = setTimeout(calculate, 500);
+    const timer = setTimeout(calculate, 200);
     return () => clearTimeout(timer);
   }, [selectedProject?.code, plan, term, age, sumAssured, mode, installments, feOeOption,]);
 
@@ -496,16 +553,15 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
     return digitsOnly.padStart(6, '0');
   };
 
-  const clearExtraCharge = () => {
-    setFeOeOption('');
-    setFeOeAmount('0');
-  };
-
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
     if (!nid) newErrors.nid = 'NID/Birth Reg/Passport is required';
+    if (nid.includes(' ')) {
+      newErrors.nid = 'NID must not contain spaces';
+    }
+
     if (!name) newErrors.name = 'Proposer name is required';
     if (!mobile) newErrors.mobile = 'Mobile number is required';
 
@@ -515,7 +571,6 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
     if (!mode) newErrors.mode = 'Mode is required';
 
     if (!sumAssured) newErrors.sumAssured = 'Sum Assured is required';
-    if (!feOeOption) newErrors.feOeOption = 'F/E or O/E option is required';
     if (!servicingCell) newErrors.servicingCell = 'Servicing Cell is required';
     if (!agentMobile) newErrors.agentMobile = 'Agent Mobile is required';
 
@@ -589,6 +644,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         feOeOption,
         feOeAmount,
         installments: mode === 'mly' ? installments : null,
+        guardianName
       }));
 
       navigation.navigate('PayfirstPremiumGateways');
@@ -627,7 +683,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             />
             {errors.project && <Text style={styles.error}>{errors.project}</Text>}
 
-            <Input label="NID/Birth Reg/Passport" value={nid} onChangeText={setNid} keyboardType="numeric" required editable={!isInputDisabled} />
+            <Input label="NID/Birth Reg/Passport" value={nid} onChangeText={(text) => setNid(text.replace(/\s+/g, ''))} keyboardType="numeric" required editable={!isInputDisabled} />
             {errors.nid && <Text style={styles.error}>{errors.nid}</Text>}
             <Input label="Date" value={entrydate} editable={false} />
             <EnglishOnlyInput label="Proposer's Name" value={name} onChangeText={setName} required editable={!isInputDisabled} />
@@ -728,10 +784,6 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
               })}
             </View>
 
-            {errors.feOeOption && <Text style={styles.error}>{errors.feOeOption}</Text>}
-
-
-
             <Text style={styles.sectionTitle}>Premium Details (Auto Calculated)</Text>
             <Input label="Code (Auto)" value={code6Digit} editable={false} />
             <Input label="Rate" value={isSpecialProject ? rate : '0'} editable={false} />
@@ -784,6 +836,15 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             <Input label="Nominee 2 Ratio %" value={nominee2Percent} onChangeText={handleNomineePercent(setNominee2Percent)} keyboardType="numeric" editable={!isInputDisabled} />
             <EnglishOnlyInput label="Nominee 3 Name" value={nominee3Name} onChangeText={setNominee3Name} editable={!isInputDisabled} />
             <Input label="Nominee 3 Ratio %" value={nominee3Percent} onChangeText={handleNomineePercent(setNominee3Percent)} keyboardType="numeric" editable={!isInputDisabled} />
+
+            <Text style={styles.sectionTitle}>Guardian Details</Text>
+
+            <EnglishOnlyInput
+              label="Guardian Name"
+              value={guardianName}
+              onChangeText={setGuardianName}
+              editable={!isInputDisabled}
+            />
 
             <Text style={styles.sectionTitle}>Code Setup</Text>
             <Input

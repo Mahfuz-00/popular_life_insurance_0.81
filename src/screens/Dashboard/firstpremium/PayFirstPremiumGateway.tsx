@@ -83,7 +83,8 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
     nominee3Percent,
     feOeOption,
     feOeAmount,
-    installments
+    installments,
+    guardianName
   } = formData;
 
   const [method, setMethod] = useState<PaymentMethod>('bkash');
@@ -128,6 +129,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
     { label: 'Nominee 2 %', value: nominee2Percent },
     { label: 'Nominee 3', value: nominee3Name },
     { label: 'Nominee 3 %', value: nominee3Percent },
+    { label: 'Guardian Name', value: guardianName },
     { label: 'Servicing Cell', value: servicingCell },
     { label: 'Agent Mobile', value: agentMobile },
     { label: 'FA', value: fa },
@@ -193,6 +195,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
       F_E_O_E: feOeOption,
       No_Of_Ins: installments,
       Total_Paid: null,
+      guardianName,
     };
 
     // Try save first
@@ -264,7 +267,8 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
           nominee_3_name: nominee3Name,
           nominee_3_percentage: nominee3Percent,
           feOeOption,
-          installments
+          installments,
+          guardianName,
         }}
         onSuccess={() => {
           dispatch(clearFirstPremiumData());
@@ -317,7 +321,8 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
           nominee_3_name: nominee3Name,
           nominee_3_percentage: nominee3Percent,
           feOeOption,
-          installments
+          installments,
+          guardianName,
         }}
         onSuccess={() => {
           dispatch(clearFirstPremiumData());
