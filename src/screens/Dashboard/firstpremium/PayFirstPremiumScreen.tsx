@@ -683,7 +683,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             />
             {errors.project && <Text style={styles.error}>{errors.project}</Text>}
 
-            <Input label="NID/Birth Reg/Passport" value={nid} onChangeText={(text) => setNid(text.replace(/\s+/g, ''))} keyboardType="numeric" required editable={!isInputDisabled} />
+            <Input label="NID/Birth Reg/Passport" value={nid} onChangeText={(text) => setNid(text.replace(/\s+/g, ''))} keyboardType="default" required editable={!isInputDisabled} />
             {errors.nid && <Text style={styles.error}>{errors.nid}</Text>}
             <Input label="Date" value={entrydate} editable={false} />
             <EnglishOnlyInput label="Proposer's Name" value={name} onChangeText={setName} required editable={!isInputDisabled} />
