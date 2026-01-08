@@ -62,6 +62,7 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
       dispatch({ type: SHOW_LOADING, payload: 'Fetching policy details...' });
       try {
         const response = await getDuePremiumDetails(policyNo);
+        console.log('Due Premium Details Response:', response);
         if (response) {
           setPolicyDetails(response);
         } else {
