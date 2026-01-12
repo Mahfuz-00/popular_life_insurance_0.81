@@ -7,7 +7,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { Provider } from 'react-redux';
 
-import store from './src/store/index'; 
+import store from './src/store/index';
 import { loadUser, userPayPremium } from './src/actions/userActions';
 
 // -- Types --
@@ -133,6 +133,70 @@ const checkUpdateNeeded = async () => {
   }
 };
 
+// -- Helper for Type Casting --
+const asScreen = (Comp: React.ComponentType<any>) => (Comp as unknown) as React.ComponentType<any>;
+
+/**
+ * STANDALONE STACK COMPONENT
+ * Moved outside the main App component to prevent history loss on re-render.
+ */
+
+const MainStack = () => {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {/* ---------- Public ---------- */}
+      <Stack.Screen name="Home" component={asScreen(HomeScreen)} />
+      <Stack.Screen name="PremiumCalculator" component={asScreen(PremiumCalculatorScreen)} />
+      <Stack.Screen name="CompanyInfo" component={asScreen(CompanyInfoScreen)} />
+      <Stack.Screen name="LocateUs" component={asScreen(LocateUsScreen)} />
+      <Stack.Screen name="PayPremium" component={asScreen(PayPremiumScreen)} />
+      <Stack.Screen name="ProductInfo" component={asScreen(ProductInfoScreen)} />
+      <Stack.Screen name="ClaimSubmission" component={asScreen(ClaimSubmissionScreen)} />
+      <Stack.Screen name="MessageFromMd" component={asScreen(MessageFromMd)} />
+      <Stack.Screen name="PolicyInfo" component={asScreen(PolicyInfoScreen)} />
+      <Stack.Screen name="ContactUs" component={asScreen(ContactUsScreen)} />
+      <Stack.Screen name="ApplyOnline" component={asScreen(ApplyOnlineScreen)} />
+      <Stack.Screen name="ProposalTracking" component={asScreen(ProposalTrackingScreen)} />
+      <Stack.Screen name="MyTransaction" component={asScreen(MyTransactionScreen)} />
+      <Stack.Screen name="PolicyPhoneUpdate" component={asScreen(PolicyPhoneUpdateScreen)} />
+      <Stack.Screen name="SyncPayment" component={asScreen(SyncPaymentScreen)} />
+      <Stack.Screen name="CodeWiseCollectionScreen" component={asScreen(CodeWiseCollectionScreen)} />
+
+      {/* ---------- First Premium ---------- */}
+      <Stack.Screen name="PhPayFirstPremium" component={asScreen(PayFirstPremiumScreen)} />
+      <Stack.Screen name="PayfirstPremiumGateways" component={asScreen(PayfirstPremiumGateway)} />
+      <Stack.Screen name="PayFirstPremiumTransaction" component={asScreen(FirstPremiumTransactionsScreen)} />
+
+      {/* ---------- Auth ---------- */}
+      <Stack.Screen name="Login" component={asScreen(LoginScreen)} />
+      <Stack.Screen name="Registration" component={asScreen(RegistrationScreen)} />
+      <Stack.Screen name="ForgotPassword" component={asScreen(ForgotPasswordScreen)} />
+      <Stack.Screen name="ResetPassword" component={asScreen(ResetPasswordScreen)} />
+      <Stack.Screen name="SelectLogin" component={asScreen(SelectLoginScreen)} />
+
+      {/* ---------- Policy Holder ---------- */}
+      <Stack.Screen name="DashboardPh" component={asScreen(DashboardPhScreen)} />
+      <Stack.Screen name="PhPolicyList" component={asScreen(PhPolicyListScreen)} />
+      <Stack.Screen name="PhPolicyStatement" component={asScreen(PhPolicyStatementScreen)} />
+      <Stack.Screen name="PhDuePremium" component={asScreen(PhDuePremiumScreen)} />
+      <Stack.Screen name="PhPayPremium" component={asScreen(PhPayPremiumScreen)} />
+      <Stack.Screen name="PhPolicyTransactions" component={asScreen(PhPolicyTransactionsScreen)} />
+      <Stack.Screen name="PhPolicyPartialTransactions" component={asScreen(PhPolicyPartialTransactionsScreen)} />
+      <Stack.Screen name="AuthPolicyInfo" component={asScreen(AuthPolicyInfoScreen)} />
+      <Stack.Screen name="PhMyProfile" component={asScreen(PhMyProfileScreen)} />
+      <Stack.Screen name="PhClaimSubmission" component={asScreen(PhClaimSubmissionScreen)} />
+      <Stack.Screen name="PhPRList" component={asScreen(PhPRListScreen)} />
+
+      {/* ---------- Producer ---------- */}
+      <Stack.Screen name="DashboardProducer" component={asScreen(DashboardProducerScreen)} />
+      <Stack.Screen name="BusinessInfo" component={asScreen(BusinessInfoScreen)} />
+      <Stack.Screen name="EarningInfo" component={asScreen(EarningInfoScreen)} />
+      <Stack.Screen name="PolicyList" component={asScreen(PolicyListScreen)} />
+      <Stack.Screen name="OrgMyProfile" component={asScreen(OrgMyProfileScreen)} />
+    </Stack.Navigator>
+  );
+};
+
 // -- App Component --
 export default function App() {
   useEffect(() => {
@@ -150,9 +214,6 @@ export default function App() {
 
   // Helper to cast components to a permissive type so Navigator accepts them without
   // forcing you to change every screen file's props/signature right now.
-  const asScreen = (Comp: React.ComponentType<any>) =>
-    (Comp as unknown) as React.ComponentType<any>;
-
   return (
     <Provider store={store}>
       <Loading />
@@ -161,79 +222,11 @@ export default function App() {
           screenOptions={{ headerShown: false }}
           drawerContent={(props) => <DrawerContent {...props} />}
         >
-          <Drawer.Screen name="MainStack" options={{ headerShown: false }}>
-            {() => (
-              <Stack.Navigator screenOptions={{ headerShown: false }}>
-                {/* ---------- Public ---------- */}
-                <Stack.Screen name="Home" component={asScreen(HomeScreen)} />
-                <Stack.Screen
-                  name="PremiumCalculator"
-                  component={asScreen(PremiumCalculatorScreen)}
-                />
-                <Stack.Screen name="CompanyInfo" component={asScreen(CompanyInfoScreen)} />
-                <Stack.Screen name="LocateUs" component={asScreen(LocateUsScreen)} />
-                <Stack.Screen name="PayPremium" component={asScreen(PayPremiumScreen)} />
-                <Stack.Screen name="ProductInfo" component={asScreen(ProductInfoScreen)} />
-                <Stack.Screen name="ClaimSubmission" component={asScreen(ClaimSubmissionScreen)} />
-                <Stack.Screen name="MessageFromMd" component={asScreen(MessageFromMd)} />
-                <Stack.Screen name="PolicyInfo" component={asScreen(PolicyInfoScreen)} />
-                <Stack.Screen name="ContactUs" component={asScreen(ContactUsScreen)} />
-                <Stack.Screen name="ApplyOnline" component={asScreen(ApplyOnlineScreen)} />
-                <Stack.Screen name="ProposalTracking" component={asScreen(ProposalTrackingScreen)} />
-                <Stack.Screen name="MyTransaction" component={asScreen(MyTransactionScreen)} />
-                <Stack.Screen name="PolicyPhoneUpdate" component={asScreen(PolicyPhoneUpdateScreen)}/>
-                <Stack.Screen name="SyncPayment" component={asScreen(SyncPaymentScreen)} />
-                <Stack.Screen
-                  name="CodeWiseCollectionScreen"
-                  component={asScreen(CodeWiseCollectionScreen)}
-                />
-
-                {/* ---------- First Premium / Payment Flow ---------- */}
-                <Stack.Screen name="PhPayFirstPremium" component={asScreen(PayFirstPremiumScreen)} />
-                <Stack.Screen
-                  name="PayfirstPremiumGateways"
-                  component={asScreen(PayfirstPremiumGateway)}
-                />
-                <Stack.Screen
-                  name="PayFirstPremiumTransaction"
-                  component={asScreen(FirstPremiumTransactionsScreen)}
-                />
-
-                {/* ---------- Auth ---------- */}
-                <Stack.Screen name="Login" component={asScreen(LoginScreen)} />
-                <Stack.Screen name="Registration" component={asScreen(RegistrationScreen)} />
-                <Stack.Screen name="ForgotPassword" component={asScreen(ForgotPasswordScreen)} />
-                <Stack.Screen name="ResetPassword" component={asScreen(ResetPasswordScreen)} />
-                <Stack.Screen name="SelectLogin" component={asScreen(SelectLoginScreen)} />
-
-                {/* ---------- Policy Holder ---------- */}
-                <Stack.Screen name="DashboardPh" component={asScreen(DashboardPhScreen)} />
-                <Stack.Screen name="PhPolicyList" component={asScreen(PhPolicyListScreen)} />
-                <Stack.Screen name="PhPolicyStatement" component={asScreen(PhPolicyStatementScreen)} />
-                <Stack.Screen name="PhDuePremium" component={asScreen(PhDuePremiumScreen)} />
-                <Stack.Screen name="PhPayPremium" component={asScreen(PhPayPremiumScreen)} />
-                <Stack.Screen
-                  name="PhPolicyTransactions"
-                  component={asScreen(PhPolicyTransactionsScreen)}
-                />
-                <Stack.Screen
-                  name="PhPolicyPartialTransactions"
-                  component={asScreen(PhPolicyPartialTransactionsScreen)}
-                />
-                <Stack.Screen name="AuthPolicyInfo" component={asScreen(AuthPolicyInfoScreen)} />
-                <Stack.Screen name="PhMyProfile" component={asScreen(PhMyProfileScreen)} />
-                <Stack.Screen name="PhClaimSubmission" component={asScreen(PhClaimSubmissionScreen)} />
-                <Stack.Screen name="PhPRList" component={asScreen(PhPRListScreen)} />
-
-                {/* ---------- Producer ---------- */}
-                <Stack.Screen name="DashboardProducer" component={asScreen(DashboardProducerScreen)} />
-                <Stack.Screen name="BusinessInfo" component={asScreen(BusinessInfoScreen)} />
-                <Stack.Screen name="EarningInfo" component={asScreen(EarningInfoScreen)} />
-                <Stack.Screen name="PolicyList" component={asScreen(PolicyListScreen)} />
-                <Stack.Screen name="OrgMyProfile" component={asScreen(OrgMyProfileScreen)} />
-              </Stack.Navigator>
-            )}
-          </Drawer.Screen>
+          <Drawer.Screen
+            name="MainStack"
+            component={MainStack}
+            options={{ headerShown: false }}
+          />
         </Drawer.Navigator>
       </NavigationContainer>
     </Provider>
