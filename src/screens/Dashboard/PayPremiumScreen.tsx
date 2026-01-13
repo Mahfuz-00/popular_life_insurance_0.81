@@ -152,7 +152,7 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      navigation.navigate('Login');
+      navigation.replace('Login');
     }
   }, [isAuthenticated, navigation]);
 

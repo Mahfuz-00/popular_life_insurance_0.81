@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { View, Alert, BackHandler, Linking, Platform } from 'react-native';
 import VersionCheck from 'react-native-version-check';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { Provider } from 'react-redux';
@@ -73,6 +73,8 @@ import { DrawerParamList } from './src/navigation/DrawerParamList';
 // -- Navigator types --
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Drawer = createDrawerNavigator();
+
+export const rootNavigationRef = createNavigationContainerRef<RootStackParamList>();
 
 // -- Helpers --
 
@@ -217,7 +219,7 @@ export default function App() {
   return (
     <Provider store={store}>
       <Loading />
-      <NavigationContainer>
+      <NavigationContainer ref={rootNavigationRef}>
         <Drawer.Navigator
           screenOptions={{ headerShown: false }}
           drawerContent={(props) => <DrawerContent {...props} />}

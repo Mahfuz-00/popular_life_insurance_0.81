@@ -683,10 +683,10 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             />
             {errors.project && <Text style={styles.error}>{errors.project}</Text>}
 
-            <Input label="NID/Birth Reg/Passport" value={nid} onChangeText={(text) => setNid(text.replace(/\s+/g, ''))} keyboardType="default" required editable={!isInputDisabled} />
+            <Input label="NID/Birth Reg/Passport" value={nid} onChangeText={(text) => setNid(text.replace(/\s+/g, ''))} keyboardType="default" required editable={!isInputDisabled} maxLength={15} />
             {errors.nid && <Text style={styles.error}>{errors.nid}</Text>}
             <Input label="Date" value={entrydate} editable={false} />
-            <EnglishOnlyInput label="Proposer's Name" value={name} onChangeText={setName} required editable={!isInputDisabled} />
+            <EnglishOnlyInput label="Proposer's Name" value={name} onChangeText={setName} required editable={!isInputDisabled} maxLength={35} />
             {errors.name && <Text style={styles.error}>{errors.name}</Text>}
             <Input label="Mobile No." value={mobile} onChangeText={setMobile} keyboardType="phone-pad" maxLength={11} required editable={!isInputDisabled} />
             {errors.mobile && <Text style={styles.error}>{errors.mobile}</Text>}
@@ -799,13 +799,13 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             <Input label="Agent Mobile" value={agentMobile} onChangeText={setAgentMobile} keyboardType="phone-pad" maxLength={11} required editable={!isInputDisabled} />
             {errors.agentMobile && <Text style={styles.error}>{errors.agentMobile}</Text>}
             <Text style={styles.sectionTitle}>Personal & Nominee Details</Text>
-            <EnglishOnlyInput label="Father's / Husband's Name" value={fatherHusbandName} onChangeText={setFatherHusbandName} required editable={!isInputDisabled} />
+            <EnglishOnlyInput label="Father's / Husband's Name" value={fatherHusbandName} onChangeText={setFatherHusbandName} required editable={!isInputDisabled} maxLength={30} />
             {errors.fatherHusbandName && <Text style={styles.error}>{errors.fatherHusbandName}</Text>}
-            <EnglishOnlyInput label="Mother's Name" value={motherName} onChangeText={setMotherName} required editable={!isInputDisabled} />
+            <EnglishOnlyInput label="Mother's Name" value={motherName} onChangeText={setMotherName} required editable={!isInputDisabled} maxLength={30} />
             {errors.motherName && <Text style={styles.error}>{errors.motherName}</Text>}
-            <EnglishOnlyInput label="Address" value={address} onChangeText={setAddress} required multiline numberOfLines={4} textAlignVertical="top" style={{ paddingTop: 12 }} editable={!isInputDisabled} />
+            <EnglishOnlyInput label="Address" value={address} onChangeText={setAddress} required multiline numberOfLines={4} textAlignVertical="top" style={{ paddingTop: 12 }} editable={!isInputDisabled} maxLength={250} />
             {errors.address && <Text style={styles.error}>{errors.address}</Text>}
-            <EnglishOnlyInput label="District" value={district} onChangeText={setDistrict} required editable={!isInputDisabled} />
+            <EnglishOnlyInput label="District" value={district} onChangeText={setDistrict} required editable={!isInputDisabled} maxLength={15} />
             {errors.district && <Text style={styles.error}>{errors.district}</Text>}
 
             <Text style={{ marginLeft: 15, marginTop: 10, fontWeight: '600', color: '#000' }}>Gender</Text>
@@ -827,14 +827,14 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             {errors.gender && (<Text style={styles.error}>{errors.gender}</Text>)}
 
             <Text style={styles.sectionTitle}>Nominee Details</Text>
-            <EnglishOnlyInput label="Nominee 1 Name" value={nominee1Name} onChangeText={setNominee1Name} required editable={!isInputDisabled} />
+            <EnglishOnlyInput label="Nominee 1 Name" value={nominee1Name} onChangeText={setNominee1Name} required editable={!isInputDisabled} maxLength={35} />
             {errors.nominee1Name && <Text style={styles.error}>{errors.nominee1Name}</Text>}
             <Input label="Nominee 1 Ratio %" value={nominee1Percent} onChangeText={handleNomineePercent(setNominee1Percent)} keyboardType="numeric" required editable={!isInputDisabled} />
             {errors.nominee1Percent && (<Text style={styles.error}>{errors.nominee1Percent}</Text>)}
 
-            <EnglishOnlyInput label="Nominee 2 Name" value={nominee2Name} onChangeText={setNominee2Name} editable={!isInputDisabled} />
+            <EnglishOnlyInput label="Nominee 2 Name" value={nominee2Name} onChangeText={setNominee2Name} editable={!isInputDisabled} maxLength={35} />
             <Input label="Nominee 2 Ratio %" value={nominee2Percent} onChangeText={handleNomineePercent(setNominee2Percent)} keyboardType="numeric" editable={!isInputDisabled} />
-            <EnglishOnlyInput label="Nominee 3 Name" value={nominee3Name} onChangeText={setNominee3Name} editable={!isInputDisabled} />
+            <EnglishOnlyInput label="Nominee 3 Name" value={nominee3Name} onChangeText={setNominee3Name} editable={!isInputDisabled} maxLength={35} />
             <Input label="Nominee 3 Ratio %" value={nominee3Percent} onChangeText={handleNomineePercent(setNominee3Percent)} keyboardType="numeric" editable={!isInputDisabled} />
 
             <Text style={styles.sectionTitle}>Guardian Details</Text>
@@ -844,6 +844,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
               value={guardianName}
               onChangeText={setGuardianName}
               editable={!isInputDisabled}
+              maxLength={30}
             />
 
             <Text style={styles.sectionTitle}>Code Setup</Text>

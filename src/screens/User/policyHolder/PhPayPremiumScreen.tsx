@@ -91,16 +91,18 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
   const handleSubmit = async () => {
     if (isSubmitting) return;
 
+    console.log('Submitting payment with details:', { policyDetails, paymentType, amountToPay, partialAmount, adjustWith, cause, method, isEnabled });
+
     if (!isEnabled) return ToastAndroid.show('Please agree to terms & conditions', ToastAndroid.LONG);
     if (!amountToPay || Number(amountToPay) <= 0) return ToastAndroid.show('Amount cannot be zero!', ToastAndroid.LONG);
 
     if (paymentType === 'partial') {
+      console.log('Submitting payment with details:', { policyDetails, paymentType, amountToPay, partialAmount, adjustWith, cause, method, isEnabled });
+
       if (!partialAmount || !adjustWith || !cause.trim())
         return ToastAndroid.show('Please fill all partial payment fields', ToastAndroid.LONG);
       if (Number(partialAmount) > maxPartialAllowed)
         return ToastAndroid.show(`Max partial: ${maxPartialAllowed}`, ToastAndroid.LONG);
-      if (Number(partialAmount) > Number(policyDetails?.DueAmount))
-        return ToastAndroid.show('Partial amount cannot exceed total due', ToastAndroid.LONG);
     }
 
     if (policyDetails.isLaps) return ToastAndroid.show('Policy is lapsed!', ToastAndroid.LONG);

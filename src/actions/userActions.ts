@@ -29,6 +29,7 @@ import {
   CLEAR_ERRORS,
 } from '../store/constants/userConstants';
 import { SHOW_LOADING, HIDE_LOADING } from '../store/constants/commonConstants';
+import { rootNavigationRef } from '../../App';
 
 // Helper to get auth headers
 const getAuthHeaders = async () => {
@@ -539,10 +540,21 @@ export const logout = (navigation: any) => async (dispatch: any) => {
     {
       text: 'YES',
       onPress: async () => {
-        await AsyncStorage.multiRemove(['user', 'token', 'savedcredentials']);
+        // First: close the drawer immediately
+        navigation.closeDrawer();
+
+        // Then: clear storage and state
+        await AsyncStorage.multiRemove(['user', 'token']);
         dispatch({ type: LOGOUT_SUCCESS });
         ToastAndroid.show('Logged out successfully', ToastAndroid.LONG);
-        navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+
+        // Finally: reset root navigation
+        if (rootNavigationRef.isReady()) {
+          rootNavigationRef.reset({
+            index: 0,
+            routes: [{ name: 'Home' }],
+          });
+        }
       },
     },
   ]);
