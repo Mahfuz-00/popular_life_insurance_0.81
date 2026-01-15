@@ -119,6 +119,10 @@ export const NagadPayment: React.FC<NagadPaymentProps> = ({
         const url = navState.url;
 
         if (url.includes('Success')) {
+          console.log("NAGAD RETURNED SUCCESS — FULL RESPONSE BODY BELOW:");
+          console.log("URL:", url);
+          console.log("Full navState:", JSON.stringify(navState, null, 2));
+
           handleSuccess();
           onClose();
         } else if (url.includes('Failed') || url.includes('Aborted')) {

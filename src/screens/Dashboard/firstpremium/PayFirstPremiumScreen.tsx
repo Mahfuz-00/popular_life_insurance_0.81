@@ -128,6 +128,9 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
   const [feOeAmount, setFeOeAmount] = useState<string>('0');
   const feOeOptions = ['F/E', 'O/E'] as const;
   const [guardianName, setGuardianName] = useState<string>('');
+  const [basePremium, setBasePremium] = useState<string>('0');
+  const [finalInstallment, setFinalInstallment] = useState<number>(0);
+  const [extraCharge, setExtraCharge] = useState<string>('0');
 
 
   const entrydate = moment().format('YYYY-MM-DD');
@@ -135,6 +138,15 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
 
   // ⭐️ Combined Loading state (use isSubmitting for button/input disabling)
   const isInputDisabled = isSubmitting || isProjectLoading;
+
+  const getInstallmentNumber = () => {
+    if (mode === 'mly') return Number(installments || 0);
+    if (mode === 'qly') return 4;
+    if (mode === 'hly') return 6;
+    if (mode === 'yly') return 12;
+    if (mode === 'single') return 1;
+    return 0;
+  };
 
   // Fetch Projects and Plans
   useEffect(() => {
@@ -326,6 +338,8 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       setCode6Digit('0');
       setRate('0');
       setPremium('0');
+      setFinalInstallment(0);
+      setBasePremium('0');
       setCommission('0');
       setNetCommission('0');
       setNetAmount('0');
@@ -339,6 +353,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       setCode6Digit(code6);
 
       let basePremiumFinal = 0;
+      let basePremium = 0;
       let fetchedRate = 0;
       let extraCharge = 0;
 
@@ -355,8 +370,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         commRate,
       });
 
-
-      if (isSpecialProject) {
+      if (plan === '72') {
         const result = await getRate(selectedProject.code, plan, term, age);
 
         if (!result?.success || result.rate <= 0) {
@@ -366,31 +380,88 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         }
         fetchedRate = result.rate;
         setRate(fetchedRate.toString());
+        console.log('Fetched Rate:', fetchedRate);
 
-        if (plan === '72') {
-          const factor = PLAN_72_FACTOR[mode] || 1;
-          basePremiumFinal = (sa / fetchedRate) * factor * 500;
-        } else {
-          let adjusted = fetchedRate;
-          if (['01', '02', '03', '05'].includes(plan)) {
-            if (mode === 'hly') adjusted += 1;
-            if (mode === 'qly') adjusted += 2;
-          } else if (['04', '06', '07'].includes(plan)) {
-            if (mode === 'hly') adjusted -= 1;
-            if (mode === 'yly') adjusted -= 2;
-          } else if (plan === '08') {
-            if (mode === 'hly') adjusted *= 0.525;
-            if (mode === 'qly') adjusted *= 0.275;
-          } else if (plan === '09') {
-            if (mode === 'hly') adjusted -= 10;
-            if (mode === 'yly') adjusted -= 20;
-          }
-          const multiplier = MODE_MULTIPLIER[mode] || 1;
-          basePremiumFinal = (sa / 1000) * adjusted / multiplier;
-        }
+
+        const factor = PLAN_72_FACTOR[mode] || 1;
+
+        // Keep only 2 decimals
+        const basePremiumDecimal = parseFloat((sa / fetchedRate).toFixed(2));
+        basePremiumFinal = basePremiumDecimal * factor * 500;
+
+
+        basePremium = basePremiumDecimal * 500;
+        const roundedBasePremium = Math.floor(basePremium) + (basePremium % 1 >= 0.5 ? 1 : 0);
+        console.log('Base Premium for Plan 72:', {
+          sa,
+          fetchedRate,
+          factor,
+          basePremium,
+          roundedBasePremium,
+        });
+        setBasePremium(roundedBasePremium.toFixed(2));
       } else {
-        setRate('0');
-        basePremiumFinal = sa / (12 * parseInt(term));
+        if (isSpecialProject) {
+          const result = await getRate(selectedProject.code, plan, term, age);
+
+          if (!result?.success || result.rate <= 0) {
+            dispatch({ type: HIDE_LOADING });
+            setRate('Not Found');
+            return;
+          }
+          fetchedRate = result.rate;
+          setRate(fetchedRate.toString());
+          console.log('Fetched Rate:', fetchedRate);
+
+          if (plan === '72') {
+            const factor = PLAN_72_FACTOR[mode] || 1;
+            basePremiumFinal = (sa / fetchedRate) * factor * 500;
+
+
+            basePremium = (sa / fetchedRate) * 500;
+            const roundedBasePremium = Math.floor(basePremium) + (basePremium % 1 >= 0.5 ? 1 : 0);
+            console.log('Base Premium for Plan 72:', {
+              sa,
+              fetchedRate,
+              factor,
+              basePremium,
+              roundedBasePremium,
+            });
+            setBasePremium(roundedBasePremium.toFixed(2));
+          } else {
+            let adjusted = fetchedRate;
+            if (['01', '02', '03', '05'].includes(plan)) {
+              if (mode === 'hly') adjusted += 1;
+              if (mode === 'qly') adjusted += 2;
+            } else if (['04', '06', '07'].includes(plan)) {
+              if (mode === 'hly') adjusted -= 1;
+              if (mode === 'yly') adjusted -= 2;
+            } else if (plan === '08') {
+              if (mode === 'hly') adjusted *= 0.525;
+              if (mode === 'qly') adjusted *= 0.275;
+            } else if (plan === '09') {
+              if (mode === 'hly') adjusted -= 10;
+              if (mode === 'yly') adjusted -= 20;
+            }
+            const multiplier = MODE_MULTIPLIER[mode] || 1;
+            basePremiumFinal = (sa / 1000) * adjusted / multiplier;
+
+            basePremium = (sa / 1000) * adjusted;
+            const roundedBasePremium = Math.floor(basePremium) + (basePremium % 1 >= 0.5 ? 1 : 0);
+            console.log('Base Premium:', {
+              sa,
+              fetchedRate,
+              adjusted,
+              multiplier,
+              basePremium,
+              roundedBasePremium,
+            });
+            setBasePremium(roundedBasePremium.toFixed(2));
+          }
+        } else {
+          setRate('0');
+          basePremiumFinal = sa / (12 * parseInt(term));
+        }
       }
 
       console.log('Base Premium before adjustments:', basePremiumFinal);
@@ -421,6 +492,8 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
 
         extraCharge = Math.round((annualExtra / 12) * monthsPaid);
 
+        setExtraCharge(extraCharge.toString());
+
         console.log('Final Extra Charge added to Premium:', extraCharge);
       }
 
@@ -434,6 +507,8 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       const finalNet = Math.floor(roundedPremium - netComm) + ((roundedPremium - netComm) % 1 >= 0.5 ? 1 : 0) + extraCharge;
       const finalTotalPremium = roundedPremium + extraCharge;
 
+      const installmentNumber = getInstallmentNumber();
+      setFinalInstallment(installmentNumber);
       setPremium(roundedPremium.toString());
       setCommission(grossComm.toFixed(2));
       setNetCommission(netComm.toFixed(2));
@@ -683,7 +758,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             />
             {errors.project && <Text style={styles.error}>{errors.project}</Text>}
 
-            <Input label="NID/Birth Reg/Passport" value={nid} onChangeText={(text) => setNid(text.replace(/\s+/g, ''))} keyboardType="default" required editable={!isInputDisabled} maxLength={15} />
+            <Input label="NID/Birth Reg/Passport" value={nid} onChangeText={(text) => setNid(text.replace(/\s+/g, ''))} keyboardType="default" required editable={!isInputDisabled} maxLength={17} />
             {errors.nid && <Text style={styles.error}>{errors.nid}</Text>}
             <Input label="Date" value={entrydate} editable={false} />
             <EnglishOnlyInput label="Proposer's Name" value={name} onChangeText={setName} required editable={!isInputDisabled} maxLength={35} />
@@ -787,12 +862,14 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             <Text style={styles.sectionTitle}>Premium Details (Auto Calculated)</Text>
             <Input label="Code (Auto)" value={code6Digit} editable={false} />
             <Input label="Rate" value={isSpecialProject ? rate : '0'} editable={false} />
-            <Input label="Premium" value={premium ? Math.ceil(parseFloat(premium)).toString() : ''} editable={false} />
-            <Input label="F/E or O/E Amount" value={feOeAmount} editable={false} />
+            <Input label="Premium" value={basePremium ? Math.ceil(parseFloat(basePremium)).toString() : ''} editable={false} />
+            <Input label="F/E or O/E Amount" value={feOeAmount.toString()} editable={false} />
+            {/* <Input label="Base Premium" value={(Number(basePremium || 0) + Number(feOeAmount || 0)).toString()} editable={false} /> */}
             <Input label="Commission" value={netCommission ? Math.ceil(parseFloat(netCommission)).toString() : ''} editable={false} />
             <Input label="Payment Amount" value={netAmount ? Math.ceil(parseFloat(netAmount)).toString() : ''} editable={false} />
 
-
+            <Input label="Installment" value={finalInstallment.toString()} editable={false} />
+            <Input label="Extra Charge" value={extraCharge} editable={false} />
             <Input label="Total Premium" value={totalPremium ? Math.ceil(parseFloat(totalPremium)).toString() : ''} editable={false} />
             <Input label="Servicing Cell Code" value={servicingCell} onChangeText={setServicingCell} maxLength={10} keyboardType="numeric" required editable={!isInputDisabled} />
             {errors.servicingCell && <Text style={styles.error}>{errors.servicingCell}</Text>}
