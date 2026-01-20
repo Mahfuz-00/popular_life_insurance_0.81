@@ -62,6 +62,9 @@ export const FirstPremiumNagadPayment: React.FC<FirstPremiumNagadProps> = ({
                 transactionNo: trxNo,
             };
             const paymentUrl = await nagadPaymentUrl(postData);
+            console.log("NAGAD Response Body:");
+            console.log("Body:", paymentUrl);
+
             if (paymentUrl) {
                 setUrl(paymentUrl);
             } else {
@@ -180,6 +183,10 @@ export const FirstPremiumNagadPayment: React.FC<FirstPremiumNagadProps> = ({
                 const pageUrl = navState.url;
 
                 if (pageUrl.includes('Success')) {
+                    console.log("NAGAD RETURNED SUCCESS — FULL RESPONSE BODY BELOW:");
+                    console.log("URL:", url);
+                    console.log("Full navState:", JSON.stringify(navState, null, 2));
+
                     handleSuccess();
                 } else if (pageUrl.includes('Failed') || pageUrl.includes('Aborted')) {
                     navigation.pop();

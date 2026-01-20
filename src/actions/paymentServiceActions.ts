@@ -117,6 +117,8 @@ export const nagadPaymentUrl = async (postData: any): Promise<string> => {
       config
     );
 
+    console.log('Nagad Payment URL Response:', data);
+
     return data.data.url || '';
   } catch (error: any) {
     console.log('err: ', error);
