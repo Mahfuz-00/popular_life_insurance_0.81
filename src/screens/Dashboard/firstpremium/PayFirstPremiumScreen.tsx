@@ -345,15 +345,17 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
   // Premium calculation 
   useEffect(() => {
     const calculate = async () => {
-      if (!selectedProject?.code || !plan || !term || age < 0 || !sumAssured || !mode) return;
+      if (!selectedProject?.code || !plan || !term || age < 8 || !sumAssured || !mode) return;
 
       dispatch({ type: SHOW_LOADING, payload: 'Calculating premium...' });
 
       const installmentNumber = getInstallmentNumber();
       setFinalInstallment(installmentNumber);
 
+      const rateAge = age < 18 ? 18 : age;
+
       const sa = parseFloat(sumAssured);
-      const paddedAge = age.toString().padStart(2, '0');
+      const paddedAge = rateAge.toString().padStart(2, '0');
       const paddedTerm = term.toString().padStart(2, '0');
       const code6 = `${plan}${paddedTerm}${paddedAge}`;
       setCode6Digit(code6);
@@ -377,7 +379,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       });
 
       if (plan === '72') {
-        const result = await getRate(selectedProject.code, plan, term, age);
+        const result = await getRate(selectedProject.code, plan, term, rateAge);
 
         if (!result?.success || result.rate <= 0) {
           dispatch({ type: HIDE_LOADING });
@@ -402,15 +404,15 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         } else if (mode === 'single') {
           setBasePremium(roundedModeBasePremium.toFixed(2));
         } else if (mode === 'hly') {
-          setBasePremium((roundedModeBasePremium / (installmentNumber * 2)).toFixed(2));
+          setBasePremium((roundedModeBasePremium / (installmentNumber)).toFixed(2));
         } else if (mode === 'qly') {
-          setBasePremium((roundedModeBasePremium / ((installmentNumber * 2))).toFixed(2));
+          setBasePremium((roundedModeBasePremium / ((installmentNumber))).toFixed(2));
         } else if (mode === 'mly') {
           setBasePremium((roundedModeBasePremium).toFixed(2));
         }
       } else {
         if (isSpecialProject) {
-          const result = await getRate(selectedProject.code, plan, term, age);
+          const result = await getRate(selectedProject.code, plan, term, rateAge);
 
           if (!result?.success || result.rate <= 0) {
             dispatch({ type: HIDE_LOADING });
@@ -669,7 +671,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
 
     if (!fatherHusbandName) newErrors.fatherHusbandName = 'Father/Husband name is required';
     if (!motherName) newErrors.motherName = 'Mother name is required';
-    if (age < 18) newErrors.dateOfBirth = 'Age must be 18 or above';
+    if (age < 8) newErrors.dateOfBirth = 'Age must be 8 or above';
     if (!address) newErrors.address = 'Address is required';
     if (!district) newErrors.district = 'District is required';
     if (!gender) newErrors.gender = 'Gender is required';
@@ -697,7 +699,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
     }
 
     if (!checkNomineeTotal()) return;
-    if (age < 18) return Alert.alert('Error', 'Age must be 18 or above');
+    if (age < 8) return Alert.alert('Error', 'Age must be 8 or above');
     if (!fatherHusbandName || !motherName || !nominee1Name || !nominee1Percent || !fa)
       return Alert.alert('Error', 'Please fill all required fields including FA code');
 
@@ -803,8 +805,8 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             </View>
 
             <DatePickerComponent date={dateOfBirth} setDate={setDateOfBirth} label="Birth Date" required />
-            {age < 18 && <Text style={{ color: 'red', marginLeft: 15, fontWeight: 'bold' }}>
-              Age: {age} years — First payment not allowed under 18
+            {age < 8 && <Text style={{ color: 'red', marginLeft: 15, fontWeight: 'bold' }}>
+              Age: {age} years — First payment not allowed under 8
             </Text>}
 
             <PickerComponent
