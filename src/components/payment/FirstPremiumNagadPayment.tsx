@@ -38,6 +38,13 @@ const getApiErrorMessage = (errorResponse: any, fallback: string) => {
     return fallback;
 };
 
+const getQueryParam = (url: string, key: string) => {
+    const params = url.split('?')[1];
+    if (!params) return null;
+    const search = new URLSearchParams(params);
+    return search.get(key);
+};
+
 export const FirstPremiumNagadPayment: React.FC<FirstPremiumNagadProps> = ({
     amount,
     nid,
@@ -75,7 +82,7 @@ export const FirstPremiumNagadPayment: React.FC<FirstPremiumNagadProps> = ({
         init();
     }, []);
 
-    const handleSuccess = async () => {
+    const handleSuccess = async (realTrxId: string) => {
         try {
             // Immediately pop back to gateway for instant feedback
             navigation.pop();
@@ -89,7 +96,7 @@ export const FirstPremiumNagadPayment: React.FC<FirstPremiumNagadProps> = ({
                 policy_no: proposalData.nid,
                 method: 'nagad',
                 amount: amount,
-                transaction_no: trxNo,
+                transaction_no: realTrxId,
                 date_time: moment().format('DD-MM-YYYY HH:mm:ss'),
             };
 
@@ -99,7 +106,7 @@ export const FirstPremiumNagadPayment: React.FC<FirstPremiumNagadProps> = ({
                 dispatch({ type: HIDE_LOADING });
                 const apiMsg = getApiErrorMessage(
                     paymentResult?.data,
-                    `Payment succeeded at bKash but no confirmation ID received.\n\nPlease contact support with TrxID: ${trxNo}`
+                    `Payment succeeded at bKash but no confirmation ID received.\n\nPlease contact support with TrxID: ${realTrxId}`
                 );
 
                 Alert.alert('Processing Error', apiMsg);
@@ -110,7 +117,7 @@ export const FirstPremiumNagadPayment: React.FC<FirstPremiumNagadProps> = ({
             /* ---------------- SECONDARY UPDATE (FIRST & ALWAYS) ---------------- */
             const updatePostData = {
                 method: proposalData.method || 'bkash',
-                transaction_no: trxNo,
+                transaction_no: realTrxId,
                 nid: proposalData.nid,
                 project: proposalData.project,
                 code: proposalData.code,
@@ -147,7 +154,7 @@ export const FirstPremiumNagadPayment: React.FC<FirstPremiumNagadProps> = ({
                     [
                         {
                             text: 'Download Receipt',
-                            onPress: () => downloadFirstPremiumReceipt(nid, trxNo),
+                            onPress: () => downloadFirstPremiumReceipt(nid, realTrxId),
                         },
                         {
                             text: 'Done',
@@ -159,7 +166,7 @@ export const FirstPremiumNagadPayment: React.FC<FirstPremiumNagadProps> = ({
             } else {
                 const apiMsg = getApiErrorMessage(
                     paymentResult?.data,
-                    `Payment succeeded at bKash but no confirmation ID received.\n\nPlease contact support with TrxID: ${trxNo}`
+                    `Payment succeeded at bKash but no confirmation ID received.\n\nPlease contact support with TrxID: ${realTrxId}`
                 );
 
                 Alert.alert('Processing Error', apiMsg);
@@ -184,10 +191,19 @@ export const FirstPremiumNagadPayment: React.FC<FirstPremiumNagadProps> = ({
 
                 if (pageUrl.includes('Success')) {
                     console.log("NAGAD RETURNED SUCCESS — FULL RESPONSE BODY BELOW:");
-                    console.log("URL:", url);
+                    console.log("URL:", pageUrl);
                     console.log("Full navState:", JSON.stringify(navState, null, 2));
+                    const issuerTrx = getQueryParam(pageUrl, 'issuer_payment_ref');
 
-                    handleSuccess();
+                    if (!issuerTrx) {
+                        Alert.alert('Error', 'Transaction ID missing from Nagad response');
+                        onClose();
+                        return;
+                    }
+
+                    console.log('Nagad trxID:', issuerTrx);
+
+                    handleSuccess(issuerTrx);
                 } else if (pageUrl.includes('Failed') || pageUrl.includes('Aborted')) {
                     navigation.pop();
                     Alert.alert(

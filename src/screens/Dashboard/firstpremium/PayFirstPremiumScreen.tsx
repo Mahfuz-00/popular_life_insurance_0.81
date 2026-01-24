@@ -21,15 +21,15 @@ import { PickerComponent } from '../../../components/PickerComponent';
 import { DatePickerComponent } from '../../../components/DatePickerComponent';
 import Header from '../../../components/Header';
 import BackgroundImage from '../../../assets/BackgroundImage.png';
-import { fetchProjects, getAgentCodes } from '../../../actions/userActions';
+import { fetchProjects, getAgentCodes, getRate } from '../../../actions/userActions';
 import { getPlanList, getTermList } from '../../../actions/calculatePremiumActions';
-import { getRate } from '../../../actions/userActions';
 import EnglishOnlyInput from '../../../components/input/EnglishOnlyInput';
 import { saveFirstPremiumData } from '../../../actions/payFirstPremiumActions';
 import { SHOW_LOADING, HIDE_LOADING } from '../../../store/constants/commonConstants';
 import InfoModal from '../../../components/InfoModal';
 import { PRIMARY_BUTTON_BG } from '../../../store/constants/colorConstants';
 
+// Constants
 const SPECIAL_PROJECTS = ['ABA', 'AKOK', 'ALA', 'IA', 'JBA', 'JBAK', 'IBT'];
 const MODE_MULTIPLIER: Record<string, number> = { yly: 1, hly: 2, qly: 4, mly: 12, single: 1 };
 const PLAN_72_FACTOR: Record<string, number> = { mly: 1, qly: 3, hly: 6, yly: 12, single: 1 };
@@ -40,12 +40,10 @@ const PROJECT_LABEL_MAP: Record<string, string> = {
   'Alamin Bima Khudra': 'Alamin Bima',
 };
 const PLAN_72_COMMISSION: Record<string, number> = {
-  '06': 0.156,
-  '07': 0.182,
-  '08': 0.208,
-  '09': 0.234,
-  '10': 0.286,
-  '11': 0.286,
+  '06': 0.156, '07': 0.182, '08': 0.208, '09': 0.234, '10': 0.286,
+  '11': 0.286, '12': 0.286, '13': 0.286, '14': 0.286, '15': 0.286,
+  '16': 0.286, '17': 0.286, '18': 0.286, '19': 0.286, '20': 0.286,
+  '21': 0.286, '22': 0.286, '23': 0.286, '24': 0.286, '25': 0.286,
 };
 
 interface ProjectItem {
@@ -54,106 +52,82 @@ interface ProjectItem {
   code: string;
 }
 
-interface ModeItem {
-  label: string;
-  value: string;
-}
-
 interface PlanItem {
   label: string;
   value: string;
   fullLabel?: string;
-  modes?: ModeItem[];
+  modes?: { label: string; value: string }[];
 }
 
 const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const dispatch = useDispatch();
+
+  // Selection State
   const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [selectedProject, setSelectedProject] = useState<ProjectItem | null>(null);
   const [plans, setPlans] = useState<PlanItem[]>([]);
-  const [terms, setTerms] = useState<{ label: string; value: string }[]>([]);
-  const [modes, setModes] = useState<ModeItem[]>([]);
-
-  // ⭐️ Renamed local loading states and removed isFaValidating
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isProjectLoading, setIsProjectLoading] = useState(true);
-
-  const [nid, setNid] = useState<string>('');
-  const [name, setName] = useState<string>('');
-  const [mobile, setMobile] = useState<string>('');
-  const [plan, setPlan] = useState<string>('');
   const [allPlans, setAllPlans] = useState<PlanItem[]>([]);
-  const [selectedPlanLabel, setSelectedPlanLabel] = useState<string>('');
+  const [terms, setTerms] = useState<{ label: string; value: string }[]>([]);
+  const [modes, setModes] = useState<{ label: string; value: string }[]>([]);
+
+  // Form State
+  const [formData, setFormData] = useState({
+    nid: '', name: '', childName: '', mobile: '', plan: '', term: '', mode: '',
+    sumAssured: '', servicingCell: '', agentMobile: '', fatherHusbandName: '',
+    motherName: '', address: '', district: '', gender: '', guardianName: '',
+    nominee1Name: '', nominee1Percent: '', nominee2Name: '', nominee2Percent: '',
+    nominee3Name: '', nominee3Percent: '', fa: '', um: '', bm: '', agm: '',
+    installments: '0' as String, feOeOption: '' as 'F/E' | 'O/E' | ''
+  });
+
   const [dateOfBirth, setDateOfBirth] = useState<Date>(new Date('1990-01-01'));
   const [age, setAge] = useState<number>(0);
-  const [term, setTerm] = useState<string>('');
-  const [mode, setMode] = useState<string>('');
-  const [sumAssured, setSumAssured] = useState<string>('');
-  const [totalPremium, setTotalPremium] = useState<string>('0');
+  const [selectedPlanLabel, setSelectedPlanLabel] = useState<string>('');
 
-  const [code6Digit, setCode6Digit] = useState<string>('0');
-  const [rate, setRate] = useState<string>('0');
-  const [premium, setPremium] = useState<string>('0');
-  const [commission, setCommission] = useState<string>('0');
-  const [netCommission, setNetCommission] = useState<string>('0');
-  const [netAmount, setNetAmount] = useState<string>('0');
+  // Calculated State
+  const [calculated, setCalculated] = useState({
+    code6Digit: '0', rate: '0', premium: '0', basePremium: '0',
+    commission: '0', netCommission: '0', netAmount: '0', totalPremium: '0',
+    feOeAmount: '0', extraCharge: '0', finalInstallment: 0
+  });
 
-  const [servicingCell, setServicingCell] = useState<string>('');
-  const [agentMobile, setAgentMobile] = useState<string>('');
-  const [fa, setFa] = useState<string>('');
-  const [um, setUm] = useState<string>('');
-  const [bm, setBm] = useState<string>('');
-  const [agm, setAgm] = useState<string>('');
-
-  const [fatherHusbandName, setFatherHusbandName] = useState<string>('');
-  const [motherName, setMotherName] = useState<string>('');
-  const [address, setAddress] = useState<string>('');
-  const [district, setDistrict] = useState<string>('');
-  const [gender, setGender] = useState<string>('');
-  const [nominee1Name, setNominee1Name] = useState<string>('');
-  const [nominee1Percent, setNominee1Percent] = useState<string>('');
-  const [nominee2Name, setNominee2Name] = useState<string>('');
-  const [nominee2Percent, setNominee2Percent] = useState<string>('');
-  const [nominee3Name, setNominee3Name] = useState<string>('');
-  const [nominee3Percent, setNominee3Percent] = useState<string>('');
-  const [isAgentFetched, setIsAgentFetched] = useState<boolean>(true);
-  const [isUmEditable, setIsUmEditable] = useState(false);
-  const [isBmEditable, setIsBmEditable] = useState(false);
-  const [isAgmEditable, setIsAgmEditable] = useState(false);
+  // UI State
+  const [loading, setLoading] = useState({ isSubmitting: false, isProjectLoading: true });
+  const [editable, setEditable] = useState({ um: false, bm: false, agm: false });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showFaFormatModal, setShowFaFormatModal] = useState(false);
   const [faExample, setFaExample] = useState('');
-  const [installments, setInstallments] = useState<'1' | '6' | '12' | ''>('');
-  const [feOeOption, setFeOeOption] = useState<'F/E' | 'O/E' | ''>('');
-  const [feOeAmount, setFeOeAmount] = useState<string>('0');
-  const feOeOptions = ['F/E', 'O/E'] as const;
-  const [guardianName, setGuardianName] = useState<string>('');
-  const [basePremium, setBasePremium] = useState<string>('0');
-  const [finalInstallment, setFinalInstallment] = useState<number>(0);
-  const [extraCharge, setExtraCharge] = useState<string>('0');
-
+  const [isAgentFetched, setIsAgentFetched] = useState<boolean>(true);
 
   const entrydate = moment().format('YYYY-MM-DD');
   const isSpecialProject = selectedProject?.code ? SPECIAL_PROJECTS.includes(selectedProject.code) : false;
+  const isInputDisabled = loading.isSubmitting || loading.isProjectLoading;
 
-  // ⭐️ Combined Loading state (use isSubmitting for button/input disabling)
-  const isInputDisabled = isSubmitting || isProjectLoading;
-
-  const getInstallmentNumber = () => {
-    if (mode === 'mly') return Number(installments || 0);
-    if (mode === 'qly') return 4;
-    if (mode === 'hly') return 2;
-    if (mode === 'yly') return 1;
-    if (mode === 'single') return 1;
-    return 0;
+  const updateFormData = (updates: Partial<typeof formData>) => {
+    setFormData(prev => ({ ...prev, ...updates }));
   };
 
-  // Fetch Projects and Plans
+  const updateCalculated = (updates: Partial<typeof calculated>) => {
+    setCalculated(prev => ({ ...prev, ...updates }));
+  };
+
+  const decimalTwoDigit = (num: number): number => Math.floor(num * 100) / 100;
+
+  const getInstallmentNumber = () => {
+    if (formData.mode === 'mly') {
+      const val = parseInt(formData.installments.toString(), 10);
+      return isNaN(val) || val <= 0 ? 1 : val; // default to 1 if invalid
+    }
+    if (formData.mode === 'qly') return 4;
+    if (formData.mode === 'hly') return 2;
+    return 1;
+  };
+
+  // Initialize projects and plans
   useEffect(() => {
     const loadInitialData = async () => {
-      setIsProjectLoading(true);
+      setLoading(prev => ({ ...prev, isProjectLoading: true }));
 
-      // 1. Fetch Projects
       const projectRes = await fetchProjects();
       if (projectRes?.data) {
         const formatted = projectRes.data.map((p: any) => ({
@@ -164,7 +138,6 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         setProjects(formatted);
       }
 
-      // 2. Fetch Plans
       const planRes = await getPlanList();
       if (planRes && Array.isArray(planRes)) {
         const formattedPlans = planRes.map((p: any) => ({
@@ -180,81 +153,66 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         }));
         setAllPlans(formattedPlans);
         setPlans(formattedPlans);
-
       }
 
-      setIsProjectLoading(false);
+      setLoading(prev => ({ ...prev, isProjectLoading: false }));
     };
     loadInitialData();
   }, []);
 
-  // Filter Plans based on selected project
+  // Filter plans based on project
   useEffect(() => {
-    if (isProjectLoading) return;
-
-    if (!selectedProject?.code) {
+    if (loading.isProjectLoading || !selectedProject?.code) {
       setPlans(allPlans);
       return;
     }
 
-    // Non-special projects → only limited plans
     if (!SPECIAL_PROJECTS.includes(selectedProject.code)) {
-      const filtered = allPlans.filter(p =>
-        ['28', '57', '72'].includes(p.value)
-      );
-
+      const filtered = allPlans.filter(p => ['28', '57', '72'].includes(p.value));
       setPlans(filtered);
-
-      // Reset invalid selection
-      if (plan && !filtered.some(p => p.value === plan)) {
-        setPlan('');
+      if (formData.plan && !filtered.some(p => p.value === formData.plan)) {
+        updateFormData({ plan: '', mode: '' });
         setModes([]);
-        setMode('');
       }
     } else {
-      // Special projects → all plans
       setPlans(allPlans);
     }
-  }, [selectedProject?.code, allPlans, isProjectLoading]);
-
+  }, [selectedProject?.code, allPlans, loading.isProjectLoading]);
 
   // Reset on project change
   useEffect(() => {
-    setPlan('');
+    updateFormData({ plan: '', mode: '', term: '', feOeOption: '' });
     setModes([]);
-    setMode('');
-    setTerm('');
     setTerms([]);
-    setFeOeOption('');
   }, [selectedProject?.code]);
 
-  // Update modes & plan label
+  // Update modes when plan changes
   useEffect(() => {
-    const selected = plans.find(p => p.value === plan);
+    const selected = plans.find(p => p.value === formData.plan);
     if (selected) {
       setSelectedPlanLabel(selected.fullLabel || '');
       setModes(selected.modes || []);
-      setMode('');
+      console.log('Available modes for selected plan:', selected.modes);
+      updateFormData({ mode: '' });
     } else {
       setSelectedPlanLabel('');
       setModes([]);
     }
-  }, [plan, plans]);
+  }, [formData.plan, plans]);
 
-  // Fetch Terms
+  // Fetch terms
   useEffect(() => {
     const loadTerms = async () => {
-      if (!plan || isProjectLoading) {
+      if (!formData.plan || loading.isProjectLoading) {
         setTerms([]);
-        setTerm('');
+        updateFormData({ term: '' });
         return;
       }
 
       dispatch({ type: SHOW_LOADING, payload: 'Loading terms...' });
 
       try {
-        const res = await getTermList(plan);
-
+        const res = await getTermList(formData.plan);
         let parsedTerms: { label: string; value: string }[] = [];
 
         if (Array.isArray(res)) {
@@ -270,15 +228,12 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         }
 
         setTerms(parsedTerms);
-
         if (parsedTerms.length === 0) {
           ToastAndroid.show('No term available for this plan', ToastAndroid.LONG);
-          setTerm('');
         }
       } catch (error) {
         console.error('Failed to load terms:', error);
         setTerms([]);
-        setTerm('');
         ToastAndroid.show('Failed to load terms', ToastAndroid.SHORT);
       } finally {
         dispatch({ type: HIDE_LOADING });
@@ -286,268 +241,191 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
     };
 
     loadTerms();
-  }, [plan, dispatch, isProjectLoading]);
+  }, [formData.plan, dispatch, loading.isProjectLoading]);
 
-
-  // Age calculation
+  // Calculate age
   useEffect(() => {
     if (!dateOfBirth) return;
 
     const birth = moment(dateOfBirth);
     const today = moment();
-
-    // Full years lived
-    let years = today.diff(birth, 'years');
-
-    // Last birthday
+    const years = today.diff(birth, 'years');
     const lastBirthday = birth.clone().add(years, 'years');
-
-    // Months & days after last birthday
     const months = today.diff(lastBirthday, 'months');
-    const days = today.diff(lastBirthday.clone().add(months, 'months'), 'days');
-
-    // 🔑 Insurance rule: 6 months or more → round up
     const roundedAge = months >= 6 ? years + 1 : years;
-
-    console.log('Calculated Age:', {
-      yearsCompleted: years,
-      monthsAfterBirthday: months,
-      daysAfterMonth: days,
-      dateOfBirth: birth.format('YYYY-MM-DD'),
-      today: today.format('YYYY-MM-DD'),
-      roundupAge: roundedAge,
-    });
 
     setAge(roundedAge);
   }, [dateOfBirth]);
 
+  // Reset only calculation values
+  const resetCalculated = useCallback(() => {
+    updateCalculated({
+      code6Digit: '0',
+      rate: '0',
+      premium: '0',
+      basePremium: '0',
+      commission: '0',
+      netCommission: '0',
+      netAmount: '0',
+      totalPremium: '0',
+      feOeAmount: '0',
+      extraCharge: '0',
+      finalInstallment: 0,
+    });
+  }, []);
 
-  const resetCalculation = () => {
-    setCode6Digit('0');
-    setRate('0');
-    setPremium('0');
-    setFinalInstallment(0);
-    setBasePremium('0');
-    setCommission('0');
-    setNetCommission('0');
-    setNetAmount('0');
-    setTotalPremium('0');
-    setFeOeAmount('0');
-    setExtraCharge('0');
-  };
+  // Hierarchical reset effect
+  useEffect(() => {
+    // Project changed → reset plan, term, mode, sumAssured, feOe
+    updateFormData({ plan: '', term: '', mode: '', sumAssured: '', feOeOption: '', installments: '' });
+    setModes([]);
+    setTerms([]);
+    resetCalculated();
+  }, [selectedProject?.code]);
 
   useEffect(() => {
-    resetCalculation();
-  }, [selectedProject?.code, plan, term, age, sumAssured, mode, installments, feOeOption]);
+    // Plan changed → reset term, mode, sumAssured, feOe
+    updateFormData({ term: '', mode: '', sumAssured: '', feOeOption: '', installments: '' });
+    setTerms([]);
+    resetCalculated();
+  }, [formData.plan]);
 
-
-
-  // Premium calculation 
+  // Premium calculation
   useEffect(() => {
     const calculate = async () => {
-      if (!selectedProject?.code || !plan || !term || age < 8 || !sumAssured || !mode) return;
+      if (!selectedProject?.code || !formData.plan || !formData.term || age < 8 || !formData.sumAssured || !formData.mode) return;
 
       dispatch({ type: SHOW_LOADING, payload: 'Calculating premium...' });
 
       const installmentNumber = getInstallmentNumber();
-      setFinalInstallment(installmentNumber);
-
       const rateAge = age < 18 ? 18 : age;
-
-      const sa = parseFloat(sumAssured);
-      const paddedAge = rateAge.toString().padStart(2, '0');
-      const paddedTerm = term.toString().padStart(2, '0');
-      const code6 = `${plan}${paddedTerm}${paddedAge}`;
-      setCode6Digit(code6);
+      const sa = parseFloat(formData.sumAssured);
+      const code6 = `${formData.plan}${formData.term.padStart(2, '0')}${rateAge.toString().padStart(2, '0')}`;
 
       let basePremiumFinal = 0;
-      let basePremium = 0;
       let fetchedRate = 0;
       let extraCharge = 0;
+      let commRate = parseInt(formData.term) < 15 ? 0.38 : 0.48;
 
-      let commRate = parseInt(term) < 15 ? 0.38 : 0.48;
-      if (plan === '10' || plan === '15') commRate = 0.06;
+      if (formData.plan === '10' || formData.plan === '15') commRate = 0.06;
+      if (formData.plan === '72') commRate = PLAN_72_COMMISSION[formData.term] ?? 0;
 
-      if (plan === '72') {
-        commRate = PLAN_72_COMMISSION[term] ?? 0;
-      }
-
-      console.log('Commission Rate:', {
-        plan,
-        term,
-        commRate,
-      });
-
-      if (plan === '72') {
-        const result = await getRate(selectedProject.code, plan, term, rateAge);
-
+      // Plan 72 calculation
+      if (formData.plan === '72') {
+        const result = await getRate(selectedProject.code, formData.plan, formData.term, rateAge);
         if (!result?.success || result.rate <= 0) {
           dispatch({ type: HIDE_LOADING });
-          setRate('Not Found');
+          updateCalculated({ rate: 'Not Found' });
           return;
         }
+
         fetchedRate = result.rate;
-        setRate(fetchedRate.toString());
-        console.log('Fetched Rate:', fetchedRate);
-
-
-        const factor = PLAN_72_FACTOR[mode] || 1;
-
-        // Keep only 2 decimals
-        const basePremiumDecimal = parseFloat((sa / fetchedRate).toFixed(2));
-        basePremiumFinal = basePremiumDecimal * factor * 500;
+        const factor = PLAN_72_FACTOR[formData.mode] || 1;
+        const basePremiumDecimal = decimalTwoDigit(sa / fetchedRate);
+        basePremiumFinal = decimalTwoDigit(basePremiumDecimal * factor * 500);
 
         const roundedModeBasePremium = Math.floor(basePremiumFinal) + (basePremiumFinal % 1 >= 0.5 ? 1 : 0);
+        const basePremiumValue = formData.mode === 'mly' ? roundedModeBasePremium :
+          formData.mode === 'hly' || formData.mode === 'qly' ? roundedModeBasePremium / installmentNumber :
+            roundedModeBasePremium;
 
-        if (mode === 'yly') {
-          setBasePremium(roundedModeBasePremium.toFixed(2));
-        } else if (mode === 'single') {
-          setBasePremium(roundedModeBasePremium.toFixed(2));
-        } else if (mode === 'hly') {
-          setBasePremium((roundedModeBasePremium / (installmentNumber)).toFixed(2));
-        } else if (mode === 'qly') {
-          setBasePremium((roundedModeBasePremium / ((installmentNumber))).toFixed(2));
-        } else if (mode === 'mly') {
-          setBasePremium((roundedModeBasePremium).toFixed(2));
-        }
+        updateCalculated({ basePremium: basePremiumValue.toFixed(2) });
       } else {
+        // Other plans calculation
         if (isSpecialProject) {
-          const result = await getRate(selectedProject.code, plan, term, rateAge);
-
+          const result = await getRate(selectedProject.code, formData.plan, formData.term, rateAge);
           if (!result?.success || result.rate <= 0) {
             dispatch({ type: HIDE_LOADING });
-            setRate('Not Found');
+            updateCalculated({ rate: 'Not Found' });
             return;
           }
+
           fetchedRate = result.rate;
-          setRate(fetchedRate.toString());
-          console.log('Fetched Rate:', fetchedRate);
+          let adjusted = fetchedRate;
 
-          if (plan === '72') {
-            const factor = PLAN_72_FACTOR[mode] || 1;
-            basePremiumFinal = (sa / fetchedRate) * factor * 500;
-
-            const roundedModeBasePremium = Math.floor(basePremiumFinal) + (basePremiumFinal % 1 >= 0.5 ? 1 : 0);
-            if (mode === 'yly') {
-              setBasePremium(roundedModeBasePremium.toFixed(2));
-            } else if (mode === 'single') {
-              setBasePremium(roundedModeBasePremium.toFixed(2));
-            } else if (mode === 'hly') {
-              setBasePremium((roundedModeBasePremium / (installmentNumber * 2)).toFixed(2));
-            } else if (mode === 'qly') {
-              setBasePremium((roundedModeBasePremium / (installmentNumber * 2)).toFixed(2));
-            } else if (mode === 'mly') {
-              setBasePremium((roundedModeBasePremium).toFixed(2));
-            }
-          } else {
-            let adjusted = fetchedRate;
-            if (['01', '02', '03', '05'].includes(plan)) {
-              if (mode === 'hly') adjusted += 1;
-              if (mode === 'qly') adjusted += 2;
-            } else if (['04', '06', '07'].includes(plan)) {
-              if (mode === 'hly') adjusted -= 1;
-              if (mode === 'yly') adjusted -= 2;
-            } else if (plan === '08') {
-              if (mode === 'hly') adjusted *= 0.525;
-              if (mode === 'qly') adjusted *= 0.275;
-            } else if (plan === '09') {
-              if (mode === 'hly') adjusted -= 10;
-              if (mode === 'yly') adjusted -= 20;
-            }
-            const multiplier = MODE_MULTIPLIER[mode] || 1;
-            basePremiumFinal = (sa / 1000) * adjusted / multiplier;
-
-            const roundedModeBasePremium = Math.floor(basePremiumFinal) + (basePremiumFinal % 1 >= 0.5 ? 1 : 0);
-            if (mode === 'yly') {
-              setBasePremium(roundedModeBasePremium.toFixed(2));
-            } else if (mode === 'single') {
-              setBasePremium(roundedModeBasePremium.toFixed(2));
-            } else if (mode === 'hly') {
-              setBasePremium((roundedModeBasePremium / (installmentNumber * 2)).toFixed(2));
-            } else if (mode === 'qly') {
-              setBasePremium((roundedModeBasePremium / (installmentNumber * 2)).toFixed(2));
-            } else if (mode === 'mly') {
-              setBasePremium((roundedModeBasePremium).toFixed(2));
-            }
+          // Mode adjustments
+          if (['01', '02', '03', '05'].includes(formData.plan)) {
+            if (formData.mode === 'hly') adjusted += 1;
+            if (formData.mode === 'qly') adjusted += 2;
+          } else if (['04', '06', '07'].includes(formData.plan)) {
+            if (formData.mode === 'hly') adjusted -= 1;
+            if (formData.mode === 'yly') adjusted -= 2;
+          } else if (formData.plan === '08') {
+            if (formData.mode === 'hly') adjusted *= 0.525;
+            if (formData.mode === 'qly') adjusted *= 0.275;
+          } else if (formData.plan === '09') {
+            if (formData.mode === 'hly') adjusted -= 10;
+            if (formData.mode === 'yly') adjusted -= 20;
           }
+
+          const multiplier = MODE_MULTIPLIER[formData.mode] || 1;
+          basePremiumFinal = decimalTwoDigit(decimalTwoDigit(sa / 1000) * adjusted / multiplier);
+
+          const roundedModeBasePremium = Math.floor(basePremiumFinal) + (basePremiumFinal % 1 >= 0.5 ? 1 : 0);
+          const basePremiumValue = formData.mode === 'hly' || formData.mode === 'qly' ? roundedModeBasePremium / (installmentNumber * 2) :
+            formData.mode === 'mly' ? roundedModeBasePremium :
+              roundedModeBasePremium;
+
+          updateCalculated({ basePremium: basePremiumValue.toFixed(2) });
         } else {
-          setRate('0');
-          basePremiumFinal = sa / (12 * parseInt(term));
-          setBasePremium((basePremiumFinal / installmentNumber).toFixed(2));
+          basePremiumFinal = decimalTwoDigit(sa / (12 * parseInt(formData.term)));
+          updateCalculated({ basePremium: (basePremiumFinal / installmentNumber).toFixed(2), rate: '0' });
         }
       }
 
-      console.log('Base Premium before adjustments:', basePremiumFinal);
-      console.log('Base Premium set state:', basePremium);
-      console.log('Mode:', mode, 'Installments:', installments);
-      console.log('Installment in UI:', finalInstallment);
-      console.log('Installment Number for calc:', installmentNumber);
-
-      let adjustedPremium = basePremiumFinal;
-
-      if (mode === 'mly' && installments) {
-        const installmentCount = Number(installments);
-        adjustedPremium = basePremiumFinal * installmentCount;
-      }
-
-      console.log('Adjusted Premium after mode/installments:', adjustedPremium);
-
-      if (feOeOption && sa > 0) {
-        const ratePerThousand = feOeOption === 'F/E' ? 3 : 2;
+      // Extra charge calculation
+      if (formData.feOeOption && sa > 0) {
+        const ratePerThousand = formData.feOeOption === 'F/E' ? 3 : 2;
         const annualExtra = (sa / 1000) * ratePerThousand;
 
-        console.log('Annual Extra Charge for F/E or O/E:', annualExtra);
-
         let monthsPaid = 12;
-        if (mode === 'hly') monthsPaid = 6;
-        else if (mode === 'qly') monthsPaid = 4;
-        else if (mode === 'yly') monthsPaid = 12;
-        else if (mode === 'mly' && installments) monthsPaid = Number(installments);
-
-
-        console.log('Months Paid for Extra Charge calculation:', monthsPaid);
+        if (formData.mode === 'hly') monthsPaid = 6;
+        else if (formData.mode === 'qly') monthsPaid = 4;
+        else if (formData.mode === 'mly' && formData.installments) monthsPaid = Number(formData.installments);
 
         extraCharge = Math.round((annualExtra / 12) * monthsPaid);
-
-        setExtraCharge(extraCharge.toString());
-
-        console.log('Final Extra Charge added to Premium:', extraCharge);
       }
 
-      setFeOeAmount(extraCharge.toString());
-
-      const roundedPremium = Math.floor(adjustedPremium) + (adjustedPremium % 1 >= 0.5 ? 1 : 0);
+      const roundedPremium = Math.floor(basePremiumFinal) + (basePremiumFinal % 1 >= 0.5 ? 1 : 0);
       const grossComm = roundedPremium * commRate;
-      console.log('Gross Commission:', grossComm);
-
       const tax = grossComm * 0.05;
-      console.log('Tax on Commission:', tax);
       const netComm = grossComm - tax;
-      console.log('Net Commission after Tax:', netComm);
-      const finalNet = Math.floor(roundedPremium - netComm) + ((roundedPremium - netComm) % 1 >= 0.5 ? 1 : 0) + extraCharge;
-      console.log('Final Net Amount (Premium - Net Commission + Extra):', finalNet);
-      const finalTotalPremium = roundedPremium + extraCharge;
-      console.log('Final Total Premium (Rounded Premium + Extra):', finalTotalPremium);
+      let netCommRounded = Math.floor(netComm) + (netComm % 1 >= 0.5 ? 1 : 0);
+      let finalNet = Math.floor(roundedPremium - netComm) + ((roundedPremium - netComm) % 1 >= 0.5 ? 1 : 0) + extraCharge;
 
-      setPremium(roundedPremium.toString());
-      setCommission(grossComm.toFixed(2));
-      setNetCommission(netComm.toFixed(2));
-      setNetAmount(finalNet.toString());
-      setTotalPremium(finalTotalPremium.toString());
+      if (formData.mode === 'mly' && formData.installments) {
+        const count = parseInt(formData.installments.toString(), 10) || 1;
+        netCommRounded *= count;
+        finalNet *= count;
+      }
+
+      const finalTotalPremium = roundedPremium + extraCharge;
+
+      updateCalculated({
+        code6Digit: code6,
+        rate: fetchedRate.toString(),
+        premium: roundedPremium.toString(),
+        commission: grossComm.toFixed(2),
+        netCommission: netCommRounded.toFixed(2),
+        netAmount: finalNet.toString(),
+        totalPremium: finalTotalPremium.toString(),
+        feOeAmount: extraCharge.toString(),
+        extraCharge: extraCharge.toString(),
+        finalInstallment: installmentNumber
+      });
 
       dispatch({ type: HIDE_LOADING });
     };
 
-    const timer = setTimeout(calculate, 200);
+    const timer = setTimeout(calculate, 500);
     return () => clearTimeout(timer);
-  }, [selectedProject?.code, plan, term, age, sumAssured, mode, installments, feOeOption,]);
+  }, [selectedProject?.code, formData.plan, formData.term, age, formData.sumAssured, formData.mode, formData.installments, formData.feOeOption]);
 
+  // FA code format warning
   useEffect(() => {
-    if (!fa) return;
+    if (!formData.fa) return;
+    const digitsOnly = formData.fa.replace(/[^0-9]/g, '');
 
-    const digitsOnly = fa.replace(/[^0-9]/g, '');
-
-    // Only warn if user stopped typing & length is between 1–7
     if (digitsOnly.length > 0 && digitsOnly.length < 8) {
       const timer = setTimeout(() => {
         setFaExample(`${digitsOnly} -> ${digitsOnly.padStart(8, '0')}`);
@@ -555,57 +433,35 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [fa]);
+  }, [formData.fa]);
 
-
-  // ⭐️ Agent codes validation - Now using useEffect and Redux Global Loading
+  // Agent code validation
   useEffect(() => {
-    const faValidation = fa.replace(/[^0-9]/g, '').slice(0, 8);
-
-    console.log('Validating FA Code:', faValidation);
+    const faValidation = formData.fa.replace(/[^0-9]/g, '').slice(0, 8);
 
     if (!faValidation || faValidation.length !== 8 || !selectedProject?.code) {
-      setUm('');
-      setBm('');
-      setAgm('');
-      setIsUmEditable(false);
-      setIsBmEditable(false);
-      setIsAgmEditable(false);
+      updateFormData({ um: '', bm: '', agm: '' });
+      setEditable({ um: false, bm: false, agm: false });
       return;
     }
 
-    // Debounce agent validation slightly
     const timer = setTimeout(async () => {
-      // ⭐️ Treat as major operation: Use Redux dispatch for global loading
       dispatch({ type: SHOW_LOADING, payload: 'Verifying agent code...' });
 
       try {
         const res = await getAgentCodes(faValidation, selectedProject.code);
-        console.log('Agent verification response:', res);
         if (res.success) {
           const umVal = res.um ?? '';
           const bmVal = res.bm ?? '';
           const agmVal = res.agm ?? '';
 
-          setUm(umVal);
-          setBm(bmVal);
-          setAgm(agmVal);
-
-          setIsUmEditable(!umVal);
-          setIsBmEditable(!bmVal);
-          setIsAgmEditable(!agmVal);
-
+          updateFormData({ um: umVal, bm: bmVal, agm: agmVal });
+          setEditable({ um: !umVal, bm: !bmVal, agm: !agmVal });
           setIsAgentFetched(true);
           ToastAndroid.show('Agent verified!', ToastAndroid.SHORT);
         } else {
-          setUm('');
-          setBm('');
-          setAgm('');
-
-          setIsUmEditable(true);
-          setIsBmEditable(true);
-          setIsAgmEditable(true);
-
+          updateFormData({ um: '', bm: '', agm: '' });
+          setEditable({ um: true, bm: true, agm: true });
           setIsAgentFetched(false);
           ToastAndroid.show('Invalid FA Code, enter codes manually', ToastAndroid.LONG);
         }
@@ -613,23 +469,19 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         console.error('Agent verification error:', error);
         ToastAndroid.show('Agent verification failed.', ToastAndroid.LONG);
       } finally {
-        // ⭐️ Hide Redux loading
         dispatch({ type: HIDE_LOADING });
       }
-    }, 800); // 800ms debounce
+    }, 800);
 
     return () => clearTimeout(timer);
+  }, [formData.fa, selectedProject?.code, dispatch]);
 
-  }, [fa, selectedProject?.code, dispatch]);
-
-
-  const handleNomineePercent = (setter: (v: string) => void) => (text: string) => {
-    const filtered = text.replace(/[^0-9]/g, '').slice(0, 3);
-    setter(filtered);
+  const handleNomineePercent = (field: 'nominee1Percent' | 'nominee2Percent' | 'nominee3Percent') => (text: string) => {
+    updateFormData({ [field]: text.replace(/[^0-9]/g, '').slice(0, 3) });
   };
 
   const checkNomineeTotal = () => {
-    const total = [nominee1Percent, nominee2Percent, nominee3Percent]
+    const total = [formData.nominee1Percent, formData.nominee2Percent, formData.nominee3Percent]
       .reduce((sum, p) => sum + parseInt(p || '0'), 0);
     if (total > 100) {
       Alert.alert('Error', 'Total nominee percentage cannot exceed 100%');
@@ -640,106 +492,107 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
 
   const normalize6DigitCode = (value?: string | null): string | null => {
     if (!value || value.trim() === '') return null;
-
     const digitsOnly = value.replace(/[^0-9]/g, '');
-
-    if (digitsOnly.length === 0) return null;
-
-    return digitsOnly.padStart(6, '0');
+    return digitsOnly.length === 0 ? null : digitsOnly.padStart(6, '0');
   };
-
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!nid) newErrors.nid = 'NID/Birth Reg/Passport is required';
-    if (nid.includes(' ')) {
-      newErrors.nid = 'NID must not contain spaces';
-    }
-
-    if (!name) newErrors.name = 'Proposer name is required';
-    if (!mobile) newErrors.mobile = 'Mobile number is required';
-
+    if (!formData.nid) newErrors.nid = 'NID/Birth Reg/Passport is required';
+    if (formData.nid.includes(' ')) newErrors.nid = 'NID must not contain spaces';
+    if (!formData.name) newErrors.name = 'Proposer name is required';
+    if (!formData.mobile) newErrors.mobile = 'Mobile number is required';
     if (!selectedProject) newErrors.project = 'Project is required';
-    if (!plan) newErrors.plan = 'Plan is required';
-    if (!term) newErrors.term = 'Term is required';
-    if (!mode) newErrors.mode = 'Mode is required';
-
-    if (!sumAssured) newErrors.sumAssured = 'Sum Assured is required';
-    if (!servicingCell) newErrors.servicingCell = 'Servicing Cell is required';
-    if (!agentMobile) newErrors.agentMobile = 'Agent Mobile is required';
-
-    if (!fatherHusbandName) newErrors.fatherHusbandName = 'Father/Husband name is required';
-    if (!motherName) newErrors.motherName = 'Mother name is required';
+    if (!formData.plan) newErrors.plan = 'Plan is required';
+    if (!formData.term) newErrors.term = 'Term is required';
+    if (!formData.mode) newErrors.mode = 'Mode is required';
+    if (!formData.sumAssured) newErrors.sumAssured = 'Sum Assured is required';
+    if (!formData.servicingCell) newErrors.servicingCell = 'Servicing Cell is required';
+    if (!formData.agentMobile) newErrors.agentMobile = 'Agent Mobile is required';
+    if (!formData.fatherHusbandName) newErrors.fatherHusbandName = 'Father/Husband name is required';
+    if (!formData.motherName) newErrors.motherName = 'Mother name is required';
     if (age < 8) newErrors.dateOfBirth = 'Age must be 8 or above';
-    if (!address) newErrors.address = 'Address is required';
-    if (!district) newErrors.district = 'District is required';
-    if (!gender) newErrors.gender = 'Gender is required';
-
-
-    if (!fa) newErrors.fa = 'FA code is required';
-    if (fa && fa.length < 8) newErrors.fa = 'FA must be 8 digits';
-
-    if (!nominee1Name) newErrors.nominee1Name = 'Nominee name is required';
-    if (!nominee1Percent) newErrors.nominee1Percent = 'Nominee percentage is required';
+    if (!formData.address) newErrors.address = 'Address is required';
+    if (!formData.district) newErrors.district = 'District is required';
+    if (!formData.gender) newErrors.gender = 'Gender is required';
+    if (!formData.fa) newErrors.fa = 'FA code is required';
+    if (formData.fa && formData.fa.length < 8) newErrors.fa = 'FA must be 8 digits';
+    if (!formData.nominee1Name) newErrors.nominee1Name = 'Nominee name is required';
+    if (!formData.nominee1Percent) newErrors.nominee1Percent = 'Nominee percentage is required';
 
     setErrors(newErrors);
-
     return Object.keys(newErrors).length === 0;
   };
 
-
+  const installmentPremiumValue = React.useMemo(() => {
+    if (formData.plan === '72') {
+      const count = formData.mode === 'mly' ? Number(formData.installments || 1) : calculated.finalInstallment || 1;
+      return (Number(calculated.totalPremium || 0) * count).toString();
+    }
+    return (Number(calculated.basePremium || 0) + Number(calculated.feOeAmount || 0)).toString();
+  }, [formData.plan, calculated.totalPremium, formData.installments, calculated.finalInstallment, calculated.basePremium, calculated.feOeAmount, formData.mode]);
 
   const handleSubmit = async () => {
-    if (isInputDisabled) return;
-
-    if (!validateForm()) {
+    if (isInputDisabled || !validateForm() || !checkNomineeTotal()) {
       ToastAndroid.show('Please fix the highlighted fields', ToastAndroid.SHORT);
       return;
     }
 
-    if (!checkNomineeTotal()) return;
-    if (age < 8) return Alert.alert('Error', 'Age must be 8 or above');
-    if (!fatherHusbandName || !motherName || !nominee1Name || !nominee1Percent || !fa)
+    if (age < 8 || !formData.fatherHusbandName || !formData.motherName || !formData.nominee1Name || !formData.nominee1Percent || !formData.fa) {
       return Alert.alert('Error', 'Please fill all required fields including FA code');
+    }
 
-    const normalizedUM = normalize6DigitCode(um);
-    const normalizedBM = normalize6DigitCode(bm);
-    const normalizedAGM = normalize6DigitCode(agm);
-
-    if (!netAmount || !code6Digit || !commission || netAmount === '0')
+    if (!calculated.netAmount || !calculated.code6Digit || !calculated.commission || calculated.netAmount === '0') {
       return Alert.alert('Error', 'Premium calculation incomplete. Check Project, Plan, Term, Mode, SA.');
+    }
 
-    setIsSubmitting(true);
+    setLoading(prev => ({ ...prev, isSubmitting: true }));
     dispatch({ type: SHOW_LOADING, payload: 'Preparing payment...' });
 
     try {
-      // Save to Redux instead of navigation params
       dispatch(saveFirstPremiumData({
         project: selectedProject!.label,
         projectCode: selectedProject!.code,
         code: selectedProject!.value,
-        nid, entrydate, name, mobile,
-        plan: `${plan}`,
+        nid: formData.nid,
+        entrydate,
+        name: formData.name,
+        childName: formData.childName,
+        mobile: formData.mobile,
+        plan: formData.plan,
         planlabel: selectedPlanLabel,
-        age, term, mode, sumAssured,
-        totalPremium, servicingCell, agentMobile,
-        fa,
-        um: normalizedUM,
-        bm: normalizedBM,
-        agm: normalizedAGM,
-        rateCode: code6Digit,
-        basePremium: premium,
-        commission: netCommission,
-        rate,
-        netAmount,
-        fatherHusbandName, motherName, address, district, gender,
-        nominee1Name, nominee1Percent, nominee2Name, nominee2Percent,
-        nominee3Name, nominee3Percent,
-        feOeOption,
-        feOeAmount,
-        installments: mode === 'mly' ? installments : null,
-        guardianName
+        age,
+        term: formData.term,
+        mode: formData.mode,
+        sumAssured: formData.sumAssured,
+        totalPremium: calculated.totalPremium,
+        servicingCell: formData.servicingCell,
+        agentMobile: formData.agentMobile,
+        fa: formData.fa,
+        um: normalize6DigitCode(formData.um),
+        bm: normalize6DigitCode(formData.bm),
+        agm: normalize6DigitCode(formData.agm),
+        rateCode: calculated.code6Digit,
+        basePremium: calculated.premium,
+        commission: calculated.netCommission,
+        rate: calculated.rate,
+        netAmount: calculated.netAmount,
+        fatherHusbandName: formData.fatherHusbandName,
+        motherName: formData.motherName,
+        address: formData.address,
+        district: formData.district,
+        gender: formData.gender,
+        nominee1Name: formData.nominee1Name,
+        nominee1Percent: formData.nominee1Percent,
+        nominee2Name: formData.nominee2Name,
+        nominee2Percent: formData.nominee2Percent,
+        nominee3Name: formData.nominee3Name,
+        nominee3Percent: formData.nominee3Percent,
+        feOeOption: formData.feOeOption,
+        feOeAmount: calculated.feOeAmount,
+        installments: formData.mode === 'mly' ? formData.installments : null,
+        guardianName: formData.guardianName
       }));
 
       navigation.navigate('PayfirstPremiumGateways');
@@ -747,7 +600,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       Alert.alert('Error', 'Failed to prepare payment data.');
       console.error('Submission error:', error);
     } finally {
-      setIsSubmitting(false);
+      setLoading(prev => ({ ...prev, isSubmitting: false }));
       dispatch({ type: HIDE_LOADING });
     }
   };
@@ -762,39 +615,33 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         <ImageBackground source={BackgroundImage} style={{ flex: 1 }}>
           <Header navigation={navigation} title="Pay First Premium" />
           <ScrollView style={[globalStyle.wrapper, { margin: 10 }]}>
+            {/* Project Selection */}
             <PickerComponent
               items={projects}
               value={selectedProject?.value || ''}
               setValue={(v) => {
                 const p = projects.find(item => item.value === v);
-                if (p) {
-                  setSelectedProject(p);
-                }
+                if (p) setSelectedProject(p);
               }}
               label="Project"
-              placeholder={isProjectLoading ? "Loading projects..." : "Select a project"}
+              placeholder={loading.isProjectLoading ? "Loading projects..." : "Select a project"}
               required
               disabled={isInputDisabled}
             />
             {errors.project && <Text style={styles.error}>{errors.project}</Text>}
 
-            <Input label="NID/Birth Reg/Passport" value={nid} onChangeText={(text) => setNid(text.replace(/\s+/g, ''))} keyboardType="numeric" required editable={!isInputDisabled} maxLength={17} />
+            {/* Basic Information */}
+            <Input label="NID/Birth Reg/Passport" value={formData.nid} onChangeText={(text) => updateFormData({ nid: text.replace(/\s+/g, '') })} keyboardType="numeric" required editable={!isInputDisabled} maxLength={17} />
             {errors.nid && <Text style={styles.error}>{errors.nid}</Text>}
             <Input label="Date" value={entrydate} editable={false} />
-            <EnglishOnlyInput label="Proposer's Name" value={name} onChangeText={setName} required editable={!isInputDisabled} maxLength={35} />
+            <EnglishOnlyInput label="Proposer's Name" value={formData.name} onChangeText={(v) => updateFormData({ name: v })} required editable={!isInputDisabled} maxLength={35} />
             {errors.name && <Text style={styles.error}>{errors.name}</Text>}
-            <Input label="Mobile No." value={mobile} onChangeText={setMobile} keyboardType="phone-pad" maxLength={11} required editable={!isInputDisabled} />
+            <EnglishOnlyInput label="Child Name" value={formData.childName} onChangeText={(v) => updateFormData({ childName: v })} editable={!isInputDisabled} maxLength={35} />
+            <Input label="Mobile No." value={formData.mobile} onChangeText={(v) => updateFormData({ mobile: v })} keyboardType="phone-pad" maxLength={11} required editable={!isInputDisabled} />
             {errors.mobile && <Text style={styles.error}>{errors.mobile}</Text>}
 
-            <PickerComponent
-              items={plans}
-              value={plan}
-              setValue={setPlan}
-              label="Plan"
-              placeholder="Select a plan"
-              required
-              disabled={isInputDisabled}
-            />
+            {/* Plan Details */}
+            <PickerComponent items={plans} value={formData.plan} setValue={(v) => updateFormData({ plan: v })} label="Plan" placeholder="Select a plan" required disabled={isInputDisabled} />
             {errors.plan && <Text style={styles.error}>{errors.plan}</Text>}
 
             <View>
@@ -805,68 +652,43 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             </View>
 
             <DatePickerComponent date={dateOfBirth} setDate={setDateOfBirth} label="Birth Date" required />
-            {age < 8 && <Text style={{ color: 'red', marginLeft: 15, fontWeight: 'bold' }}>
-              Age: {age} years — First payment not allowed under 8
-            </Text>}
+            {age < 8 && <Text style={{ color: 'red', marginLeft: 15, fontWeight: 'bold' }}>Age: {age} years — First payment not allowed under 8</Text>}
 
-            <PickerComponent
-              items={terms}
-              value={term}
-              setValue={setTerm}
-              label="Term"
-              placeholder="Select a term"
-              required
-              disabled={isInputDisabled}
-            />
+            <PickerComponent items={terms} value={formData.term} setValue={(v) => updateFormData({ term: v })} label="Term" placeholder="Select a term" required disabled={isInputDisabled} />
             {errors.term && <Text style={styles.error}>{errors.term}</Text>}
 
-
-            <PickerComponent
-              items={modes}
-              value={mode}
-              setValue={setMode}
-              label="Mode"
-              placeholder="Select a mode"
-              required
-              disabled={isInputDisabled}
-            />
+            <PickerComponent items={modes} value={formData.mode} setValue={(v) => updateFormData({ mode: v })} label="Mode" placeholder="Select a mode" required disabled={isInputDisabled} />
             {errors.mode && <Text style={styles.error}>{errors.mode}</Text>}
 
-            {mode === 'mly' && (
-              <>
-                <PickerComponent
-                  items={[
-                    { label: '1', value: '1' },
-                    { label: '6', value: '6' },
-                    { label: '12', value: '12' },
-                  ]}
-                  value={installments}
-                  setValue={setInstallments}
-                  label="Installments"
-                  placeholder="Select installments"
-                  required
-                  disabled={isInputDisabled}
-                />
-                {errors.installments && <Text style={styles.error}>{errors.installments}</Text>}
-              </>
+            {formData.mode === 'mly' && (
+              <Input
+                label="Installments"
+                value={formData.installments.toString()}
+                onChangeText={(v) => {
+                  const sanitized = v.replace(/[^0-9]/g, '');
+                  updateFormData({ installments: sanitized });
+                }}
+                keyboardType="numeric"
+                placeholder="Enter number of installments"
+                required
+                editable={!isInputDisabled}
+              />
             )}
 
-            <Input label="Sum Assured" value={sumAssured} onChangeText={setSumAssured} keyboardType="numeric" required editable={!isInputDisabled} />
+
+            <Input label="Sum Assured" value={formData.sumAssured} onChangeText={(v) => updateFormData({ sumAssured: v })} keyboardType="numeric" required editable={!isInputDisabled} />
             {errors.sumAssured && <Text style={styles.error}>{errors.sumAssured}</Text>}
 
+            {/* Extra Charge */}
             <Text style={styles.sectionTitle}>Extra Charge</Text>
-
             <View style={styles.checkboxRow}>
-              {feOeOptions.map(option => {
-                const checked = feOeOption === option;
-
+              {['F/E', 'O/E'].map(option => {
+                const checked = formData.feOeOption === option;
                 return (
                   <TouchableOpacity
                     key={option}
                     disabled={isInputDisabled}
-                    onPress={() => {
-                      setFeOeOption(prev => (prev === option ? '' : option));
-                    }}
+                    onPress={() => updateFormData({ feOeOption: formData.feOeOption === option ? '' : option as 'F/E' | 'O/E' })}
                     style={styles.checkboxItem}
                     activeOpacity={0.7}
                   >
@@ -879,76 +701,79 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
               })}
             </View>
 
+            {/* Premium Details */}
             <Text style={styles.sectionTitle}>Premium Details (Auto Calculated)</Text>
-            <Input label="Code (Auto)" value={code6Digit} editable={false} />
-            <Input label="Rate" value={isSpecialProject ? rate : '0'} editable={false} />
-            <Input label="Premium" value={basePremium ? Math.ceil(parseFloat(basePremium)).toString() : ''} editable={false} />
-            <Input label="F/E or O/E Amount" value={feOeAmount.toString()} editable={false} />
-            {/* <Input label="Base Premium" value={(Number(basePremium || 0) + Number(feOeAmount || 0)).toString()} editable={false} /> */}
-            <Input label="Commission" value={netCommission ? Math.ceil(parseFloat(netCommission)).toString() : ''} editable={false} />
-            <Input label="Payment Amount" value={netAmount ? Math.ceil(parseFloat(netAmount)).toString() : ''} editable={false} />
+            <Input label="Code (Auto)" value={calculated.code6Digit} editable={false} />
+            <Input label="Rate" value={isSpecialProject ? calculated.rate : '0'} editable={false} />
+            <Input label="Premium" value={calculated.premium ? Math.ceil(parseFloat(calculated.premium)).toString() : ''} editable={false} />
+            <Input label="F/E or O/E Amount" value={calculated.feOeAmount} editable={false} />
+            <Input label="Total Premium" value={calculated.totalPremium ? Math.ceil(parseFloat(calculated.totalPremium)).toString() : ''} editable={false} />
+            <Input label="Commission" value={calculated.netCommission ? Math.ceil(parseFloat(calculated.netCommission)).toString() : ''} editable={false} />
+            <Input label="Payment Amount" value={calculated.netAmount ? Math.ceil(parseFloat(calculated.netAmount)).toString() : ''} editable={false} />
+            <Input label="Installment" value={calculated.finalInstallment.toString()} editable={false} />
+            <Input label="Installment Premium" value={installmentPremiumValue} editable={false} />
 
-            <Input label="Installment" value={finalInstallment.toString()} editable={false} />
-            <Input label="Extra Charge" value={extraCharge} editable={false} />
-            <Input label="Total Premium" value={totalPremium ? Math.ceil(parseFloat(totalPremium)).toString() : ''} editable={false} />
-            <Input label="Servicing Cell Code" value={servicingCell} onChangeText={setServicingCell} maxLength={10} keyboardType="numeric" required editable={!isInputDisabled} />
+            {/* Agent Details */}
+            <Text style={styles.sectionTitle}>Agent & Servicing Details</Text>
+            <Input label="Servicing Cell Code" value={formData.servicingCell} onChangeText={(v) => updateFormData({ servicingCell: v })} maxLength={10} keyboardType="numeric" required editable={!isInputDisabled} />
             {errors.servicingCell && <Text style={styles.error}>{errors.servicingCell}</Text>}
-            <Input label="Agent Mobile" value={agentMobile} onChangeText={setAgentMobile} keyboardType="phone-pad" maxLength={11} required editable={!isInputDisabled} />
+            <Input label="Agent Mobile" value={formData.agentMobile} onChangeText={(v) => updateFormData({ agentMobile: v })} keyboardType="phone-pad" maxLength={11} required editable={!isInputDisabled} />
             {errors.agentMobile && <Text style={styles.error}>{errors.agentMobile}</Text>}
+
+            {/* Personal Details */}
             <Text style={styles.sectionTitle}>Personal & Nominee Details</Text>
-            <EnglishOnlyInput label="Father's / Husband's Name" value={fatherHusbandName} onChangeText={setFatherHusbandName} required editable={!isInputDisabled} maxLength={30} />
+            <EnglishOnlyInput label="Father's / Husband's Name" value={formData.fatherHusbandName} onChangeText={(v) => updateFormData({ fatherHusbandName: v })} required editable={!isInputDisabled} maxLength={30} />
             {errors.fatherHusbandName && <Text style={styles.error}>{errors.fatherHusbandName}</Text>}
-            <EnglishOnlyInput label="Mother's Name" value={motherName} onChangeText={setMotherName} required editable={!isInputDisabled} maxLength={30} />
+            <EnglishOnlyInput label="Mother's Name" value={formData.motherName} onChangeText={(v) => updateFormData({ motherName: v })} required editable={!isInputDisabled} maxLength={30} />
             {errors.motherName && <Text style={styles.error}>{errors.motherName}</Text>}
-            <EnglishOnlyInput label="Address" value={address} onChangeText={setAddress} required multiline numberOfLines={4} textAlignVertical="top" style={{ paddingTop: 12 }} editable={!isInputDisabled} maxLength={250} />
+            <EnglishOnlyInput label="Address" value={formData.address} onChangeText={(v) => updateFormData({ address: v })} required multiline numberOfLines={4} textAlignVertical="top" style={{ paddingTop: 12 }} editable={!isInputDisabled} maxLength={250} />
             {errors.address && <Text style={styles.error}>{errors.address}</Text>}
-            <EnglishOnlyInput label="District" value={district} onChangeText={setDistrict} required editable={!isInputDisabled} maxLength={15} />
+            <EnglishOnlyInput label="District" value={formData.district} onChangeText={(v) => updateFormData({ district: v })} required editable={!isInputDisabled} maxLength={15} />
             {errors.district && <Text style={styles.error}>{errors.district}</Text>}
 
             <Text style={{ marginLeft: 15, marginTop: 10, fontWeight: '600', color: '#000' }}>Gender</Text>
             <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginVertical: 10 }}>
               {['Male', 'Female'].map(g => (
-                <TouchableOpacity key={g}
+                <TouchableOpacity
+                  key={g}
                   onPress={() => {
-                    setGender(g);
+                    updateFormData({ gender: g });
                     setErrors(prev => ({ ...prev, gender: '' }));
                   }}
-                  style={{ flexDirection: 'row', alignItems: 'center' }} disabled={isInputDisabled}>
+                  style={{ flexDirection: 'row', alignItems: 'center' }}
+                  disabled={isInputDisabled}
+                >
                   <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: '#000', marginRight: 10, justifyContent: 'center', alignItems: 'center' }}>
-                    {gender === g && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#000' }} />}
+                    {formData.gender === g && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#000' }} />}
                   </View>
                   <Text>{g}</Text>
                 </TouchableOpacity>
               ))}
             </View>
-            {errors.gender && (<Text style={styles.error}>{errors.gender}</Text>)}
+            {errors.gender && <Text style={styles.error}>{errors.gender}</Text>}
 
+            {/* Nominee Details */}
             <Text style={styles.sectionTitle}>Nominee Details</Text>
-            <EnglishOnlyInput label="Nominee 1 Name" value={nominee1Name} onChangeText={setNominee1Name} required editable={!isInputDisabled} maxLength={35} />
+            <EnglishOnlyInput label="Nominee 1 Name" value={formData.nominee1Name} onChangeText={(v) => updateFormData({ nominee1Name: v })} required editable={!isInputDisabled} maxLength={35} />
             {errors.nominee1Name && <Text style={styles.error}>{errors.nominee1Name}</Text>}
-            <Input label="Nominee 1 Ratio %" value={nominee1Percent} onChangeText={handleNomineePercent(setNominee1Percent)} keyboardType="numeric" required editable={!isInputDisabled} />
-            {errors.nominee1Percent && (<Text style={styles.error}>{errors.nominee1Percent}</Text>)}
+            <Input label="Nominee 1 Ratio %" value={formData.nominee1Percent} onChangeText={handleNomineePercent('nominee1Percent')} keyboardType="numeric" required editable={!isInputDisabled} />
+            {errors.nominee1Percent && <Text style={styles.error}>{errors.nominee1Percent}</Text>}
 
-            <EnglishOnlyInput label="Nominee 2 Name" value={nominee2Name} onChangeText={setNominee2Name} editable={!isInputDisabled} maxLength={35} />
-            <Input label="Nominee 2 Ratio %" value={nominee2Percent} onChangeText={handleNomineePercent(setNominee2Percent)} keyboardType="numeric" editable={!isInputDisabled} />
-            <EnglishOnlyInput label="Nominee 3 Name" value={nominee3Name} onChangeText={setNominee3Name} editable={!isInputDisabled} maxLength={35} />
-            <Input label="Nominee 3 Ratio %" value={nominee3Percent} onChangeText={handleNomineePercent(setNominee3Percent)} keyboardType="numeric" editable={!isInputDisabled} />
+            <EnglishOnlyInput label="Nominee 2 Name" value={formData.nominee2Name} onChangeText={(v) => updateFormData({ nominee2Name: v })} editable={!isInputDisabled} maxLength={35} />
+            <Input label="Nominee 2 Ratio %" value={formData.nominee2Percent} onChangeText={handleNomineePercent('nominee2Percent')} keyboardType="numeric" editable={!isInputDisabled} />
+            <EnglishOnlyInput label="Nominee 3 Name" value={formData.nominee3Name} onChangeText={(v) => updateFormData({ nominee3Name: v })} editable={!isInputDisabled} maxLength={35} />
+            <Input label="Nominee 3 Ratio %" value={formData.nominee3Percent} onChangeText={handleNomineePercent('nominee3Percent')} keyboardType="numeric" editable={!isInputDisabled} />
 
+            {/* Guardian */}
             <Text style={styles.sectionTitle}>Guardian Details</Text>
+            <EnglishOnlyInput label="Guardian Name" value={formData.guardianName} onChangeText={(v) => updateFormData({ guardianName: v })} editable={!isInputDisabled} maxLength={30} />
 
-            <EnglishOnlyInput
-              label="Guardian Name"
-              value={guardianName}
-              onChangeText={setGuardianName}
-              editable={!isInputDisabled}
-              maxLength={30}
-            />
-
+            {/* Code Setup */}
             <Text style={styles.sectionTitle}>Code Setup</Text>
             <Input
               label="FA"
-              value={fa}
-              onChangeText={(text) => setFa(text.replace(/[^0-9]/g, '').slice(0, 8))}
+              value={formData.fa}
+              onChangeText={(text) => updateFormData({ fa: text.replace(/[^0-9]/g, '').slice(0, 8) })}
               maxLength={8}
               keyboardType="numeric"
               required
@@ -957,47 +782,18 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             />
             {errors.fa && <Text style={styles.error}>{errors.fa}</Text>}
 
-            <Input
-              label="UM"
-              value={um}
-              onChangeText={setUm}
-              maxLength={6}
-              keyboardType="numeric"
-              editable={isUmEditable && !isInputDisabled}
-              style={{
-                backgroundColor: isUmEditable && !isInputDisabled ? '#ffffff' : '#f0f0f0'
-              }}
-            />
-            <Input
-              label="BM"
-              value={bm}
-              onChangeText={setBm}
-              maxLength={6}
-              keyboardType="numeric"
-              editable={isBmEditable && !isInputDisabled}
-              style={{
-                backgroundColor: isBmEditable && !isInputDisabled ? '#ffffff' : '#f0f0f0'
-              }}
-            />
-            <Input
-              label="AGM"
-              value={agm}
-              onChangeText={setAgm}
-              maxLength={6}
-              keyboardType="numeric"
-              editable={isAgmEditable && !isInputDisabled}
-              style={{
-                backgroundColor: isAgmEditable && !isInputDisabled ? '#ffffff' : '#f0f0f0'
-              }}
-            />
+            <Input label="UM" value={formData.um} onChangeText={(v) => updateFormData({ um: v })} maxLength={6} keyboardType="numeric" editable={editable.um && !isInputDisabled} style={{ backgroundColor: editable.um && !isInputDisabled ? '#ffffff' : '#f0f0f0' }} />
+            <Input label="BM" value={formData.bm} onChangeText={(v) => updateFormData({ bm: v })} maxLength={6} keyboardType="numeric" editable={editable.bm && !isInputDisabled} style={{ backgroundColor: editable.bm && !isInputDisabled ? '#ffffff' : '#f0f0f0' }} />
+            <Input label="AGM" value={formData.agm} onChangeText={(v) => updateFormData({ agm: v })} maxLength={6} keyboardType="numeric" editable={editable.agm && !isInputDisabled} style={{ backgroundColor: editable.agm && !isInputDisabled ? '#ffffff' : '#f0f0f0' }} />
 
             <FilledButton
-              title={isSubmitting ? 'Preparing Payment...' : 'Submit'}
+              title={loading.isSubmitting ? 'Preparing Payment...' : 'Submit'}
               onPress={handleSubmit}
               style={styles.submitButton}
               disabled={isInputDisabled || !selectedProject}
             />
           </ScrollView>
+
           <InfoModal
             visible={showFaFormatModal}
             onClose={() => setShowFaFormatModal(false)}
@@ -1012,110 +808,18 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
 };
 
 const styles = StyleSheet.create({
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginVertical: 10,
-    color: '#333',
-  },
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginVertical: 10, color: '#333' },
   planName: { color: 'black', marginBottom: 10 },
   planNameScroll: { marginBottom: 10, borderWidth: 1, borderColor: '#000', borderRadius: 7, backgroundColor: '#E0E0E0' },
   planNameInput: { padding: 15, fontSize: 14, color: '#333' },
   submitButton: { marginVertical: 20 },
-  error: {
-    color: 'red',
-    marginTop: 4,
-    fontSize: 16,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalBox: {
-    width: '85%',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 20,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
-    color: '#000',
-  },
-  modalText: {
-    fontSize: 14,
-    color: '#333',
-    marginBottom: 20,
-  },
-  modalButton: {
-    alignSelf: 'flex-end',
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    backgroundColor: '#fff',
-    borderRadius: 6,
-  },
-  modalButtonText: {
-    fontSize: 16,
-    color: '#007AFF',
-    fontWeight: '600',
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-
-  checkboxRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginVertical: 10,
-  },
-
-  checkboxItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 30,
-  },
-
-  checkbox: {
-    width: 22,
-    height: 22,
-    borderWidth: 2,
-    borderColor: PRIMARY_BUTTON_BG,
-    borderRadius: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-
-  checkMark: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    lineHeight: 18,
-    textAlign: 'center',
-  },
-
-  checkboxChecked: {
-    backgroundColor: PRIMARY_BUTTON_BG,
-  },
-
-  checkboxInner: {
-    width: 12,
-    height: 12,
-    backgroundColor: '#fff',
-  },
-
-  checkboxLabel: {
-    marginLeft: 10,
-    fontSize: 16,
-    color: '#000',
-  },
-
-
+  error: { color: 'red', marginTop: 4, fontSize: 16 },
+  checkboxRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginVertical: 10 },
+  checkboxItem: { flexDirection: 'row', alignItems: 'center', marginRight: 30 },
+  checkbox: { width: 22, height: 22, borderWidth: 2, borderColor: PRIMARY_BUTTON_BG, borderRadius: 4, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
+  checkMark: { color: '#fff', fontSize: 16, fontWeight: 'bold', lineHeight: 18, textAlign: 'center' },
+  checkboxChecked: { backgroundColor: PRIMARY_BUTTON_BG },
+  checkboxLabel: { marginLeft: 10, fontSize: 16, color: '#000' },
 });
 
 export default PayFirstPremiumScreen;

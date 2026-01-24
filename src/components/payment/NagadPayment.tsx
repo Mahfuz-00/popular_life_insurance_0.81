@@ -22,6 +22,14 @@ type NagadPaymentProps = {
   secondaryPaymentId?: number | null;
 };
 
+const getQueryParam = (url: string, key: string) => {
+  const params = url.split('?')[1];
+  if (!params) return null;
+  const search = new URLSearchParams(params);
+  return search.get(key);
+};
+
+
 export const NagadPayment: React.FC<NagadPaymentProps> = ({
   amount,
   number,
@@ -49,7 +57,7 @@ export const NagadPayment: React.FC<NagadPaymentProps> = ({
     init();
   }, []);
 
-  const handleSuccess = async () => {
+  const handleSuccess = async (realTrxId: string) => {
     const partialFields = paymentType === 'partial' ? {
       partial_amount: partialAmount,
       adjust_with: adjustWith,
@@ -61,7 +69,7 @@ export const NagadPayment: React.FC<NagadPaymentProps> = ({
       policy_no: number,
       method: 'nagad',
       amount: paymentType === 'full' ? amount : partialAmount,
-      transaction_no: trxNo,
+      transaction_no: realTrxId,
       date_time: trxNo,
       id: secondaryPaymentId,
     };
@@ -78,7 +86,7 @@ export const NagadPayment: React.FC<NagadPaymentProps> = ({
       method: 'nagad',
       // If full payment, use the amount prop, otherwise nullify the main amount field.
       amount: paymentType === 'full' ? amount : null,
-      transaction_no: trxNo,
+      transaction_no: realTrxId,
       date_time: trxNo,
 
       //SPREAD THE PARTIAL FIELDS: Only exists if paymentType is 'partial'
@@ -94,18 +102,18 @@ export const NagadPayment: React.FC<NagadPaymentProps> = ({
     await AsyncStorage.setItem('syncPayments', JSON.stringify([...saved, postData]));
 
     const lastId = await AsyncStorage.getItem('lastTransactionId');
-    if (lastId === trxNo) {
+    if (lastId === realTrxId) {
       onClose();
       return;
     }
 
-    await AsyncStorage.setItem('lastTransactionId', trxNo);
+    await AsyncStorage.setItem('lastTransactionId', realTrxId);
 
     const success = await userPayPremium(postData);
     if (success) {
-      const updated = saved.filter((p: any) => p.transaction_no !== trxNo);
+      const updated = saved.filter((p: any) => p.transaction_no !== realTrxId);
       await AsyncStorage.setItem('syncPayments', JSON.stringify(updated));
-      onSuccess(trxNo);
+      onSuccess(realTrxId);
     }
   };
 
@@ -122,8 +130,17 @@ export const NagadPayment: React.FC<NagadPaymentProps> = ({
           console.log("NAGAD RETURNED SUCCESS — FULL RESPONSE BODY BELOW:");
           console.log("URL:", url);
           console.log("Full navState:", JSON.stringify(navState, null, 2));
+          const issuerTrx = getQueryParam(url, 'issuer_payment_ref');
 
-          handleSuccess();
+          if (!issuerTrx) {
+            Alert.alert('Error', 'Transaction ID missing from Nagad response');
+            onClose();
+            return;
+          }
+
+          console.log('Nagad trxID:', issuerTrx);
+
+          handleSuccess(issuerTrx);
           onClose();
         } else if (url.includes('Failed') || url.includes('Aborted')) {
           Alert.alert(
