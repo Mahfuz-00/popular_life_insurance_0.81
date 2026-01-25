@@ -393,11 +393,11 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       let netCommRounded = Math.floor(netComm) + (netComm % 1 >= 0.5 ? 1 : 0);
       let finalNet = Math.floor(roundedPremium - netComm) + ((roundedPremium - netComm) % 1 >= 0.5 ? 1 : 0) + extraCharge;
 
-      if (formData.mode === 'mly' && formData.installments) {
-        const count = parseInt(formData.installments.toString(), 10) || 1;
-        netCommRounded *= count;
-        finalNet *= count;
-      }
+      // if (formData.mode === 'mly') {
+      //   const count = parseInt(formData.installments.toString(), 10) || 1;
+      //   netCommRounded *= count;
+      //   finalNet *= count;
+      // }
 
       const finalTotalPremium = roundedPremium + extraCharge;
 
@@ -526,11 +526,8 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
   };
 
   const installmentPremiumValue = React.useMemo(() => {
-    if (formData.plan === '72') {
-      const count = formData.mode === 'mly' ? Number(formData.installments || 1) : calculated.finalInstallment || 1;
-      return (Number(calculated.totalPremium || 0) * count).toString();
-    }
-    return (Number(calculated.basePremium || 0) + Number(calculated.feOeAmount || 0)).toString();
+    const count = formData.mode === 'mly' ? Number(formData.installments || 1) : calculated.finalInstallment || 1;
+    return (Number(calculated.totalPremium || 0) * count).toString();
   }, [formData.plan, calculated.totalPremium, formData.installments, calculated.finalInstallment, calculated.basePremium, calculated.feOeAmount, formData.mode]);
 
   const handleSubmit = async () => {
