@@ -166,7 +166,6 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
       project: projectCode.toString(),
       code: code.toString(),
       name,
-      childName,
       mobile,
       totalPremium,
       servicingCell,
@@ -199,6 +198,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
       No_Of_Ins: installments,
       Total_Paid: null,
       guardianName,
+      childName,
     };
 
     // Try save first
@@ -242,7 +242,6 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
           project: projectCode.toString(),
           code: code.toString(),
           name,
-          childName,
           entrydate,
           mobile,
           plan,
@@ -273,6 +272,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
           feOeOption,
           installments,
           guardianName,
+          childName,
         }}
         onSuccess={() => {
           dispatch(clearFirstPremiumData());
@@ -297,7 +297,6 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
           project: projectCode.toString(),
           code: code.toString(),
           name,
-          childName,
           entrydate,
           mobile,
           plan,
@@ -328,6 +327,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
           feOeOption,
           installments,
           guardianName,
+          childName,
         }}
         onSuccess={() => {
           dispatch(clearFirstPremiumData());
