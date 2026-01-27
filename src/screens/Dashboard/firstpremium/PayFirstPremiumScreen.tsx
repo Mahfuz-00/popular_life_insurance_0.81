@@ -390,7 +390,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         let monthsPaid = 12;
         if (formData.mode === 'hly') monthsPaid = 6;
         else if (formData.mode === 'qly') monthsPaid = 3;
-        else if (formData.mode === 'mly' && formData.installments) monthsPaid = Number(formData.installments);
+        else if (formData.mode === 'mly' && formData.installments) monthsPaid = 1;
 
         extraCharge = Math.round((annualExtra / 12) * monthsPaid);
       }
@@ -420,7 +420,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       const installmentPremium = Math.ceil(finalTotalPremium * count);
 
       // ✅ Payment amount = installment premium - total commission
-      const finalNet = Math.floor(installmentPremium - totalCommission) + ((roundedPremium - netComm) % 1 >= 0.5 ? 1 : 0) + extraCharge;
+      const finalNet = Math.floor(installmentPremium - totalCommission) + ((roundedPremium - netComm) % 1 >= 0.5 ? 1 : 0);
 
       updateCalculated({
         code6Digit: code6,
