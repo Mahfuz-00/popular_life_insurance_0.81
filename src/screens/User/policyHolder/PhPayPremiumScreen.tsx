@@ -118,6 +118,16 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
       if (entered % dueTotal !== 0) {
         return ToastAndroid.show('Amount must be multiple of premium', ToastAndroid.LONG);
       }
+
+      const payingInstallments = Number(amountToPay || 0) / Number(policyDetails.totalpremium || 0);
+      const remainingInstallments = Number(policyDetails.Diff_Ins || 0);
+
+      if (payingInstallments > remainingInstallments) {
+        return ToastAndroid.show(
+          `You can pay maximum ${remainingInstallments} installments (${Number(policyDetails.totalpremium || 0) * remainingInstallments})`,
+          ToastAndroid.LONG
+        );
+      }
     }
 
     setIsSubmitting(true);

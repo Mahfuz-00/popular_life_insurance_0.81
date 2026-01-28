@@ -45,12 +45,6 @@ const PLAN_72_COMMISSION: Record<string, number> = {
   '16': 0.286, '17': 0.286, '18': 0.286, '19': 0.286, '20': 0.286,
   '21': 0.286, '22': 0.286, '23': 0.286, '24': 0.286, '25': 0.286,
 };
-const MODE_MAX_INSTALLMENTS: Record<string, number> = {
-  mly: 12,
-  qly: 4,
-  hly: 2,
-};
-
 
 interface ProjectItem {
   label: string;
@@ -120,17 +114,14 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
   const decimalTwoDigit = (num: number): number => Math.floor(num * 100) / 100;
 
   const getInstallmentNumber = () => {
-    if (!['mly', 'qly', 'hly'].includes(formData.mode)) return 1;
-
-    const val = parseInt(formData.installments.toString(), 10);
-    const max = MODE_MAX_INSTALLMENTS[formData.mode] ?? 1;
-
-    if (isNaN(val) || val <= 0) return 1;
-    if (val > max) return max;
-
-    return val;
+    if (formData.mode === 'mly') {
+      const val = parseInt(formData.installments.toString(), 10);
+      return isNaN(val) || val <= 0 ? 1 : val; // default to 1 if invalid
+    }
+    if (formData.mode === 'qly') return 4;
+    if (formData.mode === 'hly') return 2;
+    return 1;
   };
-
 
   // Initialize projects and plans
   useEffect(() => {
@@ -390,7 +381,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         let monthsPaid = 12;
         if (formData.mode === 'hly') monthsPaid = 6;
         else if (formData.mode === 'qly') monthsPaid = 3;
-        else if (formData.mode === 'mly' && formData.installments) monthsPaid = 1;
+        else if (formData.mode === 'mly' && formData.installments) monthsPaid = Number(formData.installments);
 
         extraCharge = Math.round((annualExtra / 12) * monthsPaid);
       }
@@ -400,34 +391,25 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       const tax = grossComm * 0.05;
       const netComm = grossComm - tax;
       let netCommRounded = Math.floor(netComm) + (netComm % 1 >= 0.5 ? 1 : 0);
-      // let finalNet = Math.floor(roundedPremium - netComm) + ((roundedPremium - netComm) % 1 >= 0.5 ? 1 : 0) + extraCharge;
+      let finalNet = Math.floor(roundedPremium - netComm) + ((roundedPremium - netComm) % 1 >= 0.5 ? 1 : 0) + extraCharge;
 
-      // if (formData.mode === 'mly') {
-      //   const count = parseInt(formData.installments.toString(), 10) || 1;
-      //   netCommRounded *= count;
-      //   finalNet *= count;
-      // }
+      if (formData.mode === 'mly') {
+        const count = parseInt(formData.installments.toString(), 10) || 1;
+        netCommRounded *= count;
+        finalNet *= count;
+      } else if (formData.mode === 'hly' || formData.mode === 'qly') {
+        netCommRounded *= installmentNumber;
+        finalNet *= installmentNumber;
+      }
 
       const finalTotalPremium = roundedPremium + extraCharge;
-
-      // total installment count
-      const count = getInstallmentNumber();
-
-      // ✅ Total commission = per installment × count
-      const totalCommission = netCommRounded * count;
-
-      // installment premium (already matching your rule)
-      const installmentPremium = Math.ceil(finalTotalPremium * count);
-
-      // ✅ Payment amount = installment premium - total commission
-      const finalNet = Math.floor(installmentPremium - totalCommission) + ((roundedPremium - netComm) % 1 >= 0.5 ? 1 : 0);
 
       updateCalculated({
         code6Digit: code6,
         rate: fetchedRate.toString(),
         premium: roundedPremium.toString(),
         commission: grossComm.toFixed(2),
-        netCommission: totalCommission.toFixed(2),
+        netCommission: netCommRounded.toFixed(2),
         netAmount: finalNet.toString(),
         totalPremium: finalTotalPremium.toString(),
         feOeAmount: extraCharge.toString(),
@@ -547,13 +529,8 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
   };
 
   const installmentPremiumValue = React.useMemo(() => {
-    const total = Number(calculated.totalPremium || 0);
-    const count = getInstallmentNumber();
-
-    if (!total || !count) return '0';
-
-    const perInstallment = Math.ceil(total * count);
-    return perInstallment.toString();
+    const count = formData.mode === 'mly' ? Number(formData.installments || 1) : calculated.finalInstallment || 1;
+    return (Number(calculated.totalPremium || 0) * count).toString();
   }, [formData.plan, calculated.totalPremium, formData.installments, calculated.finalInstallment, calculated.basePremium, calculated.feOeAmount, formData.mode]);
 
   const handleSubmit = async () => {
@@ -683,7 +660,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             <PickerComponent items={modes} value={formData.mode} setValue={(v) => updateFormData({ mode: v })} label="Mode" placeholder="Select a mode" required disabled={isInputDisabled} />
             {errors.mode && <Text style={styles.error}>{errors.mode}</Text>}
 
-            {['mly', 'qly', 'hly'].includes(formData.mode) && (
+            {formData.mode === 'mly' && (
               <Input
                 label="Installments"
                 value={formData.installments.toString()}
@@ -691,27 +668,27 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
                   const sanitized = v.replace(/[^0-9]/g, '');
                   const num = Number(sanitized);
 
-                  const max = MODE_MAX_INSTALLMENTS[formData.mode] ?? 1;
-
                   if (!sanitized) {
                     updateFormData({ installments: '' });
                     return;
                   }
 
-                  if (num > max) {
-                    ToastAndroid.show(`Max ${max} installments allowed for this mode`, ToastAndroid.SHORT);
-                    updateFormData({ installments: max.toString() });
+                  if (num > 12) {
+                    ToastAndroid.show('Maximum 12 installments allowed', ToastAndroid.SHORT);
+                    updateFormData({ installments: '12' });
                     return;
                   }
 
                   updateFormData({ installments: sanitized });
                 }}
                 keyboardType="numeric"
-                placeholder={`Max ${MODE_MAX_INSTALLMENTS[formData.mode]} allowed`}
+                placeholder="Maximum 12 installments allowed"
                 required
                 editable={!isInputDisabled}
               />
             )}
+
+
 
             <Input label="Sum Assured" value={formData.sumAssured} onChangeText={(v) => updateFormData({ sumAssured: v })} keyboardType="numeric" required editable={!isInputDisabled} />
             {errors.sumAssured && <Text style={styles.error}>{errors.sumAssured}</Text>}

@@ -54,6 +54,7 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       const res = await getDuePremiumDetails(policyNumber);
       if (res?.Policyno) {
         setPolicyDetails(res);
+        console.log('Policy Details:', res);
         if (res.DueAmount) {
           setAmount(String(res.DueAmount));
         }
@@ -91,6 +92,19 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 
     if (Number(payableAmount) % Number(policyDetails.totalpremium) !== 0) {
       return ToastAndroid.show('Amount must be multiple of premium', ToastAndroid.LONG);
+    }
+
+    const payingInstallments = Number(payableAmount || 0) / Number(policyDetails.totalpremium || 0);
+    const remainingInstallments = Number(policyDetails.Diff_Ins || 0);
+    console.log('Diff ins:', policyDetails.Diff_Ins);
+    console.log('Paying Installments:', payingInstallments);
+    console.log('Remaining Installments:', remainingInstallments);
+
+    if (payingInstallments > remainingInstallments) {
+      return ToastAndroid.show(
+        `You can pay maximum ${remainingInstallments} installments (${Number(policyDetails.totalpremium || 0) * remainingInstallments})`,
+        ToastAndroid.LONG
+      );
     }
 
     setIsSubmitting(true);
