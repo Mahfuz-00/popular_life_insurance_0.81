@@ -116,12 +116,11 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
   const getInstallmentNumber = () => {
     if (formData.mode === 'mly') {
       const val = parseInt(formData.installments.toString(), 10);
-      return isNaN(val) || val <= 0 ? 1 : val; // default to 1 if invalid
+      return isNaN(val) || val <= 0 ? 1 : val;
     }
-    if (formData.mode === 'qly') return 4;
-    if (formData.mode === 'hly') return 2;
     return 1;
   };
+
 
   // Initialize projects and plans
   useEffect(() => {
@@ -297,7 +296,6 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
 
       dispatch({ type: SHOW_LOADING, payload: 'Calculating premium...' });
 
-      const installmentNumber = getInstallmentNumber();
       const rateAge = age < 18 ? 18 : age;
       const sa = parseFloat(formData.sumAssured);
       const code6 = `${formData.plan}${formData.term.padStart(2, '0')}${rateAge.toString().padStart(2, '0')}`;
@@ -323,13 +321,6 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         const factor = PLAN_72_FACTOR[formData.mode] || 1;
         const basePremiumDecimal = decimalTwoDigit(sa / fetchedRate);
         basePremiumFinal = decimalTwoDigit(basePremiumDecimal * factor * 500);
-
-        const roundedModeBasePremium = Math.floor(basePremiumFinal) + (basePremiumFinal % 1 >= 0.5 ? 1 : 0);
-        const basePremiumValue = formData.mode === 'mly' ? roundedModeBasePremium :
-          formData.mode === 'hly' || formData.mode === 'qly' ? roundedModeBasePremium / installmentNumber :
-            roundedModeBasePremium;
-
-        updateCalculated({ basePremium: basePremiumValue.toFixed(2) });
       } else {
         // Other plans calculation
         if (isSpecialProject) {
@@ -360,16 +351,8 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
 
           const multiplier = MODE_MULTIPLIER[formData.mode] || 1;
           basePremiumFinal = decimalTwoDigit(decimalTwoDigit(sa / 1000) * adjusted / multiplier);
-
-          const roundedModeBasePremium = Math.floor(basePremiumFinal) + (basePremiumFinal % 1 >= 0.5 ? 1 : 0);
-          const basePremiumValue = formData.mode === 'hly' || formData.mode === 'qly' ? roundedModeBasePremium / (installmentNumber * 2) :
-            formData.mode === 'mly' ? roundedModeBasePremium :
-              roundedModeBasePremium;
-
-          updateCalculated({ basePremium: basePremiumValue.toFixed(2) });
         } else {
           basePremiumFinal = decimalTwoDigit(sa / (12 * parseInt(formData.term)));
-          updateCalculated({ basePremium: (basePremiumFinal / installmentNumber).toFixed(2), rate: '0' });
         }
       }
 
@@ -393,14 +376,10 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       let netCommRounded = Math.floor(netComm) + (netComm % 1 >= 0.5 ? 1 : 0);
       let finalNet = Math.floor(roundedPremium - netComm) + ((roundedPremium - netComm) % 1 >= 0.5 ? 1 : 0) + extraCharge;
 
-      if (formData.mode === 'mly') {
-        const count = parseInt(formData.installments.toString(), 10) || 1;
-        netCommRounded *= count;
-        finalNet *= count;
-      } else if (formData.mode === 'hly' || formData.mode === 'qly') {
-        netCommRounded *= installmentNumber;
-        finalNet *= installmentNumber;
-      }
+      const installmentNumber = getInstallmentNumber();
+
+      netCommRounded *= installmentNumber;
+      finalNet *= installmentNumber;
 
       const finalTotalPremium = roundedPremium + extraCharge;
 
@@ -591,7 +570,8 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         nominee3Percent: formData.nominee3Percent,
         feOeOption: formData.feOeOption,
         feOeAmount: calculated.feOeAmount,
-        installments: formData.mode === 'mly' ? formData.installments : null,
+        installments: formData.mode === 'mly' ? formData.installments : 1,
+        installmentPremium: installmentPremiumValue.toString(),
         guardianName: formData.guardianName
       }));
 
@@ -722,10 +702,11 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             <Input label="Premium" value={calculated.premium ? Math.ceil(parseFloat(calculated.premium)).toString() : ''} editable={false} />
             <Input label="F/E or O/E Amount" value={calculated.feOeAmount} editable={false} />
             <Input label="Total Premium" value={calculated.totalPremium ? Math.ceil(parseFloat(calculated.totalPremium)).toString() : ''} editable={false} />
-            <Input label="Commission" value={calculated.netCommission ? Math.ceil(parseFloat(calculated.netCommission)).toString() : ''} editable={false} />
-            <Input label="Payment Amount" value={calculated.netAmount ? Math.ceil(parseFloat(calculated.netAmount)).toString() : ''} editable={false} />
             <Input label="Installment" value={calculated.finalInstallment.toString()} editable={false} />
             <Input label="Installment Premium" value={installmentPremiumValue} editable={false} />
+            <Input label="Commission" value={calculated.netCommission ? Math.ceil(parseFloat(calculated.netCommission)).toString() : ''} editable={false} />
+            <Input label="Payment Amount" value={calculated.netAmount ? Math.ceil(parseFloat(calculated.netAmount)).toString() : ''} editable={false} />
+
 
             {/* Agent Details */}
             <Text style={styles.sectionTitle}>Agent & Servicing Details</Text>
