@@ -364,24 +364,29 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         let monthsPaid = 12;
         if (formData.mode === 'hly') monthsPaid = 6;
         else if (formData.mode === 'qly') monthsPaid = 3;
-        else if (formData.mode === 'mly' && formData.installments) monthsPaid = Number(formData.installments);
+        else if (formData.mode === 'mly' && formData.installments) 
+          monthsPaid = 1;
+          // monthsPaid = Number(formData.installments);
 
         extraCharge = Math.round((annualExtra / 12) * monthsPaid);
       }
 
       const roundedPremium = Math.floor(basePremiumFinal) + (basePremiumFinal % 1 >= 0.5 ? 1 : 0);
-      const grossComm = roundedPremium * commRate;
-      const tax = grossComm * 0.05;
-      const netComm = grossComm - tax;
-      let netCommRounded = Math.floor(netComm) + (netComm % 1 >= 0.5 ? 1 : 0);
-      let finalNet = Math.floor(roundedPremium - netComm) + ((roundedPremium - netComm) % 1 >= 0.5 ? 1 : 0) + extraCharge;
-
       const installmentNumber = getInstallmentNumber();
+      const totalPremiumBeforeInstallment = roundedPremium + extraCharge;
 
-      netCommRounded *= installmentNumber;
-      finalNet *= installmentNumber;
+      const totalPremiumBeforeCommission = roundedPremium * installmentNumber;
+      console.log('Total Premium Before Commission:', totalPremiumBeforeCommission);
+      const grossComm = totalPremiumBeforeCommission * commRate;
+      console.log('Gross Commission:', grossComm);
+      const tax = grossComm * 0.05;
+      console.log('Tax on Commission:', tax);
+      const netComm = grossComm - tax;
+      console.log('Net Commission:', netComm);
+      let netCommRounded = Math.floor(netComm) + (netComm % 1 >= 0.5 ? 1 : 0);
+      let finalNet = Math.floor(totalPremiumBeforeCommission - netComm) + ((totalPremiumBeforeCommission - netComm) % 1 >= 0.5 ? 1 : 0) + extraCharge;
 
-      const finalTotalPremium = roundedPremium + extraCharge;
+      const finalTotalPremium = totalPremiumBeforeCommission + extraCharge;
 
       updateCalculated({
         code6Digit: code6,
@@ -390,7 +395,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         commission: grossComm.toFixed(2),
         netCommission: netCommRounded.toFixed(2),
         netAmount: finalNet.toString(),
-        totalPremium: finalTotalPremium.toString(),
+        totalPremium: totalPremiumBeforeInstallment.toString(),
         feOeAmount: extraCharge.toString(),
         extraCharge: extraCharge.toString(),
         finalInstallment: installmentNumber

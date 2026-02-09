@@ -111,7 +111,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
     { label: 'Term', value: term },
     { label: 'Mode', value: mode },
     // ← Only show Installments row when mode is monthly
-    ...(mode === 'mly' ? [{ label: 'Installments', value: installments || '1' }] : []),
+    ...(mode === 'mly' ? [{ label: 'Monthly Installments', value: installments || '1' }] : []),
     { label: 'Sum Assured', value: sumAssured },
     { label: 'F/E or O/E', value: feOeOption },
     { label: 'Rate Code', value: rateCode },
@@ -119,6 +119,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
     { label: 'Base Premium', value: basePremium },
     { label: 'F/E or O/E Amount', value: feOeAmount },
     { label: 'Total Premium', value: totalPremium },
+    { label: 'Installments', value: installments },
     { label: 'Installment Premium', value: installmentPremium },
     { label: 'Commission', value: commission },
     { label: 'Payment Amount', value: netAmount },
