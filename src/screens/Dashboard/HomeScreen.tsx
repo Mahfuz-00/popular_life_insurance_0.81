@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ScrollView, StyleSheet, Dimensions, Image} from 'react-native';
+import { View, ScrollView, StyleSheet, Dimensions, Image, StatusBar} from 'react-native';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../store';
 import globalStyle from '../../styles/globalStyle';
@@ -11,6 +11,8 @@ import { COMPANY_LOGO } from '../../config';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
+
+const PRIMARY_COLOR = '#966EAF';
 
 const HomeScreen = ({ navigation }: { navigation: any }) => {
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
@@ -87,7 +89,11 @@ const HomeScreen = ({ navigation }: { navigation: any }) => {
   ].filter(Boolean);
 
   return (
-    <SafeAreaView style={{ flex: 1}}>
+    <View style={[styles.safeArea, { backgroundColor: '#fff' }]}>
+      <StatusBar
+        backgroundColor={PRIMARY_COLOR}
+        barStyle="light-content"
+      />
     <View style={globalStyle.container}>
       <Header navigation={navigation} />
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -108,11 +114,15 @@ const HomeScreen = ({ navigation }: { navigation: any }) => {
       </ScrollView>
       <FooterContact />
     </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+   safeArea: {
+    flex: 1,
+    backgroundColor: '#966EAF', 
+  },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

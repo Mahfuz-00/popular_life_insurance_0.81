@@ -14,7 +14,7 @@ type ContactUsScreenProps = {
 
 const ContactUsScreen: React.FC<ContactUsScreenProps> = ({ navigation }) => {
   return (
-    <SafeAreaView style={{ flex: 1}}>
+    <View style={{ flex: 1, backgroundColor: '#966EAF', }}>
     <View style={[globalStyle.container, { backgroundColor: '#D5EDE3' }]}>
       <Header navigation={navigation} title={'Contact Us'} />
       <ScrollView>
@@ -61,7 +61,7 @@ const ContactUsScreen: React.FC<ContactUsScreenProps> = ({ navigation }) => {
 
       <FooterContact/>
     </View>
-    </SafeAreaView>
+    </View>
   );
 };
 

@@ -6,7 +6,6 @@ import {
   Image,
   Dimensions,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -15,6 +14,7 @@ import type { RootState } from '../store';
 import type { DrawerContentComponentProps } from '@react-navigation/drawer';
 import { COMPANY_NAME, COMPANY_LOGO } from '../config';
 import { logout } from '../actions/userActions';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 const guidelineBaseWidth = 360;
@@ -37,13 +37,6 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
       <View style={styles.drawer}>
         {/* Header */}
         <View style={styles.header}>
-          <Icon
-            name="arrow-back-sharp"
-            size={scale(26)}
-            color="#000"
-            onPress={() => navigation.closeDrawer()}
-            style={styles.backIcon}
-          />
           <View style={styles.headerContent}>
             <View style={styles.logoContainer}>
               <Image source={COMPANY_LOGO} style={styles.logo} resizeMode="contain" />
@@ -137,7 +130,7 @@ const aboutItems = [
 ];
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', },
+  container: { flex: 1, backgroundColor: '#fff', paddingTop: 8, paddingBottom: 8 },
   drawer: { flex: 1, width: '100%' },
   header: { paddingHorizontal: scale(15), paddingTop: scale(10), paddingBottom: scale(15) },
   backIcon: { marginBottom: scale(10) },
