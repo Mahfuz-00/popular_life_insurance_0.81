@@ -202,6 +202,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
       total_paid: installmentPremium,
       guardianName,
       childName,
+      basePremium,
     };
 
     // Try save first
@@ -277,6 +278,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
           total_paid: installmentPremium,
           guardianName,
           childName,
+          basePremium,
         }}
         onSuccess={() => {
           dispatch(clearFirstPremiumData());
@@ -333,6 +335,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
           total_paid: installmentPremium,
           guardianName,
           childName,
+          basePremium,
         }}
         onSuccess={() => {
           dispatch(clearFirstPremiumData());

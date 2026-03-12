@@ -1,8 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import DatePicker from 'react-native-date-picker';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import moment from 'moment';
 import globalStyle from '../styles/globalStyle';
+
+let DatePickerAndroid: any = null;
+if (Platform.OS === 'android') {
+  // Only import react-native-date-picker on Android
+  DatePickerAndroid = require('react-native-date-picker').default;
+}
 
 interface DatePickerComponentProps {
   date?: Date | null;
@@ -27,13 +33,20 @@ export const DatePickerComponent: React.FC<DatePickerComponentProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
 
+  const handlePress = () => {
+    if (!editable) return;
+    setOpen(true);
+  };
+
+  const handleConfirmIOS = (_event: any, selectedDate?: Date) => {
+    setOpen(false);
+    if (selectedDate) setDate(selectedDate);
+  };
+
   return (
     <View style={[styles.container, style]}>
       {label && <Text style={[globalStyle.font, labelStyle]}>{label}</Text>}
-      <TouchableOpacity
-        onPress={() => editable && setOpen(true)}
-        disabled={!editable}
-      >
+      <TouchableOpacity onPress={handlePress} disabled={!editable}>
         <TextInput
           style={[
             globalStyle.font,
@@ -45,17 +58,29 @@ export const DatePickerComponent: React.FC<DatePickerComponentProps> = ({
           pointerEvents="none"
         />
       </TouchableOpacity>
-      <DatePicker
-        modal
-        open={open}
-        date={date || defaultDate}
-        mode="date"
-        onConfirm={(selectedDate) => {
-          setOpen(false);
-          setDate(selectedDate);
-        }}
-        onCancel={() => setOpen(false)}
-      />
+
+      {Platform.OS === 'android' && DatePickerAndroid && (
+        <DatePickerAndroid
+          modal
+          open={open}
+          date={date || defaultDate}
+          mode="date"
+          onConfirm={(selectedDate: Date) => {
+            setOpen(false);
+            setDate(selectedDate);
+          }}
+          onCancel={() => setOpen(false)}
+        />
+      )}
+
+      {Platform.OS === 'ios' && open && (
+        <DateTimePicker
+          value={date || defaultDate}
+          mode="date"
+          display="default"
+          onChange={handleConfirmIOS}
+        />
+      )}
     </View>
   );
 };
