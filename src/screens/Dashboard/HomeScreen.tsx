@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ScrollView, StyleSheet, Dimensions, Image, StatusBar} from 'react-native';
+import { View, ScrollView, StyleSheet, Dimensions, Image, StatusBar } from 'react-native';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../store';
 import globalStyle from '../../styles/globalStyle';
@@ -28,8 +28,8 @@ const HomeScreen = ({ navigation }: { navigation: any }) => {
   const allMenus = [
     ...(isAuthenticated
       ? [
-          { title: 'New Policy', navigateTo: 'PhPayFirstPremium', icon: require('../../assets/pay-first-premiums-menu.jpg'), zoomOut: true },
-       ]
+        { title: 'New Policy', navigateTo: 'PhPayFirstPremium', icon: require('../../assets/pay-first-premiums-menu.jpg'), zoomOut: true },
+      ]
       : []),
 
     { title: 'Pay Premium', navigateTo: 'PayPremium', icon: require('../../assets/icon-online-payment.png') },
@@ -37,16 +37,16 @@ const HomeScreen = ({ navigation }: { navigation: any }) => {
     { title: 'Policy Information', navigateTo: isAuthenticated ? 'AuthPolicyInfo' : 'PolicyInfo', icon: require('../../assets/icon-policy-info.png') },
     ...(isAuthenticated
       ? [
-          { title: 'Receipt Download', navigateTo: 'PayFirstPremiumTransaction', icon: require('../../assets/icon-premium-calc.png') },
-        ]
+        { title: 'Receipt Download', navigateTo: 'PayFirstPremiumTransaction', icon: require('../../assets/icon-premium-calc.png') },
+      ]
       : []),
     { title: 'Phone No Update', navigateTo: 'PolicyPhoneUpdate', icon: require('../../assets/product-engine.png') },
     { title: 'Company Information', navigateTo: 'CompanyInfo', icon: require('../../assets/icon-company-info.png') },
     { title: 'Our Product', navigateTo: 'ProductInfo', icon: require('../../assets/product-engine.png') },
     ...(isAuthenticated
       ? [
-          { title: 'Business Report', navigateTo: 'CodeWiseCollectionScreen', icon: require('../../assets/icon-claim-submission.png') },
-        ]
+        { title: 'Business Report', navigateTo: 'CodeWiseCollectionScreen', icon: require('../../assets/icon-claim-submission.png') },
+      ]
       : []),
   ];
 
@@ -54,7 +54,7 @@ const HomeScreen = ({ navigation }: { navigation: any }) => {
     <MenuComponent
       onPress={isAuthenticated ? navigateToDashboard : () => navigation.navigate('Login')}
       icon={require('../../assets/icon-login.png')}
-      title={isAuthenticated 
+      title={isAuthenticated
         ? (user?.type === 'policy holder' ? 'Policy List' : 'Dashboard')
         : 'Role base login'
       }
@@ -63,7 +63,7 @@ const HomeScreen = ({ navigation }: { navigation: any }) => {
 
   const myAccountMenu = isAuthenticated ? (
     <MenuComponent
-      onPress={() => 
+      onPress={() =>
         user?.type === 'policy holder'
           ? navigation.navigate('PhMyProfile')
           : navigation.navigate('OrgMyProfile')
@@ -75,17 +75,17 @@ const HomeScreen = ({ navigation }: { navigation: any }) => {
 
   // Final order: Login first → all menus → My Account last
   const menuItems = [
-    loginMenu,
+    React.cloneElement(loginMenu, { key: 'login-menu' }),
     ...allMenus.map((item, i) => (
       <MenuComponent
-        key={i}
+        key={`menu-${i}`}            // better than just i
         title={item.title}
         icon={item.icon}
         zoomOut={item.zoomOut}
         onPress={() => navigation.navigate(item.navigateTo)}
       />
     )),
-    myAccountMenu,
+    myAccountMenu ? React.cloneElement(myAccountMenu, { key: 'my-account-menu' }) : null,
   ].filter(Boolean);
 
   return (
@@ -94,39 +94,39 @@ const HomeScreen = ({ navigation }: { navigation: any }) => {
         backgroundColor={PRIMARY_COLOR}
         barStyle="light-content"
       />
-    <View style={globalStyle.container}>
-      <Header navigation={navigation} />
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <Slider />
-        <View style={styles.logoContainer}>
-        <Image
-          source={COMPANY_LOGO}
-          style={styles.bigLogo}
-          resizeMode="contain"
-        />
-      </View>
-
-        <View style={globalStyle.wrapper}>
-          <View style={styles.grid}>
-            {menuItems}
+      <View style={globalStyle.container}>
+        <Header navigation={navigation} />
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <Slider />
+          <View style={styles.logoContainer}>
+            <Image
+              source={COMPANY_LOGO}
+              style={styles.bigLogo}
+              resizeMode="contain"
+            />
           </View>
-        </View>
-      </ScrollView>
-      <FooterContact />
-    </View>
+
+          <View style={globalStyle.wrapper}>
+            <View style={styles.grid}>
+              {menuItems}
+            </View>
+          </View>
+        </ScrollView>
+        <FooterContact />
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-   safeArea: {
+  safeArea: {
     flex: 1,
-    backgroundColor: '#966EAF', 
+    backgroundColor: '#966EAF',
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',   
+    justifyContent: 'space-between',
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
