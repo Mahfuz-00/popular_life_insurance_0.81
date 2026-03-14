@@ -10,7 +10,8 @@ import {
   ToastAndroid,
   StyleSheet,
   Linking,
-  Alert
+  Alert,
+  Platform
 } from 'react-native';
 import RadioButtonRN from 'radio-buttons-react-native';
 import { Image } from 'react-native';
@@ -93,20 +94,54 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
 
     console.log('Submitting payment with details:', { policyDetails, paymentType, amountToPay, partialAmount, adjustWith, cause, method, isEnabled });
 
-    if (!isEnabled) return ToastAndroid.show('Please agree to terms & conditions', ToastAndroid.LONG);
-    if (!amountToPay || Number(amountToPay) <= 0) return ToastAndroid.show('Amount cannot be zero!', ToastAndroid.LONG);
+    if (!isEnabled) {
+      if (Platform.OS === 'android') {
+        return ToastAndroid.show('Please agree to terms & conditions', ToastAndroid.LONG);
+      } else {
+        return Alert.alert('Alert', 'Please agree to terms & conditions');
+      }
+    }
+    if (!amountToPay || Number(amountToPay) <= 0) {
+      if (Platform.OS === 'android') {
+        return ToastAndroid.show('Amount cannot be zero!', ToastAndroid.LONG);
+      } else {
+        return Alert.alert('Alert', 'Amount cannot be zero!');
+      }
+    }
 
     if (paymentType === 'partial') {
       console.log('Submitting payment with details:', { policyDetails, paymentType, amountToPay, partialAmount, adjustWith, cause, method, isEnabled });
 
-      if (!partialAmount || !adjustWith || !cause.trim())
-        return ToastAndroid.show('Please fill all partial payment fields', ToastAndroid.LONG);
-      if (Number(partialAmount) > maxPartialAllowed)
-        return ToastAndroid.show(`Max partial: ${maxPartialAllowed}`, ToastAndroid.LONG);
+      if (!partialAmount || !adjustWith || !cause.trim()) {
+        if (Platform.OS === 'android') {
+          return ToastAndroid.show('Please fill all partial payment fields', ToastAndroid.LONG);
+        } else {
+          return Alert.alert('Alert', 'Please fill all partial payment fields');
+        }
+      }
+      if (Number(partialAmount) > maxPartialAllowed) {
+        if (Platform.OS === 'android') {
+          return ToastAndroid.show(`Max partial: ${maxPartialAllowed}`, ToastAndroid.LONG);
+        } else {
+          return Alert.alert('Alert', `Maximum partial amount allowed is ${maxPartialAllowed}`);
+        }
+      }
     }
 
-    if (policyDetails.isLaps) return ToastAndroid.show('Policy is lapsed!', ToastAndroid.LONG);
-    if (policyDetails.isMaturity) return ToastAndroid.show('Policy is matured!', ToastAndroid.LONG);
+    if (policyDetails.isLaps) {
+      if (Platform.OS === 'android') {
+        return ToastAndroid.show('Policy is lapsed!', ToastAndroid.LONG);
+      } else {
+        return Alert.alert('Alert', 'Policy is lapsed!');
+      }
+    }
+    if (policyDetails.isMaturity) {
+      if (Platform.OS === 'android') {
+        return ToastAndroid.show('Policy is matured!', ToastAndroid.LONG);
+      } else {
+        return Alert.alert('Alert', 'Policy is matured!');
+      }
+    }
     if (paymentType === 'full') {
       const dueTotal = Number(policyDetails.totalpremium);
       const entered = Number(amountToPay);
@@ -116,17 +151,28 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
       // }
 
       if (entered % dueTotal !== 0) {
-        return ToastAndroid.show('Amount must be multiple of premium', ToastAndroid.LONG);
+        if (Platform.OS === 'android') {
+          return ToastAndroid.show('Amount must be multiple of premium', ToastAndroid.LONG);
+        } else {
+          return Alert.alert('Alert', 'Amount must be multiple of premium');
+        }
       }
 
       const payingInstallments = Number(amountToPay || 0) / Number(policyDetails.totalpremium || 0);
       const remainingInstallments = Number(policyDetails.Diff_Ins || 0);
 
       if (payingInstallments > remainingInstallments) {
-        return ToastAndroid.show(
-          `You can pay maximum ${remainingInstallments} installments (${Number(policyDetails.totalpremium || 0) * remainingInstallments})`,
-          ToastAndroid.LONG
-        );
+        if (Platform.OS === 'android') {
+          return ToastAndroid.show(
+            `You can pay maximum ${remainingInstallments} installments (${Number(policyDetails.totalpremium || 0) * remainingInstallments})`,
+            ToastAndroid.LONG
+          );
+        } else {
+          return Alert.alert(
+            'Alert',
+            `You can pay maximum ${remainingInstallments} installments (${Number(policyDetails.totalpremium || 0) * remainingInstallments})`
+          );
+        }
       }
     }
 
@@ -138,7 +184,11 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
     if (!isServerOk) {
       dispatch({ type: HIDE_LOADING });
       setIsSubmitting(false);
-      ToastAndroid.show('Server is currently unavailable. Please try again later.', ToastAndroid.LONG);
+      if (Platform.OS === 'android') {
+        ToastAndroid.show('Server is currently unavailable. Please try again later.', ToastAndroid.LONG);
+      } else {
+        Alert.alert('Alert', 'Server is currently unavailable. Please try again later.');
+      }
       return;
     }
 
@@ -172,7 +222,11 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
       if (method === 'nagad') setShowNagad(true);
     } catch (error) {
       console.error('Payment initiation failed:', error);
-      ToastAndroid.show('Failed to start payment process.', ToastAndroid.LONG);
+      if (Platform.OS === 'android') {
+        ToastAndroid.show('Failed to start payment process.', ToastAndroid.LONG);
+      } else {
+        Alert.alert('Error', 'Failed to start payment process.');
+      }
     } finally {
       // HIDE_LOADING right before showing the payment modal (Bkash/Nagad) 
       // as the modal is expected to handle its own loading UI.

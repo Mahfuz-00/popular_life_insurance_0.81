@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { API } from './../config';
-import { ToastAndroid } from 'react-native';
+import { ToastAndroid, Platform, Alert } from 'react-native';
 
 export const getPlanList = async () => {
   try {
@@ -11,11 +11,12 @@ export const getPlanList = async () => {
       fullLabel: item.name,
       modes: {
         yly: item.yly === '1' ? { label: 'Yearly', value: 'yly' } : null,
-      hly: item.hly === '1' ? { label: 'Half Yearly', value: 'hly' } : null,
-      qly: item.qly === '1' ? { label: 'Quarterly', value: 'qly' } : null,
-      mly: item.mly === '1' ? { label: 'Monthly', value: 'mly' } : null,
-      single: item.single === '1' ? { label: 'Single', value: 'single' } : null,
-    }}));
+        hly: item.hly === '1' ? { label: 'Half Yearly', value: 'hly' } : null,
+        qly: item.qly === '1' ? { label: 'Quarterly', value: 'qly' } : null,
+        mly: item.mly === '1' ? { label: 'Monthly', value: 'mly' } : null,
+        single: item.single === '1' ? { label: 'Single', value: 'single' } : null,
+      }
+    }));
     return res;
   } catch (error) {
     return [];
@@ -38,7 +39,12 @@ export const getCalculatedPremium = async (postData: any) => {
     const { data } = await axios.post(`${API}/api/premium-calculator`, postData);
     return data.data.result;
   } catch (error: any) {
-    ToastAndroid.show(error.response?.data?.message || error.message || 'Premium calculation failed', ToastAndroid.LONG);
-    return ; 
+    if (Platform.OS === 'android') {
+      ToastAndroid.show(error.response?.data?.message || error.message || 'Premium calculation failed', ToastAndroid.LONG);
+    }
+    else {
+      Alert.alert('Error', error.response?.data?.message || error.message || 'Premium calculation failed');
+    }
+    return;
   }
 };

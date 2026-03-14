@@ -228,12 +228,20 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
 
         setTerms(parsedTerms);
         if (parsedTerms.length === 0) {
-          ToastAndroid.show('No term available for this plan', ToastAndroid.LONG);
+          if (Platform.OS === 'android') {
+            ToastAndroid.show('No term available for this plan', ToastAndroid.LONG);
+          } else {
+            Alert.alert('Info', 'No term available for this plan');
+          }
         }
       } catch (error) {
         console.error('Failed to load terms:', error);
         setTerms([]);
-        ToastAndroid.show('Failed to load terms', ToastAndroid.SHORT);
+        if (Platform.OS === 'android') {
+          ToastAndroid.show('Failed to load terms', ToastAndroid.SHORT);
+        } else {
+          Alert.alert('Error', 'Failed to load terms');
+        }
       } finally {
         dispatch({ type: HIDE_LOADING });
       }
@@ -364,9 +372,9 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         let monthsPaid = 12;
         if (formData.mode === 'hly') monthsPaid = 6;
         else if (formData.mode === 'qly') monthsPaid = 3;
-        else if (formData.mode === 'mly' && formData.installments) 
+        else if (formData.mode === 'mly' && formData.installments)
           monthsPaid = 1;
-          // monthsPaid = Number(formData.installments);
+        // monthsPaid = Number(formData.installments);
 
         extraCharge = Math.round((annualExtra / 12) * monthsPaid);
       }
@@ -445,16 +453,28 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
           updateFormData({ um: umVal, bm: bmVal, agm: agmVal });
           setEditable({ um: !umVal, bm: !bmVal, agm: !agmVal });
           setIsAgentFetched(true);
-          ToastAndroid.show('Agent verified!', ToastAndroid.SHORT);
+          if (Platform.OS === 'android') {
+            ToastAndroid.show('Agent verified!', ToastAndroid.SHORT);
+          } else {
+            Alert.alert('Success', 'Agent verified!');
+          }
         } else {
           updateFormData({ um: '', bm: '', agm: '' });
           setEditable({ um: true, bm: true, agm: true });
           setIsAgentFetched(false);
-          ToastAndroid.show('Invalid FA Code, enter codes manually', ToastAndroid.LONG);
+          if (Platform.OS === 'android') {
+            ToastAndroid.show('Invalid FA Code, enter codes manually', ToastAndroid.LONG);
+          } else {
+            Alert.alert('Error', 'Invalid FA Code, please enter agent codes manually');
+          }
         }
       } catch (error) {
         console.error('Agent verification error:', error);
-        ToastAndroid.show('Agent verification failed.', ToastAndroid.LONG);
+        if (Platform.OS === 'android') {
+          ToastAndroid.show('Agent verification failed.', ToastAndroid.LONG);
+        } else {
+          Alert.alert('Error', 'Agent verification failed. Please try again.');
+        }
       } finally {
         dispatch({ type: HIDE_LOADING });
       }
@@ -519,7 +539,11 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
 
   const handleSubmit = async () => {
     if (isInputDisabled || !validateForm() || !checkNomineeTotal()) {
-      ToastAndroid.show('Please fix the highlighted fields', ToastAndroid.SHORT);
+      if (Platform.OS === 'android') {
+        ToastAndroid.show('Please fix the highlighted fields', ToastAndroid.SHORT);
+      } else {
+        Alert.alert('Alert', 'Please fix the highlighted fields');
+      }
       return;
     }
 
@@ -659,7 +683,11 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
                   }
 
                   if (num > 12) {
-                    ToastAndroid.show('Maximum 12 installments allowed', ToastAndroid.SHORT);
+                    if (Platform.OS === 'android') {
+                      ToastAndroid.show('Maximum 12 installments allowed', ToastAndroid.SHORT);
+                    } else {
+                      Alert.alert('Alert', 'Maximum 12 installments allowed');
+                    }
                     updateFormData({ installments: '12' });
                     return;
                   }

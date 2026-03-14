@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { API } from './../config';
-import { ToastAndroid } from 'react-native';
+import { ToastAndroid, Platform, Alert } from 'react-native';
 
 export const getPolicyDetails = async (policyNo: any) => {
   try {
@@ -43,10 +43,19 @@ export const guestPayPremium = async (postData: any) => {
     };
     const { data } = await axios.post(`${API}/api/payment-without-auth`, postData, config);
 
-    ToastAndroid.show(data.message || 'Payment successful', ToastAndroid.LONG);
+    if (Platform.OS === 'android') {
+      ToastAndroid.show(data.message || 'Payment successful', ToastAndroid.LONG);
+    } else {
+      Alert.alert('Success', data.message || 'Payment successful');
+    }
     return true;
   } catch (error: any) {
-    ToastAndroid.show('Failed to pay. Try again..', ToastAndroid.LONG);
+    if (Platform.OS === 'android') {
+      ToastAndroid.show('Failed to pay. Try again..', ToastAndroid.LONG);
+    }
+    else {
+      Alert.alert('Error', 'Failed to pay. Try again..');
+    }
     return false;
   }
 };

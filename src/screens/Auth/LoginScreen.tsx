@@ -10,7 +10,8 @@ import {
   TouchableOpacity,
   Modal,
   StyleSheet,
-  Alert
+  Alert,
+  Platform
 } from 'react-native';
 import CheckBox from '@react-native-community/checkbox';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -79,14 +80,22 @@ const LoginScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       }
 
       if (typeof apiError === 'string') {
-        ToastAndroid.show(apiError, ToastAndroid.LONG);
+        if (Platform.OS === 'android') {
+          ToastAndroid.show(apiError, ToastAndroid.LONG);
+        } else {
+          Alert.alert('Error', apiError);
+        }
       }
 
       if (apiError.errors.general) {
-        ToastAndroid.show(
-          apiError.errors.general,
-          ToastAndroid.LONG
-        );
+        if (Platform.OS === 'android') {
+          ToastAndroid.show(
+            apiError.errors.general,
+            ToastAndroid.LONG
+          );
+        } else {
+          Alert.alert('Error', apiError.errors.general);
+        }
       }
 
       dispatch(clearErrors());
@@ -124,7 +133,11 @@ const LoginScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     }
 
     if (error) {
-      ToastAndroid.show(error, ToastAndroid.LONG);
+      if (Platform.OS === 'android') {
+        ToastAndroid.show(error, ToastAndroid.LONG);
+      } else {
+        Alert.alert('Error', error);
+      }
       dispatch(clearErrors());
     }
   }, [isAuthenticated, user, error, navigation, dispatch]);

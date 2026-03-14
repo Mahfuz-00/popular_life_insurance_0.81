@@ -1,4 +1,4 @@
-import { Alert, ToastAndroid, Linking } from 'react-native';
+import { Alert, ToastAndroid, Linking, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from '../utils/axios';
 import { API, SECONDARYAPI } from '../config';
@@ -72,7 +72,11 @@ export const checkDatabaseConnection = async (): Promise<boolean> => {
       console.log('🎉 Database connection: OK');
     } else {
       console.log('❌ Database connection: FAILED (error: true)');
-      ToastAndroid.show('Server database issue. Please try again later.', ToastAndroid.LONG);
+      if (Platform.OS === 'android') {
+        ToastAndroid.show('Server database issue. Please try again later.', ToastAndroid.LONG);
+      } else {
+        Alert.alert('Connection Error', 'Server database issue. Please try again later.');
+      }
     }
 
     return isConnected;
@@ -81,10 +85,18 @@ export const checkDatabaseConnection = async (): Promise<boolean> => {
 
     if (error.name === 'AbortError') {
       console.log(`⏰ [Health Check] Timeout after 30s`);
-      ToastAndroid.show('Server timeout. Please check your connection.', ToastAndroid.LONG);
+      if (Platform.OS === 'android') {
+        ToastAndroid.show('Server timeout. Please check your connection.', ToastAndroid.LONG);
+      } else {
+        Alert.alert('Timeout', 'Server timeout. Please check your connection.');
+      }
     } else {
       console.log(`🌐 [Health Check] Network/request error in ${duration}ms:`, error.message);
-      ToastAndroid.show('Cannot reach server. Please try again later.', ToastAndroid.LONG);
+      if (Platform.OS === 'android') {
+        ToastAndroid.show('Cannot reach server. Please try again later.', ToastAndroid.LONG);
+      } else {
+        Alert.alert('Network Error', 'Cannot reach server. Please try again later.');
+      }
     }
 
     return false;
@@ -100,11 +112,19 @@ export const userPayPremium = async (postData: any): Promise<{ data: any; succes
     const headers = await getAuthHeaders();
     const { data } = await axios.post(`${API}/api/payment`, postData, { headers });
 
-    ToastAndroid.show(data.message || 'Payment successful', ToastAndroid.LONG);
+    if (Platform.OS === 'android') {
+      ToastAndroid.show(data.message || 'Payment successful', ToastAndroid.LONG);
+    } else {
+      Alert.alert('Success', data.message || 'Payment successful');
+    }
 
     return { data, success: true };
   } catch (error: any) {
-    ToastAndroid.show('Payment failed. Try again.', ToastAndroid.LONG);
+    if (Platform.OS === 'android') {
+      ToastAndroid.show('Payment failed. Try again.', ToastAndroid.LONG);
+    } else {
+      Alert.alert('Error', 'Payment failed. Try again.');
+    }
     console.error('userPayPremium error:', error.response?.data || error.message);
     return { data: null, success: false };
   }
@@ -116,14 +136,26 @@ export const createClaim = async (postData: any) => {
     const { data } = await axios.post(`${API}/api/claims/create`, postData, { headers });
 
     if (data.errors) {
-      ToastAndroid.show(data.message || 'Claim submission failed', ToastAndroid.LONG);
+      if (Platform.OS === 'android') {
+        ToastAndroid.show(data.message || 'Claim submission failed', ToastAndroid.LONG);
+      } else {
+        Alert.alert('Error', data.message || 'Claim submission failed');
+      }
       return { isSuccess: false, errors: data.errors };
     }
 
-    ToastAndroid.show('Claim submitted successfully', ToastAndroid.LONG);
+    if (Platform.OS === 'android') {
+      ToastAndroid.show('Claim submitted successfully', ToastAndroid.LONG);
+    } else {
+      Alert.alert('Success', 'Claim submitted successfully');
+    }
     return { isSuccess: true };
   } catch (error: any) {
-    ToastAndroid.show(error.message || 'Network error', ToastAndroid.LONG);
+    if (Platform.OS === 'android') {
+      ToastAndroid.show(error.message || 'Network error', ToastAndroid.LONG);
+    } else {
+      Alert.alert('Error', error.message || 'Network error occurred while submitting claim.');
+    }
     return { isSuccess: false };
   }
 };
@@ -168,7 +200,11 @@ export const getAuthPolicyDetails = (postData: any) => async (dispatch: any) => 
     return data;
   } catch (error: any) {
     dispatch({ type: HIDE_LOADING });
-    ToastAndroid.show(error.message || 'Failed to fetch policy', ToastAndroid.LONG);
+    if (Platform.OS === 'android') {
+      ToastAndroid.show(error.message || 'Failed to fetch policy', ToastAndroid.LONG);
+    } else {
+      Alert.alert('Error', error.message || 'Failed to fetch policy details. Please try again later.');
+    }
     return null;
   }
 };
@@ -232,14 +268,26 @@ export const userPayFirstPremium = async (postData: any): Promise<{ success: boo
     const { data } = await axios.post(`${API}/api/first-premium`, postData, { headers });
 
     if (data.errors) {
-      ToastAndroid.show(data.message || 'Payment failed', ToastAndroid.LONG);
+      if (Platform.OS === 'android') {
+        ToastAndroid.show(data.message || 'Payment failed', ToastAndroid.LONG);
+      } else {
+        Alert.alert('Error', data.message || 'Payment failed');
+      }
       return { success: false, message: data.message };
     }
 
-    ToastAndroid.show(data.message || 'Payment successful', ToastAndroid.LONG);
+    if (Platform.OS === 'android') {
+      ToastAndroid.show(data.message || 'Payment successful', ToastAndroid.LONG);
+    } else {
+      Alert.alert('Success', data.message || 'Payment successful');
+    }
     return { success: true, message: data.message };
   } catch (error: any) {
-    ToastAndroid.show(error.message || 'Payment failed', ToastAndroid.LONG);
+    if (Platform.OS === 'android') {
+      ToastAndroid.show(error.message || 'Payment failed', ToastAndroid.LONG);
+    } else {
+      Alert.alert('Error', error.message || 'Payment failed');
+    }
     console.error('userPayFirstPremium error:', error.response?.data || error.message);
     return { success: false, message: error.message };
   }
@@ -248,7 +296,11 @@ export const userPayFirstPremium = async (postData: any): Promise<{ success: boo
 export const downloadFirstPremiumReceipt = (nid: string, trxID: string) => {
   const url = `${API}/api/first-payment/e-receipt/${nid}/${trxID}`;
   Linking.openURL(url).catch(() => {
-    ToastAndroid.show('Cannot open eReceipt', ToastAndroid.LONG);
+    if (Platform.OS === 'android') {
+      ToastAndroid.show('Cannot open eReceipt', ToastAndroid.LONG);
+    } else {
+      Alert.alert('Error', 'Cannot open eReceipt');
+    }
   });
 };
 
@@ -282,13 +334,17 @@ export const userPayPremiumSave = async (postData: any): Promise<{ data: any; su
 
     console.log('Primary payment saved:', data);
 
-    return { 
-      data, 
-      success: true, 
-      id: data?.data?.id, 
+    return {
+      data,
+      success: true,
+      id: data?.data?.id,
     };
   } catch (error: any) {
-    ToastAndroid.show('Payment failed. Try again.', ToastAndroid.LONG);
+    if (Platform.OS === 'android') {
+      ToastAndroid.show('Payment failed. Try again.', ToastAndroid.LONG);
+    } else {
+      Alert.alert('Error', 'Payment failed. Try again.');
+    }
     console.error('userPayPremiumSave error:', error.response?.data || error.message);
     console.log('Failed payment data:', postData);
     console.log('Error details:', error);
@@ -314,17 +370,25 @@ export const userPayFirstPremiumSave = async (postData: any): Promise<{ success:
     const { data } = await axios.post(`${SECONDARYAPI}/api/store/first_premium`, postData, { headers });
 
     if (data.errors) {
-      ToastAndroid.show(data.message || 'Payment failed', ToastAndroid.LONG);
+      if (Platform.OS === 'android') {
+        ToastAndroid.show(data.message || 'Payment failed', ToastAndroid.LONG);
+      } else {
+        Alert.alert('Error', data.message || 'Payment failed');
+      }
       return { success: false, message: data.message };
     }
 
-    return { 
-      success: true, 
-      message: data.message, 
-      id: data?.data?.id, 
+    return {
+      success: true,
+      message: data.message,
+      id: data?.data?.id,
     };
   } catch (error: any) {
-    ToastAndroid.show(error.message || 'Payment failed', ToastAndroid.LONG);
+    if (Platform.OS === 'android') {
+      ToastAndroid.show(error.message || 'Payment failed', ToastAndroid.LONG);
+    } else {
+      Alert.alert('Error', error.message || 'Payment failed');
+    }
     console.error('userPayFirstPremiumSave error:', error.response?.data || error.message);
     return { success: false, message: error.message };
   }
@@ -336,7 +400,11 @@ export const userPayFirstPremiumUpdate = async (postData: any): Promise<{ succes
     const { data } = await axios.post(`${SECONDARYAPI}/api/update/first_premium`, postData, { headers });
 
     if (data.errors) {
-      ToastAndroid.show(data.message || 'Payment failed', ToastAndroid.LONG);
+      if (Platform.OS === 'android') {
+        ToastAndroid.show(data.message || 'Payment failed', ToastAndroid.LONG);
+      } else {
+        Alert.alert('Error', data.message || 'Payment failed');
+      }
       return { success: false, message: data.message };
     }
 
@@ -481,10 +549,18 @@ export const login = (postData: any): any => async (dispatch: any) => {
 export const register = (postData: any) => async (dispatch: any) => {
   try {
     const { data } = await axios.post(`${API}/api/registration`, postData);
-    ToastAndroid.show(data.message, ToastAndroid.LONG);
+    if (Platform.OS === 'android') {
+      ToastAndroid.show(data.message, ToastAndroid.LONG);
+    } else {
+      Alert.alert('Success', data.message);
+    }
     return data.status === 200 ? true : data;
   } catch (error: any) {
-    ToastAndroid.show(error.message || 'Registration failed', ToastAndroid.LONG);
+    if (Platform.OS === 'android') {
+      ToastAndroid.show(error.message || 'Registration failed', ToastAndroid.LONG);
+    } else {
+      Alert.alert('Error', error.message || 'Registration failed');
+    }
     return false;
   }
 };
@@ -493,7 +569,11 @@ export const verifyRegistration = (postData: any) => async (dispatch: any) => {
   try {
     const { data } = await axios.post(`${API}/api/verify-registration`, postData);
     if (data.errorMessage) {
-      ToastAndroid.show(data.errorMessage, ToastAndroid.LONG);
+      if (Platform.OS === 'android') {
+        ToastAndroid.show(data.errorMessage, ToastAndroid.LONG);
+      } else {
+        Alert.alert('Error', data.errorMessage);
+      }
       return false;
     }
     if (data.data?.token) {
@@ -503,12 +583,20 @@ export const verifyRegistration = (postData: any) => async (dispatch: any) => {
         type: LOGIN_SUCCESS,
         payload: { user: data.data.user, token: data.data.token },
       });
-      ToastAndroid.show(data.message, ToastAndroid.LONG);
+      if (Platform.OS === 'android') {
+        ToastAndroid.show(data.message, ToastAndroid.LONG);
+      } else {
+        Alert.alert('Success', data.message);
+      }
       return true;
     }
     return false;
   } catch (error: any) {
-    ToastAndroid.show('Verification failed', ToastAndroid.LONG);
+    if (Platform.OS === 'android') {
+      ToastAndroid.show('Verification failed', ToastAndroid.LONG);
+    } else {
+      Alert.alert('Error', 'Verification failed');
+    }
     return false;
   }
 };
@@ -546,7 +634,11 @@ export const logout = (navigation: any) => async (dispatch: any) => {
         // Then: clear storage and state
         await AsyncStorage.multiRemove(['user', 'token']);
         dispatch({ type: LOGOUT_SUCCESS });
-        ToastAndroid.show('Logged out successfully', ToastAndroid.LONG);
+        if (Platform.OS === 'android') {
+          ToastAndroid.show('Logged out successfully', ToastAndroid.LONG);
+        } else {
+          Alert.alert('Success', 'Logged out successfully');
+        }
 
         // Finally: reset root navigation
         if (rootNavigationRef.isReady()) {
@@ -566,10 +658,18 @@ export const logout = (navigation: any) => async (dispatch: any) => {
 export const resetPassword = async (postData: any) => {
   try {
     const { data } = await axios.post(`${API}/api/reset-password`, postData);
-    ToastAndroid.show(data.successMessage || data.errorMessage, ToastAndroid.LONG);
+    if (Platform.OS === 'android') {
+      ToastAndroid.show(data.successMessage || data.errorMessage, ToastAndroid.LONG);
+    } else {
+      Alert.alert('Password Reset', data.successMessage || data.errorMessage);
+    }
     return data.status === 200;
   } catch (error: any) {
-    ToastAndroid.show(error.message, ToastAndroid.LONG);
+    if (Platform.OS === 'android') {
+      ToastAndroid.show(error.message, ToastAndroid.LONG);
+    } else {
+      Alert.alert('Error', error.message || 'Password reset failed');
+    }
     return false;
   }
 };
@@ -577,10 +677,18 @@ export const resetPassword = async (postData: any) => {
 export const verifyForgotPasswordOtp = async (postData: any) => {
   try {
     const { data } = await axios.post(`${API}/api/verify-forgot-password-otp`, postData);
-    ToastAndroid.show(data.message || data.errorMessage, ToastAndroid.LONG);
+    if (Platform.OS === 'android') {
+      ToastAndroid.show(data.message || data.errorMessage, ToastAndroid.LONG);
+    } else {
+      Alert.alert('OTP Verification', data.message || data.errorMessage);
+    }
     return data.status === 200;
   } catch (error: any) {
-    ToastAndroid.show('Invalid OTP', ToastAndroid.LONG);
+    if (Platform.OS === 'android') {
+      ToastAndroid.show('Invalid OTP', ToastAndroid.LONG);
+    } else {
+      Alert.alert('Error', 'Invalid OTP');
+    }
     return false;
     false;
   }
@@ -589,10 +697,18 @@ export const verifyForgotPasswordOtp = async (postData: any) => {
 export const getforgotPasswordOtp = async (postData: any) => {
   try {
     const { data } = await axios.post(`${API}/api/forgot-password`, postData);
-    ToastAndroid.show(data.successMessage || data.message, ToastAndroid.LONG);
+    if (Platform.OS === 'android') {
+      ToastAndroid.show(data.successMessage || data.message, ToastAndroid.LONG);
+    } else {
+      Alert.alert('OTP Sent', data.successMessage || data.message);
+    }
     return data.status === 200;
   } catch (error: any) {
-    ToastAndroid.show('Failed to send OTP', ToastAndroid.LONG);
+    if (Platform.OS === 'android') {
+      ToastAndroid.show('Failed to send OTP', ToastAndroid.LONG);
+    } else {
+      Alert.alert('Error', 'Failed to send OTP');
+    }
     return false;
   }
 };
@@ -606,7 +722,11 @@ export const getRate = async (projectCode: string, plan: string, term: string, a
 
     const token = await AsyncStorage.getItem('token');
     if (!token) {
-      ToastAndroid.show('Session expired', ToastAndroid.LONG);
+      if (Platform.OS === 'android') {
+        ToastAndroid.show('Session expired', ToastAndroid.LONG);
+      } else {
+        Alert.alert('Session Expired', 'Please log in again to continue.');
+      }
       return { success: false, rate: 0 };
     }
 
@@ -622,7 +742,11 @@ export const getRate = async (projectCode: string, plan: string, term: string, a
     const rate = parseFloat(data.data?.rate);
     return rate > 0 ? { success: true, rate } : { success: false, rate: 0 };
   } catch (error: any) {
-    ToastAndroid.show('Rate not available', ToastAndroid.SHORT);
+    if (Platform.OS === 'android') {
+      ToastAndroid.show('Rate not available', ToastAndroid.SHORT);
+    } else {
+      Alert.alert('Error', 'Rate not available for the selected criteria.');
+    }
     return { success: false, rate: 0 };
   }
 };
@@ -639,7 +763,11 @@ export const getAgentCodes = async (faCode: string, projectCode: string) => {
     }
     return { success: false };
   } catch (error) {
-    ToastAndroid.show('Invalid FA Code', ToastAndroid.LONG);
+    if (Platform.OS === 'android') {
+      ToastAndroid.show('Invalid FA Code', ToastAndroid.LONG);
+    } else {
+      Alert.alert('Error', 'Invalid FA Code');
+    }
     return { success: false };
   }
 };
@@ -664,7 +792,11 @@ export const fetchProjects = async () => {
     return data; // { status: 200, data: [...] }
   } catch (error: any) {
     console.error('Error fetching projects: ', error.response?.data || error.message);
-    ToastAndroid.show('Failed to load projects', ToastAndroid.SHORT);
+    if (Platform.OS === 'android') {
+      ToastAndroid.show('Failed to load projects', ToastAndroid.SHORT);
+    } else {
+      Alert.alert('Error', 'Failed to load projects');
+    }
     throw error;
   }
 };

@@ -11,6 +11,7 @@ import {
   Linking,
   Alert,
   BackHandler,
+  Platform
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { BkashPayment } from '../../../components/payment/BkashPayment';
@@ -145,7 +146,11 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
 
   const handleSubmit = async () => {
     if (!isEnabled) {
-      ToastAndroid.show('Please agree to terms', ToastAndroid.LONG);
+      if (Platform.OS === 'android') {
+        ToastAndroid.show('Please agree to terms', ToastAndroid.LONG);
+      } else {
+        Alert.alert('Alert', 'Please agree to terms');
+      }
       return;
     }
 
@@ -158,7 +163,11 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
     if (!isServerOk) {
       dispatch({ type: HIDE_LOADING });
       setIsSubmitting(false);
-      ToastAndroid.show('Server is currently unavailable. Please try again later.', ToastAndroid.LONG);
+      if (Platform.OS === 'android') {
+        ToastAndroid.show('Server is currently unavailable. Please try again later.', ToastAndroid.LONG);
+      } else {
+        Alert.alert('Alert', 'Server is currently unavailable. Please try again later.');
+      }
       return;
     }
 

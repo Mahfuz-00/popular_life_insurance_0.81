@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { WebView } from 'react-native-webview';
-import { Alert, ToastAndroid } from 'react-native';
+import { Alert, ToastAndroid, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import moment from 'moment';
 import {
@@ -127,7 +127,12 @@ export const BkashPayment: React.FC<BkashPaymentProps> = ({
       await AsyncStorage.setItem('syncPayments', JSON.stringify(updated));
       onSuccess(trxID);
     } else {
-      ToastAndroid.show('Payment recorded. Will sync when online.', ToastAndroid.LONG);
+      if (Platform.OS === 'android') {
+        ToastAndroid.show('Payment recorded. Will sync when online.', ToastAndroid.LONG);
+      }
+      else {
+        Alert.alert('Payment Recorded', 'Your payment was recorded but failed to sync. It will retry automatically when you have internet connection.');
+      }
     }
 
   };

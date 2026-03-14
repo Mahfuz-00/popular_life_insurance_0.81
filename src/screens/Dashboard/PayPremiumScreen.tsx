@@ -9,7 +9,8 @@ import {
   ToastAndroid,
   StyleSheet,
   Alert,
-  Linking
+  Linking,
+  Platform
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { Image } from 'react-native';
@@ -46,7 +47,13 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const amountToPay = amount;
 
   const handleGetPolicyDetails = async () => {
-    if (!policyNumber) return ToastAndroid.show('Please enter Policy Number', ToastAndroid.LONG);
+    if (!policyNumber) {
+      if (Platform.OS === 'android') {
+        return ToastAndroid.show('Please enter Policy Number', ToastAndroid.LONG);
+      } else {
+        return Alert.alert('Alert', 'Please enter Policy Number');
+      }
+    }
 
     dispatch({ type: SHOW_LOADING, payload: `Fetching details for ${policyNumber}...` });
 
@@ -75,23 +82,43 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     if (isSubmitting) return;
 
     if (!isEnabled) {
-      return ToastAndroid.show('Please agree to Terms & Conditions', ToastAndroid.LONG);
+      if (Platform.OS === 'android') {
+        return ToastAndroid.show('Please agree to Terms & Conditions', ToastAndroid.LONG);
+      } else {
+        return Alert.alert('Alert', 'Please agree to Terms & Conditions');
+      }
     }
 
     if (policyDetails.isLaps) {
-      return ToastAndroid.show('Policy is lapsed!', ToastAndroid.LONG);
+      if (Platform.OS === 'android') {
+        return ToastAndroid.show('Policy is lapsed!', ToastAndroid.LONG);
+      } else {
+        return Alert.alert('Policy Lapsed', 'This policy is currently lapsed. Please contact support for assistance.');
+      }
     }
     if (policyDetails.isMaturity) {
-      return ToastAndroid.show('Policy is matured!', ToastAndroid.LONG);
+      if (Platform.OS === 'android') {
+        return ToastAndroid.show('Policy is matured!', ToastAndroid.LONG);
+      } else {
+        return Alert.alert('Policy Matured', 'This policy has matured. Please contact support for assistance.');
+      }
     }
 
     const payableAmount = amountToPay;
     if (!payableAmount || Number(payableAmount) <= 0) {
-      return ToastAndroid.show('Amount cannot be zero', ToastAndroid.LONG);
+      if (Platform.OS === 'android') {
+        return ToastAndroid.show('Amount cannot be zero', ToastAndroid.LONG);
+      } else {
+        return Alert.alert('Alert', 'Amount cannot be zero');
+      }
     }
 
     if (Number(payableAmount) % Number(policyDetails.totalpremium) !== 0) {
-      return ToastAndroid.show('Amount must be multiple of premium', ToastAndroid.LONG);
+      if (Platform.OS === 'android') {
+        return ToastAndroid.show('Amount must be multiple of premium', ToastAndroid.LONG);
+      } else {
+        return Alert.alert('Alert', 'Amount must be multiple of premium');
+      }
     }
 
     const payingInstallments = Number(payableAmount || 0) / Number(policyDetails.totalpremium || 0);
@@ -101,10 +128,17 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     console.log('Remaining Installments:', remainingInstallments);
 
     if (payingInstallments > remainingInstallments) {
-      return ToastAndroid.show(
-        `You can pay maximum ${remainingInstallments} installments (${Number(policyDetails.totalpremium || 0) * remainingInstallments})`,
-        ToastAndroid.LONG
-      );
+      if (Platform.OS === 'android') {
+        return ToastAndroid.show(
+          `You can pay maximum ${remainingInstallments} installments (${Number(policyDetails.totalpremium || 0) * remainingInstallments})`,
+          ToastAndroid.LONG
+        );
+      } else {
+        return Alert.alert(
+          'Alert',
+          `You can pay maximum ${remainingInstallments} installments (${Number(policyDetails.totalpremium || 0) * remainingInstallments})`
+        );
+      }
     }
 
     setIsSubmitting(true);
@@ -115,7 +149,11 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     if (!isServerOk) {
       dispatch({ type: HIDE_LOADING });
       setIsSubmitting(false);
-      ToastAndroid.show('Server is currently unavailable. Please try again later.', ToastAndroid.LONG);
+      if (Platform.OS === 'android') {
+        ToastAndroid.show('Server is currently unavailable. Please try again later.', ToastAndroid.LONG);
+      } else {
+        Alert.alert('Alert', 'Server is currently unavailable. Please try again later.');
+      }
       return;
     }
 
@@ -150,11 +188,19 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       } else if (method === 'nagad') {
         setShowNagad(true);
       } else if (method === 'ssl') {
-        ToastAndroid.show('SSL payment gateway under maintenance.', ToastAndroid.LONG);
+        if (Platform.OS === 'android') {
+          ToastAndroid.show('SSL payment gateway under maintenance.', ToastAndroid.LONG);
+        } else {
+          Alert.alert('Alert', 'SSL payment gateway is currently under maintenance. Please choose another method.');
+        }
       }
     } catch (error) {
       console.error('Payment initiation failed:', error);
-      ToastAndroid.show('Failed to start payment process.', ToastAndroid.LONG);
+      if (Platform.OS === 'android') {
+        ToastAndroid.show('Failed to start payment process.', ToastAndroid.LONG);
+      } else {
+        Alert.alert('Error', 'Failed to start payment process.');
+      }
     } finally {
       dispatch({ type: HIDE_LOADING });
 
