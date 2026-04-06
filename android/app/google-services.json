@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "312039813061",
+    "project_id": "popular-life-insurance",
+    "storage_bucket": "popular-life-insurance.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:312039813061:android:1d400e9fdad01c81b265ac",
+        "android_client_info": {
+          "package_name": "com.insurancecompanyapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDuzdJa3lw04vSmrxIoxQGy5k7PqenC1X4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
