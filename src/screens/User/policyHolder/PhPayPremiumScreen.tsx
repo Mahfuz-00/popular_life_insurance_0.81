@@ -25,6 +25,8 @@ import { Input } from '../../../components/input/Input';
 import { FilledButton } from '../../../components/FilledButton';
 import { BkashPayment } from '../../../components/payment/BkashPayment';
 import { NagadPayment } from '../../../components/payment/NagadPayment';
+import { DBBLPayment } from '../../../components/payment/DBBLPayment';
+
 import { checkDatabaseConnection, getDuePremiumDetails, userPayPremiumSave } from '../../../actions/userActions';
 import PaymentMethodSelector, { PaymentMethod } from '../../../components/PaymentMethodRadio';
 import { useSelector, useDispatch } from 'react-redux';
@@ -46,11 +48,12 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
   const [cause, setCause] = useState<string>('');
 
   const [policyDetails, setPolicyDetails] = useState<any>(null);
-  const [method, setMethod] = useState<'bkash' | 'nagad' | 'ssl'>('bkash');
+  const [method, setMethod] = useState<'bkash' | 'nagad' | 'dbbl' | 'ssl'>('bkash');
   const [isEnabled, setIsEnabled] = useState(false);
 
   const [showBkash, setShowBkash] = useState(false);
   const [showNagad, setShowNagad] = useState(false);
+  const [showDbbl, setShowDbbl] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [secondaryPaymentId, setSecondaryPaymentId] = useState<number | null>(null);
 
@@ -220,6 +223,7 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
     try {
       if (method === 'bkash') setShowBkash(true);
       if (method === 'nagad') setShowNagad(true);
+      if (method === 'dbbl') setShowDbbl(true);
     } catch (error) {
       console.error('Payment initiation failed:', error);
       if (Platform.OS === 'android') {
@@ -295,6 +299,33 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
         onClose={() => {
           setIsSubmitting(false);
           setShowNagad(false);
+        }}
+      />
+    );
+  }
+
+  // DBBL WebView
+  if (showDbbl) {
+    return (
+      <DBBLPayment
+        amount={amountToPay}
+        number={policyNo}
+        secondaryPaymentId={secondaryPaymentId}
+        mobileNo={user?.phone || ''}
+        paymentType="full"
+        policyDetails={policyDetails}
+        onSuccess={(trxID) => {
+          setIsSubmitting(false);
+          console.log('DBBL Payment Successful, TrxID:', trxID);
+          console.log('Payment Type:', paymentType);
+          if (paymentType === 'partial') {
+            showPartialReceiptAlert(trxID);
+          }
+          navigation.pop();
+        }}
+        onClose={() => {
+          setIsSubmitting(false);
+          setShowDbbl(false);
         }}
       />
     );

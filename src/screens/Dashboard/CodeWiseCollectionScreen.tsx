@@ -112,6 +112,8 @@ const CodeWiseCollectionScreen: React.FC<{ navigation: any }> = ({ navigation })
         : await getCodeWiseCollectionDetails(selectedProject.value, selectedDesignation, code);
 
       if (result?.data && Object.keys(result.data).length > 0) {
+        console.log('Report Data:', result.data);          
+        console.log(`${reportType} Report Data:`, result.data);
         setData(result.data);
       } else {
         Alert.alert('No Data', 'No records found');

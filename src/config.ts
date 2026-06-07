@@ -6,3 +6,5 @@ export const SECONDARYAPI = "https://plim.touchandsolve.com" as const;
 
 export const COMPANY_NAME = "Popular Life Insurance PLC";
 export const COMPANY_LOGO = require('./assets/logo.png');
+export const COMPANY_CELEBRATION = require('./assets/Popular-Celebration.png');
+export const COMPANY_CELEBRATION_2 = require('./assets/Popular-Celebration-2.png');

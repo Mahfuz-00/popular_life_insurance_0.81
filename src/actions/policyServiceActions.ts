@@ -17,7 +17,6 @@ export const updatePolicyMobile = async (postData: any) => {
     };
   } catch (error: any) {
     const errorMessage = error.response?.data?.message || 'Failed to update phone number due to a network error.';
-    // ToastAndroid.show(errorMessage, ToastAndroid.LONG); // Removed toast here to let the screen handle it with Alert
 
     // Check for validation errors if structure is consistent
     const errors = error.response?.data?.errors;

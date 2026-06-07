@@ -23,6 +23,7 @@ import { Input } from '../../components/input/Input';
 import { FilledButton } from '../../components/FilledButton';
 import { BkashPayment } from '../../components/payment/BkashPayment';
 import { NagadPayment } from '../../components/payment/NagadPayment';
+import { DBBLPayment } from '../../components/payment/DBBLPayment';
 import { checkDatabaseConnection, getDuePremiumDetails, userPayPremiumSave } from '../../actions/userActions';
 import PaymentMethodSelector, { PaymentMethod } from '../../components/PaymentMethodRadio';
 import { SHOW_LOADING, HIDE_LOADING } from '../../store/constants/commonConstants';
@@ -37,10 +38,11 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [policyDetails, setPolicyDetails] = useState<any>({});
 
   const [isEnabled, setIsEnabled] = useState(false);
-  const [method, setMethod] = useState<'bkash' | 'nagad' | 'ssl'>('bkash');
+  const [method, setMethod] = useState<'bkash' | 'nagad' | 'dbbl' | 'ssl'>('bkash');
 
   const [showBkash, setShowBkash] = useState(false);
   const [showNagad, setShowNagad] = useState(false);
+  const [showDbbl, setShowDbbl] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [secondaryPaymentId, setSecondaryPaymentId] = useState<number | null>(null);
 
@@ -187,6 +189,8 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
         setShowBkash(true);
       } else if (method === 'nagad') {
         setShowNagad(true);
+      } else if (method === 'dbbl') {
+        setShowDbbl(true);
       } else if (method === 'ssl') {
         if (Platform.OS === 'android') {
           ToastAndroid.show('SSL payment gateway under maintenance.', ToastAndroid.LONG);
@@ -254,6 +258,28 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
         onClose={() => {
           setIsSubmitting(false);
           setShowNagad(false);
+        }}
+      />
+    );
+  }
+
+  // DBBL WebView
+  if (showDbbl) {
+    return (
+      <DBBLPayment
+        amount={amountToPay}
+        number={policyNumber}
+        secondaryPaymentId={secondaryPaymentId}
+        mobileNo={user?.phone || ''}
+        paymentType="full"
+        policyDetails={policyDetails}
+        onSuccess={() => {
+          setIsSubmitting(false);
+          navigation.pop();
+        }}
+        onClose={() => {
+          setIsSubmitting(false);
+          setShowDbbl(false);
         }}
       />
     );

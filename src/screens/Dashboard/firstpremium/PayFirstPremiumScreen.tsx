@@ -88,7 +88,8 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
   const [calculated, setCalculated] = useState({
     code6Digit: '0', rate: '0', premium: '0', basePremium: '0',
     commission: '0', netCommission: '0', netAmount: '0', totalPremium: '0',
-    feOeAmount: '0', extraCharge: '0', finalInstallment: 0
+    feOeAmount: '0', extraCharge: '0', finalInstallment: 0,
+    faCommission: '0', umCommission: '0', bmCommission: '0'  
   });
 
   // UI State
@@ -102,6 +103,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
   const entrydate = moment().format('YYYY-MM-DD');
   const isSpecialProject = selectedProject?.code ? SPECIAL_PROJECTS.includes(selectedProject.code) : false;
   const isInputDisabled = loading.isSubmitting || loading.isProjectLoading;
+ 
 
   const updateFormData = (updates: Partial<typeof formData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
@@ -278,6 +280,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       feOeAmount: '0',
       extraCharge: '0',
       finalInstallment: 0,
+      faCommission: '0', umCommission: '0', bmCommission: '0'
     });
   }, []);
 
@@ -300,7 +303,8 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
   // Premium calculation
   useEffect(() => {
     const calculate = async () => {
-      if (!selectedProject?.code || !formData.plan || !formData.term || age < 8 || !formData.sumAssured || !formData.mode) return;
+      if (!selectedProject?.code || !formData.plan || !formData.term || age < 8 || !formData.sumAssured || !formData.mode || 
+        !formData.fa || formData.fa.length !== 8 || !formData.bm || !formData.um ) return;
 
       dispatch({ type: SHOW_LOADING, payload: 'Calculating premium...' });
 
@@ -311,10 +315,13 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       let basePremiumFinal = 0;
       let fetchedRate = 0;
       let extraCharge = 0;
-      let commRate = parseInt(formData.term) < 15 ? 0.38 : 0.48;
+      // let commRate = parseInt(formData.term) < 15 ? 0.38 : 0.48;
+      const termNum = parseInt(formData.term);
+      const isPlan72 = formData.plan === '72';
+      let faComm = 0, umComm = 0, bmComm = 0;
 
-      if (formData.plan === '10' || formData.plan === '15') commRate = 0.06;
-      if (formData.plan === '72') commRate = PLAN_72_COMMISSION[formData.term] ?? 0;
+      // if (formData.plan === '10' || formData.plan === '15') commRate = 0.06;
+      // if (formData.plan === '72') commRate = PLAN_72_COMMISSION[formData.term] ?? 0;
 
       // Plan 72 calculation
       if (formData.plan === '72') {
@@ -382,15 +389,52 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       const roundedPremium = Math.floor(basePremiumFinal) + (basePremiumFinal % 1 >= 0.5 ? 1 : 0);
       const installmentNumber = getInstallmentNumber();
       const totalPremiumBeforeInstallment = roundedPremium + extraCharge;
+      console.log('Total Premium Before Installment Multiplier:', totalPremiumBeforeInstallment);
 
       const totalPremiumBeforeCommission = roundedPremium * installmentNumber;
       console.log('Total Premium Before Commission:', totalPremiumBeforeCommission);
-      const grossComm = totalPremiumBeforeCommission * commRate;
+      if (isPlan72) {
+        faComm = totalPremiumBeforeCommission * 0.22;
+        console.log('FA Commission:', faComm);
+        umComm = totalPremiumBeforeCommission * 0.066;
+        console.log('UM Commission:', umComm);
+        bmComm = totalPremiumBeforeCommission * 0.044;
+        console.log('BM Commission:', bmComm);
+      } else {
+        const faRate = termNum < 15 ? 0.25 : 0.35;
+        faComm = totalPremiumBeforeCommission * faRate;
+        console.log('FA Commission:', faComm);
+        umComm = totalPremiumBeforeCommission * 0.13;
+        console.log('UM Commission:', umComm);
+        bmComm = totalPremiumBeforeCommission * 0.08;
+        console.log('BM Commission:', bmComm);
+      }
+      // const grossComm = totalPremiumBeforeCommission * commRate;
+      const grossComm = faComm + umComm + bmComm;
       console.log('Gross Commission:', grossComm);
       const tax = grossComm * 0.05;
       console.log('Tax on Commission:', tax);
       const netComm = grossComm - tax;
       console.log('Net Commission:', netComm);
+
+      // NEW: Distribute Net Commission proportionally
+      let faCommission = 0;
+      let umCommission = 0;
+      let bmCommission = 0;
+
+      if (isPlan72) {
+        const totalRatio = 0.22 + 0.066 + 0.044; // 0.33
+        faCommission = netComm * (0.22 / totalRatio);
+        umCommission = netComm * (0.066 / totalRatio);
+        bmCommission = netComm * (0.044 / totalRatio);
+      } else {
+        const totalRatio = 0.25 + 0.13 + 0.08; // 0.46
+        faCommission = netComm * (0.25 / totalRatio);
+        umCommission = netComm * (0.13 / totalRatio);
+        bmCommission = netComm * (0.08 / totalRatio);
+      }
+
+
       let netCommRounded = Math.floor(netComm) + (netComm % 1 >= 0.5 ? 1 : 0);
       let finalNet = Math.floor(totalPremiumBeforeCommission - netComm) + ((totalPremiumBeforeCommission - netComm) % 1 >= 0.5 ? 1 : 0) + extraCharge;
 
@@ -406,7 +450,10 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         totalPremium: totalPremiumBeforeInstallment.toString(),
         feOeAmount: extraCharge.toString(),
         extraCharge: extraCharge.toString(),
-        finalInstallment: installmentNumber
+        finalInstallment: installmentNumber,
+        faCommission: Math.round(faCommission).toString(),
+        umCommission: Math.round(umCommission).toString(),
+        bmCommission: Math.round(bmCommission).toString()
       });
 
       dispatch({ type: HIDE_LOADING });
@@ -414,7 +461,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
 
     const timer = setTimeout(calculate, 500);
     return () => clearTimeout(timer);
-  }, [selectedProject?.code, formData.plan, formData.term, age, formData.sumAssured, formData.mode, formData.installments, formData.feOeOption]);
+  }, [selectedProject?.code, formData.plan, formData.term, age, formData.sumAssured, formData.mode, formData.installments, formData.feOeOption, formData.fa, formData.um, formData.bm]);
 
   // FA code format warning
   useEffect(() => {
@@ -524,7 +571,9 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
     if (!formData.district) newErrors.district = 'District is required';
     if (!formData.gender) newErrors.gender = 'Gender is required';
     if (!formData.fa) newErrors.fa = 'FA code is required';
-    if (formData.fa && formData.fa.length < 8) newErrors.fa = 'FA must be 8 digits';
+    if (formData.fa && formData.fa.length !== 8) newErrors.fa = 'FA must be 8 digits';
+    if (!formData.um) newErrors.um = 'UM code is required';
+    if (!formData.bm) newErrors.bm = 'BM code is required';
     if (!formData.nominee1Name) newErrors.nominee1Name = 'Nominee name is required';
     if (!formData.nominee1Percent) newErrors.nominee1Percent = 'Nominee percentage is required';
 
@@ -584,6 +633,9 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         rateCode: calculated.code6Digit,
         basePremium: calculated.premium,
         commission: calculated.netCommission,
+        fa_commission: calculated.faCommission || '0',
+        um_commission: calculated.umCommission || '0',
+        bm_commission: calculated.bmCommission || '0',
         rate: calculated.rate,
         netAmount: calculated.netAmount,
         fatherHusbandName: formData.fatherHusbandName,
@@ -728,6 +780,24 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
               })}
             </View>
 
+            {/* Code Setup */}
+            <Text style={styles.sectionTitle}>Code Setup</Text>
+            <Input
+              label="FA"
+              value={formData.fa}
+              onChangeText={(text) => updateFormData({ fa: text.replace(/[^0-9]/g, '').slice(0, 8) })}
+              maxLength={8}
+              keyboardType="numeric"
+              required
+              placeholder="Enter 8-digit FA code"
+              editable={!isInputDisabled}
+            />
+            {errors.fa && <Text style={styles.error}>{errors.fa}</Text>}
+
+            <Input label="UM" value={formData.um} onChangeText={(v) => updateFormData({ um: v })} maxLength={6} keyboardType="numeric" required editable={editable.um && !isInputDisabled} style={{ backgroundColor: editable.um && !isInputDisabled ? '#ffffff' : '#f0f0f0' }} />
+            <Input label="BM" value={formData.bm} onChangeText={(v) => updateFormData({ bm: v })} maxLength={6} keyboardType="numeric" required editable={editable.bm && !isInputDisabled} style={{ backgroundColor: editable.bm && !isInputDisabled ? '#ffffff' : '#f0f0f0' }} />
+            <Input label="AGM" value={formData.agm} onChangeText={(v) => updateFormData({ agm: v })} maxLength={6} keyboardType="numeric" required editable={editable.agm && !isInputDisabled} style={{ backgroundColor: editable.agm && !isInputDisabled ? '#ffffff' : '#f0f0f0' }} />
+
             {/* Premium Details */}
             <Text style={styles.sectionTitle}>Premium Details (Auto Calculated)</Text>
             <Input label="Code (Auto)" value={calculated.code6Digit} editable={false} />
@@ -795,24 +865,6 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             {/* Guardian */}
             <Text style={styles.sectionTitle}>Guardian Details</Text>
             <EnglishOnlyInput label="Guardian Name" value={formData.guardianName} onChangeText={(v) => updateFormData({ guardianName: v })} editable={!isInputDisabled} maxLength={30} />
-
-            {/* Code Setup */}
-            <Text style={styles.sectionTitle}>Code Setup</Text>
-            <Input
-              label="FA"
-              value={formData.fa}
-              onChangeText={(text) => updateFormData({ fa: text.replace(/[^0-9]/g, '').slice(0, 8) })}
-              maxLength={8}
-              keyboardType="numeric"
-              required
-              placeholder="Enter 8-digit FA code"
-              editable={!isInputDisabled}
-            />
-            {errors.fa && <Text style={styles.error}>{errors.fa}</Text>}
-
-            <Input label="UM" value={formData.um} onChangeText={(v) => updateFormData({ um: v })} maxLength={6} keyboardType="numeric" editable={editable.um && !isInputDisabled} style={{ backgroundColor: editable.um && !isInputDisabled ? '#ffffff' : '#f0f0f0' }} />
-            <Input label="BM" value={formData.bm} onChangeText={(v) => updateFormData({ bm: v })} maxLength={6} keyboardType="numeric" editable={editable.bm && !isInputDisabled} style={{ backgroundColor: editable.bm && !isInputDisabled ? '#ffffff' : '#f0f0f0' }} />
-            <Input label="AGM" value={formData.agm} onChangeText={(v) => updateFormData({ agm: v })} maxLength={6} keyboardType="numeric" editable={editable.agm && !isInputDisabled} style={{ backgroundColor: editable.agm && !isInputDisabled ? '#ffffff' : '#f0f0f0' }} />
 
             <FilledButton
               title={loading.isSubmitting ? 'Preparing Payment...' : 'Submit'}

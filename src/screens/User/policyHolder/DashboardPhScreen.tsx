@@ -18,6 +18,7 @@ import MenuComponent from '../../../components/MenuComponent';
 import Header from '../../../components/Header';
 import { COMPANY_NAME } from '../../../config';
 import { AppDispatch } from '../../../store/index';
+import { COMPANY_CELEBRATION_2 } from '../../../config';
 
 const { width, height } = Dimensions.get('window');
 
@@ -81,6 +82,19 @@ const DashboardPhScreen: React.FC<DashboardPhScreenProps> = ({ navigation, route
       <Header navigation={navigation} title={policyNo} />
 
       <ScrollView>
+        <View style={styles.celebrationSection}>
+          <View style={styles.logoBorderFrame}>
+            <Image
+              source={COMPANY_CELEBRATION_2}
+              style={styles.bigLogo}
+              resizeMode="cover"
+            />
+          </View>
+          <Text style={styles.celebrationText}>
+            25 Years of Popular Life Insurance
+          </Text>
+        </View>
+
         <View style={globalStyle.wrapper}>
           <View
             style={{
@@ -127,6 +141,32 @@ const DashboardPhScreen: React.FC<DashboardPhScreenProps> = ({ navigation, route
 };
 
 const styles = StyleSheet.create({
+  celebrationSection: {
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    paddingVertical: 20,
+  },
+  logoBorderFrame: {
+    width: width * 0.85,
+    height: height * 0.25,
+    borderWidth: 2,
+    borderColor: '#966EAF',
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: '#fff',
+  },
+  bigLogo: {
+    width: '100%',
+    height: '100%',
+  },
+  celebrationText: {
+    marginTop: 12,
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#966EAF',
+    textAlign: 'center',
+    letterSpacing: 0.5,
+  },
   updateContainer: {
     alignItems: 'center',
     marginTop: 20,

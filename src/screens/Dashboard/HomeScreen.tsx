@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ScrollView, StyleSheet, Dimensions, Image, StatusBar } from 'react-native';
+import { View, ScrollView, StyleSheet, Dimensions, Image, StatusBar, Text } from 'react-native';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../store';
 import globalStyle from '../../styles/globalStyle';
@@ -7,12 +7,16 @@ import Header from '../../components/Header';
 import Slider from '../../components/Slider';
 import MenuComponent from '../../components/MenuComponent';
 import FooterContact from '../../components/FooterContact';
-import { COMPANY_LOGO } from '../../config';
+import { COMPANY_CELEBRATION, COMPANY_LOGO } from '../../config';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
 
 const PRIMARY_COLOR = '#966EAF';
+
+// Define explicit dimensions for the celebration card so border hugs the image edges perfectly
+const LOGO_WIDTH = width * 0.85;
+const LOGO_HEIGHT = height * 0.25;
 
 const HomeScreen = ({ navigation }: { navigation: any }) => {
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
@@ -78,7 +82,7 @@ const HomeScreen = ({ navigation }: { navigation: any }) => {
     React.cloneElement(loginMenu, { key: 'login-menu' }),
     ...allMenus.map((item, i) => (
       <MenuComponent
-        key={`menu-${i}`}            // better than just i
+        key={`menu-${i}`}           
         title={item.title}
         icon={item.icon}
         zoomOut={item.zoomOut}
@@ -98,12 +102,26 @@ const HomeScreen = ({ navigation }: { navigation: any }) => {
         <Header navigation={navigation} />
         <ScrollView showsVerticalScrollIndicator={false}>
           <Slider />
-          <View style={styles.logoContainer}>
+          {/* <View style={styles.logoContainer}>
             <Image
-              source={COMPANY_LOGO}
+              source={COMPANY_LOGO} 
               style={styles.bigLogo}
               resizeMode="contain"
             />
+          </View> */}
+
+          {/* Main layout section housing the image framing & typography */}
+          <View style={styles.celebrationSection}>
+            <View style={styles.logoBorderFrame}>
+              <Image
+                source={COMPANY_CELEBRATION}
+                style={styles.bigLogo}
+                resizeMode="cover" 
+              />
+            </View>
+            <Text style={styles.celebrationText}>
+              25 Years of Popular Life Insurance
+            </Text>
           </View>
 
           <View style={globalStyle.wrapper}>
@@ -132,12 +150,38 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  // This style is for the logo and below one is for celebration image. We keep them separate to maintain the integrity of the celebration graphic which has its own design and dimensions.
+  // bigLogo: {
+  //   width: width * 0.6,
+  //   height: height * 0.2,
+  // },
+  celebrationSection: {
+    alignItems: 'center',
+    backgroundColor: '#fff',
     paddingVertical: 20,
+  },
+  logoBorderFrame: {
+    width: LOGO_WIDTH,
+    height: LOGO_HEIGHT,
+    borderWidth: 2,
+    borderColor: '#966EAF',
+    borderRadius: 8,
+    overflow: 'hidden', // Crucial to prevent image corners from spilling out of the borderRadius
     backgroundColor: '#fff',
   },
   bigLogo: {
-    width: width * 0.6,
-    height: height * 0.2,
+    width: '100%',
+    height: '100%',
+  },
+  celebrationText: {
+    marginTop: 12,
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#966EAF',
+    textAlign: 'center',
+    letterSpacing: 0.5,
   },
 });
 

@@ -4,7 +4,7 @@
 // const BKASH_EXECUTE_PAYMENT_API = "https://tokenized.sandbox.bka.sh/v1.2.0-beta/tokenized/checkout/execute";
 // const BKASH_QUERY_PAYMENT_API = "https://tokenized.sandbox.bka.sh/v1.2.0-beta/tokenized/checkout/payment/status";
 
-import {API} from '../config';
+import { API } from '../config';
 import axios from '../utils/axios';
 
 // export const BKASH_USERNAME = "sandboxTokenizedUser02";
@@ -123,5 +123,78 @@ export const nagadPaymentUrl = async (postData: any): Promise<string> => {
   } catch (error: any) {
     console.log('err: ', error);
     return '';
+  }
+};
+
+export type DBBLPaymentInitResponse = {
+  status: boolean;
+  payment_url: string;
+  transaction_id: string;
+  raw?: any;
+};
+
+export const dbblPaymentUrl = async (
+  amount: number,
+  invoice: string,
+  cardType: number
+): Promise<DBBLPaymentInitResponse> => {
+  try {
+
+    console.log('Initiating DBBL Payment with:', { amount, invoice, cardType });
+    const { data, status } = await axios.post(
+      `${API}/api/get-dbbl-url`,
+      { amount, invoice, card_type: cardType as Number },
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+
+    console.log('HTTP Status Code:', status);
+    console.log('DBBL Init Response:', data);
+
+    const payload = data?.data || data || {};
+
+    return {
+      status: payload?.status === true,
+      payment_url: payload?.payment_url || '',
+      transaction_id: payload?.transaction_id || '',
+      raw: data,
+    };
+  } catch (error: any) {
+
+    console.error('DBBL Payment Error:', error);
+
+
+    // 👉 added logs only
+    console.log('DBBL Check Error Status:', error?.response?.status);
+    console.log('DBBL Check Error Data:', error?.response?.data);
+    console.log('DBBL Check Error Message:', error?.message);
+    return {
+      status: false,
+      payment_url: '',
+      transaction_id: '',
+      raw: null,
+    };
+  }
+};
+
+export const dbblCheckTransaction = async (trans_id: string): Promise<any> => {
+  try {
+    const { data, status } = await axios.post(
+      `${API}/api/check-dbbl-transaction`,
+      { trans_id },
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+
+    console.log('HTTP Status Code:', status);
+    console.log('DBBL Check Response:', data);
+    return data;
+  } catch (error: any) {
+    console.error('DBBL Check Error:', error);
+
+    // 👉 added logs only
+    console.log('DBBL Check Error Status:', error?.response?.status);
+    console.log('DBBL Check Error Data:', error?.response?.data);
+    console.log('DBBL Check Error Message:', error?.message);
+
+    return null;
   }
 };

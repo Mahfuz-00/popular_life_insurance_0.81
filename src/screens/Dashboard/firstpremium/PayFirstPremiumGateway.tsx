@@ -26,8 +26,9 @@ import { clearFirstPremiumData } from '../../../actions/payFirstPremiumActions';
 import { SHOW_LOADING, HIDE_LOADING } from '../../../store/constants/commonConstants';
 import { FirstPremiumBkashPayment } from '../../../components/payment/FirstPremiumBkashPayment';
 import { FirstPremiumNagadPayment } from '../../../components/payment/FirstPremiumNagadPayment';
+import { FirstPremiumDBBLPayment } from '../../../components/payment/FirstPremiumDBBLPayment';
 
-type PaymentMethod = 'bkash' | 'nagad' | 'ssl';
+type PaymentMethod = 'bkash' | 'nagad' | 'dbbl' | 'ssl';
 
 const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -87,13 +88,17 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
     feOeOption,
     feOeAmount,
     installments,
-    guardianName
+    guardianName,
+    fa_commission,
+    um_commission,
+    bm_commission,
   } = formData;
 
   const [method, setMethod] = useState<PaymentMethod>('bkash');
   const [isEnabled, setIsEnabled] = useState(false);
   const [showBkash, setShowBkash] = useState(false);
   const [showNagad, setShowNagad] = useState(false);
+  const [showDbbl, setShowDbbl] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [secondaryPaymentId, setSecondaryPaymentId] = useState<number | null>(null);
 
@@ -212,7 +217,12 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
       guardianName,
       childName,
       basePremium,
+      fa_commission: fa_commission || '0',
+      um_commission: um_commission || '0',
+      bm_commission: bm_commission || '0',
     };
+
+    console.log('Prepared post data for payment:', postData);
 
     // Try save first
     const saveResult = await userPayFirstPremiumSave(postData);
@@ -225,6 +235,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
 
     if (method === 'bkash') setShowBkash(true);
     if (method === 'nagad') setShowNagad(true);
+    if (method === 'dbbl') setShowDbbl(true);
     if (method === 'ssl') {
       Alert.alert('Payment Method', 'SSL Commerz is under maintanence.');
     }
@@ -288,6 +299,9 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
           guardianName,
           childName,
           basePremium,
+          fa_commission: fa_commission || '0',
+          um_commission: um_commission || '0',
+          bm_commission: bm_commission || '0',  
         }}
         onSuccess={() => {
           dispatch(clearFirstPremiumData());
@@ -345,6 +359,69 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
           guardianName,
           childName,
           basePremium,
+          fa_commission: fa_commission || '0',
+          um_commission: um_commission || '0',
+          bm_commission: bm_commission || '0',
+        }}
+        onSuccess={() => {
+          dispatch(clearFirstPremiumData());
+          navigation.pop();
+        }}
+        onClose={() => setShowNagad(false)}
+        navigation={navigation}
+      />
+    );
+  }
+
+  // DBBL WebView
+  if (showDbbl) {
+    return (
+      <FirstPremiumDBBLPayment
+        amount={netAmount}
+        nid={nid}
+        mobileNo={mobile}
+        secondaryPaymentId={secondaryPaymentId}
+        proposalData={{
+          nid,
+          project: projectCode.toString(),
+          code: code.toString(),
+          name,
+          entrydate,
+          mobile,
+          plan,
+          age,
+          term,
+          mode,
+          sumAssured,
+          totalPremium,
+          servicingCell,
+          fa,
+          um: um || null,
+          bm: bm || null,
+          agm: agm || null,
+          agentMobile,
+          commission: commission || '0',
+          net_pay: netAmount || '0',
+          father_or_husband_name: fatherHusbandName,
+          mother_name: motherName,
+          address,
+          district,
+          gender,
+          nominee_1_name: nominee1Name,
+          nominee_1_percentage: nominee1Percent,
+          nominee_2_name: nominee2Name,
+          nominee_2_percentage: nominee2Percent,
+          nominee_3_name: nominee3Name,
+          nominee_3_percentage: nominee3Percent,
+          feOeOption,
+          installments,
+          total_paid: installmentPremium,
+          guardianName,
+          childName,
+          basePremium,
+          fa_commission: fa_commission || '0',
+          um_commission: um_commission || '0',
+          bm_commission: bm_commission || '0',
         }}
         onSuccess={() => {
           dispatch(clearFirstPremiumData());

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity, Image, StyleSheet } from 'react-native';
 
-export type PaymentMethod = 'bkash' | 'nagad' | 'ssl';
+export type PaymentMethod = 'bkash' | 'nagad' | 'dbbl' | 'ssl';
 
 interface PaymentMethodSelectorProps {
   selectedMethod: PaymentMethod;
@@ -12,6 +12,7 @@ interface PaymentMethodSelectorProps {
 const gatewayOptions: Array<{ value: PaymentMethod; image: any }> = [
   { value: 'bkash', image: require('../assets/bkash.png') },
   { value: 'nagad', image: require('../assets/nagad.png') },
+  { value: 'dbbl', image: require('../assets/dbbl.png') },
   { value: 'ssl', image: require('../assets/otherCards.png') },
 ];
 

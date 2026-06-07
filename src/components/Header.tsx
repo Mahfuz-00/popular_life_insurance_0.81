@@ -7,6 +7,7 @@ import {
   Dimensions,
   StatusBar,
   StyleSheet,
+  Platform,
 } from 'react-native';
 
 import { COMPANY_LOGO, COMPANY_NAME } from '../config';
@@ -25,6 +26,16 @@ type HeaderProps = {
 const Header: React.FC<HeaderProps> = ({ navigation, title }) => {
   const showTitleCard = title && title.trim() !== '';
 
+  const handleBack = () => {
+    if (navigation?.canGoBack?.()) {
+      navigation.goBack();
+    } else if (navigation?.getParent?.()?.canGoBack?.()) {
+      navigation.getParent().goBack();
+    }
+  };
+
+  const isIOS = Platform.OS === 'ios';
+
   return (
     <>
       <StatusBar backgroundColor="#966EAF" barStyle="light-content" />
@@ -33,19 +44,32 @@ const Header: React.FC<HeaderProps> = ({ navigation, title }) => {
         {/* Purple Curved Header */}
         <View style={styles.headerBar}>
           <View style={styles.row}>
-            {/* 10% Logo */}
-            <View style={styles.logoContainer}>
+            {/* Left: Back button + Logo */}
+            <View
+              style={[
+                styles.leftContainer,
+                isIOS && { width: '10%', flexDirection: 'row', alignItems: 'center', marginEnd: 5 },
+              ]}
+            >
+              {isIOS && (
+                <TouchableOpacity onPress={handleBack} style={styles.backButtonContainer}>
+                  <Text style={styles.backButton}>{'‹'}</Text>
+                </TouchableOpacity>
+              )}
               <Image source={COMPANY_LOGO} style={styles.logo} resizeMode="contain" />
             </View>
 
-            {/* 80% Company Name – perfectly centered */}
-            <View style={styles.nameContainer}>
-              <Text style={styles.companyName} numberOfLines={1}>
+            {/* Company Name */}
+            <View style={[styles.nameContainer, isIOS && { width: '75%' }]}>
+              <Text
+                style={[styles.companyName, isIOS && { fontSize: scale(16), marginLeft: scale(4) }]}
+                numberOfLines={1}
+              >
                 {COMPANY_NAME}
               </Text>
             </View>
 
-            {/* 10% Drawer Toggle */}
+            {/* Drawer Toggle */}
             <View style={styles.drawerContainer}>
               <TouchableOpacity onPress={() => navigation.toggleDrawer()}>
                 <Image
@@ -57,7 +81,7 @@ const Header: React.FC<HeaderProps> = ({ navigation, title }) => {
           </View>
         </View>
 
-        {/* White Title Card — only if title exists */}
+        {/* White Title Card */}
         {showTitleCard && (
           <View style={styles.titleCard}>
             <Text style={styles.titleText}>{title}</Text>
@@ -90,9 +114,18 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(20),
     justifyContent: 'space-between',
   },
-  logoContainer: {
+  leftContainer: {
     width: '10%',
-    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
+  },
+  backButtonContainer: {
+    width: '50%',
+  },
+  backButton: {
+    color: '#FFFFFF',
+    fontSize: scale(28),
+    lineHeight: scale(28),
+    fontWeight: '600',
   },
   nameContainer: {
     width: '80%',

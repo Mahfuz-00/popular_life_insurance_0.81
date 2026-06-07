@@ -6,6 +6,7 @@ import { NavigationContainer, createNavigationContainerRef } from '@react-naviga
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { Provider } from 'react-redux';
+import { initCrashlytics } from './src/store/SafeCrashlyticsHelper';
 
 import store from './src/store/index';
 import { loadUser, userPayPremium } from './src/actions/userActions';
@@ -69,6 +70,8 @@ import OrgMyProfileScreen from './src/screens/User/producer/OrgMyProfileScreen';
 import DrawerContent from './src/components/DrawerContent';
 import { DrawerParamList } from './src/navigation/DrawerParamList';
 
+
+initCrashlytics();
 
 // -- Navigator types --
 const Stack = createNativeStackNavigator<RootStackParamList>();
