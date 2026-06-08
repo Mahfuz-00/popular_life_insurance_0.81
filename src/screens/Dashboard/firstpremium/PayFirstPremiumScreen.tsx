@@ -393,7 +393,14 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
 
       const totalPremiumBeforeCommission = roundedPremium * installmentNumber;
       console.log('Total Premium Before Commission:', totalPremiumBeforeCommission);
-      if (isPlan72) {
+      if (formData.plan === '10' || formData.plan === '15') {
+        faComm = totalPremiumBeforeCommission * 0.05;
+        console.log('FA Commission:', faComm);
+        umComm = totalPremiumBeforeCommission * 0.01;
+        console.log('UM Commission:', umComm);
+        bmComm = totalPremiumBeforeCommission * 0.01;
+        console.log('BM Commission:', bmComm);
+      } else if (isPlan72) {
         faComm = totalPremiumBeforeCommission * 0.22;
         console.log('FA Commission:', faComm);
         umComm = totalPremiumBeforeCommission * 0.066;
@@ -422,7 +429,12 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       let umCommission = 0;
       let bmCommission = 0;
 
-      if (isPlan72) {
+      if (formData.plan === '10' || formData.plan === '15') {
+        const totalRatio = 0.05 + 0.01 + 0.01; // 0.07
+        faCommission = netComm * (0.05 / totalRatio);
+        umCommission = netComm * (0.01 / totalRatio);
+        bmCommission = netComm * (0.01 / totalRatio);
+      } else if (isPlan72) {
         const totalRatio = 0.22 + 0.066 + 0.044; // 0.33
         faCommission = netComm * (0.22 / totalRatio);
         umCommission = netComm * (0.066 / totalRatio);

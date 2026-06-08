@@ -12,7 +12,7 @@ interface PaymentMethodSelectorProps {
 const gatewayOptions: Array<{ value: PaymentMethod; image: any }> = [
   { value: 'bkash', image: require('../assets/bkash.png') },
   { value: 'nagad', image: require('../assets/nagad.png') },
-  { value: 'dbbl', image: require('../assets/dbbl.png') },
+  // { value: 'dbbl', image: require('../assets/dbbl.png') },
   { value: 'ssl', image: require('../assets/otherCards.png') },
 ];
 

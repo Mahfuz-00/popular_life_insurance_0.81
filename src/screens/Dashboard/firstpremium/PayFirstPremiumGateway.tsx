@@ -235,7 +235,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
 
     if (method === 'bkash') setShowBkash(true);
     if (method === 'nagad') setShowNagad(true);
-    if (method === 'dbbl') setShowDbbl(true);
+    // if (method === 'dbbl') setShowDbbl(true);
     if (method === 'ssl') {
       Alert.alert('Payment Method', 'SSL Commerz is under maintanence.');
     }
