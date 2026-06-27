@@ -71,6 +71,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
     rateCode,
     basePremium,
     commission,
+    net_commission,
     rate,
     netAmount,
     installmentPremium,
@@ -92,6 +93,13 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
     fa_commission,
     um_commission,
     bm_commission,
+    agm_commission,
+    fa_incentive,
+    um_incentive,
+    bm_incentive,
+    agm_incentive,
+    pi_incentive,
+    total_incentive,
   } = formData;
 
   const [method, setMethod] = useState<PaymentMethod>('bkash');
@@ -128,6 +136,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
     { label: 'Installments', value: installments },
     { label: 'Installment Premium', value: installmentPremium },
     { label: 'Commission', value: commission },
+    { label: 'Incentive', value: total_incentive },
     { label: 'Payment Amount', value: netAmount },
     { label: 'Father/Husband Name', value: fatherHusbandName },
     { label: 'Mother Name', value: motherName },
@@ -220,6 +229,14 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
       fa_commission: fa_commission || '0',
       um_commission: um_commission || '0',
       bm_commission: bm_commission || '0',
+      agm_commission: agm_commission || '0',
+      fa_incentive: fa_incentive || '0',
+      um_incentive: um_incentive || '0',
+      bm_incentive: bm_incentive || '0',
+      agm_incentive: agm_incentive || '0',
+      pi_incentive: pi_incentive || '0',
+      total_incentive: total_incentive || '0',
+      net_commission: net_commission || '0',
     };
 
     console.log('Prepared post data for payment:', postData);
@@ -302,6 +319,14 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
           fa_commission: fa_commission || '0',
           um_commission: um_commission || '0',
           bm_commission: bm_commission || '0',  
+          agm_commission: agm_commission || '0',
+          fa_incentive: fa_incentive || '0',
+          um_incentive: um_incentive || '0',
+          bm_incentive: bm_incentive || '0',
+          agm_incentive: agm_incentive || '0',
+          pi_incentive: pi_incentive || '0',
+          total_incentive: total_incentive || '0',
+          net_commission: net_commission || '0',
         }}
         onSuccess={() => {
           dispatch(clearFirstPremiumData());
@@ -362,6 +387,14 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
           fa_commission: fa_commission || '0',
           um_commission: um_commission || '0',
           bm_commission: bm_commission || '0',
+          agm_commission: agm_commission || '0',
+          fa_incentive: fa_incentive || '0',
+          um_incentive: um_incentive || '0',
+          bm_incentive: bm_incentive || '0',
+          agm_incentive: agm_incentive || '0',
+          pi_incentive: pi_incentive || '0',
+          total_incentive: total_incentive || '0',
+          net_commission: net_commission || '0',
         }}
         onSuccess={() => {
           dispatch(clearFirstPremiumData());
@@ -422,6 +455,14 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
           fa_commission: fa_commission || '0',
           um_commission: um_commission || '0',
           bm_commission: bm_commission || '0',
+          agm_commission: agm_commission || '0',
+          fa_incentive: fa_incentive || '0',
+          um_incentive: um_incentive || '0',
+          bm_incentive: bm_incentive || '0',
+          agm_incentive: agm_incentive || '0',
+          pi_incentive: pi_incentive || '0',
+          total_incentive: total_incentive || '0',
+          net_commission: net_commission || '0',
         }}
         onSuccess={() => {
           dispatch(clearFirstPremiumData());

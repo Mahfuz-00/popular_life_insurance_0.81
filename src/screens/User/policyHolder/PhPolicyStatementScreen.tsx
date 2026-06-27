@@ -165,28 +165,28 @@ const PhPolicyStatementScreen: React.FC<PhPolicyStatementScreenProps> = ({ navig
                 <View style={styles.rowWrapper}>
                   <Text style={[styles.rowLable, globalStyle.tableText]}>Total Paid</Text>
                   <Text style={[styles.rowValue, globalStyle.tableText]}>
-                    {Number(policyDetails.totalPaid).toFixed(2)}
+                    {policyDetails.totalPaid ? Number(policyDetails.totalPaid).toFixed(2) : '0.00'}
                   </Text>
                 </View>
 
                 <View style={styles.rowWrapper}>
                   <Text style={[styles.rowLable, globalStyle.tableText]}>Date of Birth</Text>
                   <Text style={[styles.rowValue, globalStyle.tableText]}>
-                    {policyDetails.dateOfBirth.format3}
+                    {policyDetails.dateOfBirth.format3 ?? 'N/A'}
                   </Text>
                 </View>
 
                 <View style={styles.rowWrapper}>
                   <Text style={[styles.rowLable, globalStyle.tableText]}>Com. Date</Text>
                   <Text style={[styles.rowValue, globalStyle.tableText]}>
-                    {policyDetails.comDate.format3}
+                    {policyDetails.comDate.format3 ?? 'N/A'}
                   </Text>
                 </View>
 
                 <View style={styles.rowWrapper}>
                   <Text style={[styles.rowLable, globalStyle.tableText]}>Next Due Date</Text>
                   <Text style={[styles.rowValue, globalStyle.tableText]}>
-                    {policyDetails.nextDueDate.format3}
+                    {policyDetails.nextDueDate.format3 ?? 'N/A'}
                   </Text>
                 </View>
               </View>

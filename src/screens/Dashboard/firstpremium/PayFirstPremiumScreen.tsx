@@ -89,7 +89,8 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
     code6Digit: '0', rate: '0', premium: '0', basePremium: '0',
     commission: '0', netCommission: '0', netAmount: '0', totalPremium: '0',
     feOeAmount: '0', extraCharge: '0', finalInstallment: 0,
-    faCommission: '0', umCommission: '0', bmCommission: '0'  
+    faCommission: '0', umCommission: '0', bmCommission: '0', agmCommission: '0',
+    faIncentive: '0', umIncentive: '0', bmIncentive: '0', agmIncentive: '0', piIncentive: '0', totalIncentive: '0'
   });
 
   // UI State
@@ -280,7 +281,10 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       feOeAmount: '0',
       extraCharge: '0',
       finalInstallment: 0,
-      faCommission: '0', umCommission: '0', bmCommission: '0'
+      faCommission: '0', 
+      umCommission: '0', 
+      bmCommission: '0', 
+      agmCommission: '0'
     });
   }, []);
 
@@ -318,7 +322,8 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       // let commRate = parseInt(formData.term) < 15 ? 0.38 : 0.48;
       const termNum = parseInt(formData.term);
       const isPlan72 = formData.plan === '72';
-      let faComm = 0, umComm = 0, bmComm = 0;
+      let faComm = 0, umComm = 0, bmComm = 0, agmComm = 0;
+      let faInc = 0, umInc = 0, bmInc = 0, agmInc = 0, piInc = 0;
 
       // if (formData.plan === '10' || formData.plan === '15') commRate = 0.06;
       // if (formData.plan === '72') commRate = PLAN_72_COMMISSION[formData.term] ?? 0;
@@ -393,6 +398,22 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
 
       const totalPremiumBeforeCommission = roundedPremium * installmentNumber;
       console.log('Total Premium Before Commission:', totalPremiumBeforeCommission);
+
+      faInc = totalPremiumBeforeCommission * 0.05;
+      console.log('FA Incentive:', faInc);
+      umInc = totalPremiumBeforeCommission * 0.03;
+      console.log('UM Incentive:', umInc);
+      bmInc = totalPremiumBeforeCommission * 0.02;
+      console.log('BM Incentive:', bmInc);
+      agmInc = totalPremiumBeforeCommission * 0.03;
+      console.log('AGM Incentive:', agmInc);
+      piInc  = totalPremiumBeforeCommission * 0.03;
+      console.log('PI Incentive:', piInc);
+
+      const totalIncentive = faInc + umInc + bmInc + agmInc + piInc;
+      console.log('Total Incentive:', totalIncentive);
+
+
       if (formData.plan === '10' || formData.plan === '15') {
         faComm = totalPremiumBeforeCommission * 0.05;
         console.log('FA Commission:', faComm);
@@ -400,6 +421,8 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         console.log('UM Commission:', umComm);
         bmComm = totalPremiumBeforeCommission * 0.01;
         console.log('BM Commission:', bmComm);
+        agmComm = totalPremiumBeforeCommission * 0.01;
+        console.log('AGM Commission:', agmComm);
       } else if (isPlan72) {
         faComm = totalPremiumBeforeCommission * 0.22;
         console.log('FA Commission:', faComm);
@@ -407,6 +430,8 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         console.log('UM Commission:', umComm);
         bmComm = totalPremiumBeforeCommission * 0.044;
         console.log('BM Commission:', bmComm);
+        agmComm = totalPremiumBeforeCommission * 0.03;
+        console.log('AGM Commission:', agmComm);
       } else {
         const faRate = termNum < 15 ? 0.25 : 0.35;
         faComm = totalPremiumBeforeCommission * faRate;
@@ -415,40 +440,20 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         console.log('UM Commission:', umComm);
         bmComm = totalPremiumBeforeCommission * 0.08;
         console.log('BM Commission:', bmComm);
+        agmComm = totalPremiumBeforeCommission * 0.03;
+        console.log('AGM Commission:', agmComm);
       }
       // const grossComm = totalPremiumBeforeCommission * commRate;
-      const grossComm = faComm + umComm + bmComm;
+      const grossComm = faComm + umComm + bmComm + agmComm + totalIncentive;
       console.log('Gross Commission:', grossComm);
       const tax = grossComm * 0.05;
       console.log('Tax on Commission:', tax);
       const netComm = grossComm - tax;
       console.log('Net Commission:', netComm);
 
-      // NEW: Distribute Net Commission proportionally
-      let faCommission = 0;
-      let umCommission = 0;
-      let bmCommission = 0;
-
-      if (formData.plan === '10' || formData.plan === '15') {
-        const totalRatio = 0.05 + 0.01 + 0.01; // 0.07
-        faCommission = netComm * (0.05 / totalRatio);
-        umCommission = netComm * (0.01 / totalRatio);
-        bmCommission = netComm * (0.01 / totalRatio);
-      } else if (isPlan72) {
-        const totalRatio = 0.22 + 0.066 + 0.044; // 0.33
-        faCommission = netComm * (0.22 / totalRatio);
-        umCommission = netComm * (0.066 / totalRatio);
-        bmCommission = netComm * (0.044 / totalRatio);
-      } else {
-        const totalRatio = 0.25 + 0.13 + 0.08; // 0.46
-        faCommission = netComm * (0.25 / totalRatio);
-        umCommission = netComm * (0.13 / totalRatio);
-        bmCommission = netComm * (0.08 / totalRatio);
-      }
-
-
       let netCommRounded = Math.floor(netComm) + (netComm % 1 >= 0.5 ? 1 : 0);
-      let finalNet = Math.floor(totalPremiumBeforeCommission - netComm) + ((totalPremiumBeforeCommission - netComm) % 1 >= 0.5 ? 1 : 0) + extraCharge;
+
+      let finalNet = Math.floor(totalPremiumBeforeCommission - grossComm) + ((totalPremiumBeforeCommission - grossComm) % 1 >= 0.5 ? 1 : 0) + extraCharge + tax;
 
       const finalTotalPremium = totalPremiumBeforeCommission + extraCharge;
 
@@ -463,9 +468,16 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         feOeAmount: extraCharge.toString(),
         extraCharge: extraCharge.toString(),
         finalInstallment: installmentNumber,
-        faCommission: Math.round(faCommission).toString(),
-        umCommission: Math.round(umCommission).toString(),
-        bmCommission: Math.round(bmCommission).toString()
+        faCommission: faComm.toFixed(2),
+        umCommission: umComm.toFixed(2),
+        bmCommission: bmComm.toFixed(2),
+        agmCommission: agmComm.toFixed(2),
+        faIncentive: faInc.toFixed(2),
+        umIncentive: umInc.toFixed(2),
+        bmIncentive: bmInc.toFixed(2),
+        agmIncentive: agmInc.toFixed(2),
+        piIncentive: piInc.toFixed(2),
+        totalIncentive: totalIncentive.toFixed(2),
       });
 
       dispatch({ type: HIDE_LOADING });
@@ -644,10 +656,18 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         agm: normalize6DigitCode(formData.agm),
         rateCode: calculated.code6Digit,
         basePremium: calculated.premium,
-        commission: calculated.netCommission,
+        commission: calculated.commission,
+        net_commission: calculated.netCommission,
         fa_commission: calculated.faCommission || '0',
         um_commission: calculated.umCommission || '0',
         bm_commission: calculated.bmCommission || '0',
+        agm_commission: calculated.agmCommission || '0',
+        fa_incentive: calculated.faIncentive || '0',
+        um_incentive: calculated.umIncentive || '0',
+        bm_incentive: calculated.bmIncentive || '0',
+        agm_incentive: calculated.agmIncentive || '0',
+        pi_incentive: calculated.piIncentive || '0',
+        total_incentive: calculated.totalIncentive || '0',
         rate: calculated.rate,
         netAmount: calculated.netAmount,
         fatherHusbandName: formData.fatherHusbandName,
@@ -819,7 +839,8 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             <Input label="Total Premium" value={calculated.totalPremium ? Math.ceil(parseFloat(calculated.totalPremium)).toString() : ''} editable={false} />
             <Input label="Installment" value={calculated.finalInstallment.toString()} editable={false} />
             <Input label="Installment Premium" value={installmentPremiumValue} editable={false} />
-            <Input label="Commission" value={calculated.netCommission ? Math.ceil(parseFloat(calculated.netCommission)).toString() : ''} editable={false} />
+            <Input label="Commission" value={calculated.commission ? Math.ceil(parseFloat(calculated.netCommission)).toString() : ''} editable={false} />
+            <Input label="Total Incentive" value={calculated.totalIncentive} editable={false} />
             <Input label="Payment Amount" value={calculated.netAmount ? Math.ceil(parseFloat(calculated.netAmount)).toString() : ''} editable={false} />
 
 

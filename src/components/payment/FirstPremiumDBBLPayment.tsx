@@ -333,7 +333,7 @@ export const FirstPremiumDBBLPayment: React.FC<FirstPremiumDBBLProps> = ({
 
                 if (!isStillOnDbblGateway && transId) {
                     console.log('DBBL first premium flow seems finished, verifying transaction...');
-                    setTimeout(verifyAndSavePayment, 2500);
+                    // setTimeout(verifyAndSavePayment, 2500);
                     verifyAndProcessPayment();
                 }
             }}
