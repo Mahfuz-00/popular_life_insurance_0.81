@@ -53,11 +53,29 @@ export const FirstPremiumBkashPayment: React.FC<FirstPremiumBkashProps> = ({
 }) => {
     const dispatch = useDispatch();
 
+    // ==================== DEBUG: Incoming Data ====================
+    console.log('🔍 [FirstPremiumBkashPayment] Component Mounted');
+    console.log('📦 Amount:', amount);
+    console.log('🆔 NID:', nid);
+    console.log('🔑 Secondary Payment ID:', secondaryPaymentId);
+    console.log('📋 Full Proposal Data Received:', JSON.stringify(proposalData, null, 2));
+    // ============================================================
+
     const [bkashUrl, setBkashUrl] = useState<string>('');
     const [bkashToken, setBkashToken] = useState<string>('');
     const [bkashPaymentId, setBkashPaymentId] = useState<string>('');
 
     const startPayment = async () => {
+        console.log('🚀 [Bkash] Starting payment process...');
+        console.log('Requesting token...');
+
+        const timeoutId = setTimeout(() => {
+            console.error('⏰ bKash initialization timeout');
+            console.log('Request timed out');
+            Alert.alert('Timeout', 'bKash is taking too long. Please try again.');
+            onClose();
+        }, 25000); // 25 seconds timeout
+
         try {
             let token = await AsyncStorage.getItem('bkashToken');
             if (!token) {
@@ -68,6 +86,9 @@ export const FirstPremiumBkashPayment: React.FC<FirstPremiumBkashProps> = ({
             }
 
             const result = await bkashCreatePayment(token!, amount, nid);
+
+            clearTimeout(timeoutId);
+            
             if (result?.message?.includes('expired')) {
                 await AsyncStorage.removeItem('bkashToken');
                 Alert.alert('Session Expired', 'Please try again.');
@@ -89,6 +110,9 @@ export const FirstPremiumBkashPayment: React.FC<FirstPremiumBkashProps> = ({
     }, []);
 
     const handleSuccess = async (trxID: string) => {
+        console.log('✅ Bkash Execute Success - TrxID:', trxID);
+        console.log('Proposal Data:', proposalData);
+
         try {
             // Immediately pop back for instant UX feedback
             navigation.pop();
@@ -106,10 +130,13 @@ export const FirstPremiumBkashPayment: React.FC<FirstPremiumBkashProps> = ({
                 date_time: moment().format('DD-MM-YYYY HH:mm:ss'),
             };
 
+            console.log('📤 Sending to userPayPremium:', paymentPostData);
             const paymentResult = await userPayPremium(paymentPostData);
+            console.log('📥 userPayPremium Response:', paymentResult);
 
             if (!paymentResult?.data?.data?.id) {
                 dispatch({ type: HIDE_LOADING });
+                console.error('❌ No payment_id received from primary');
                 const apiMsg = getApiErrorMessage(
                     paymentResult?.data,
                     `Payment succeeded at bKash but no confirmation ID received.\n\nPlease contact support with TrxID: ${trxID}`
@@ -134,6 +161,8 @@ export const FirstPremiumBkashPayment: React.FC<FirstPremiumBkashProps> = ({
                 id: secondaryPaymentId,
             };
 
+            console.log('📤 Sending to Secondary Update:', updatePostData);
+
             userPayFirstPremiumUpdate(updatePostData)
                 .then(res => {
                     if (res.success) console.log('Secondary server updated');
@@ -148,7 +177,11 @@ export const FirstPremiumBkashPayment: React.FC<FirstPremiumBkashProps> = ({
                 ...proposalData,
             };
 
+            console.log('📤 Sending Full First Premium Data:', fullPostData);
+
             const firstPremiumResult = await userPayFirstPremium(fullPostData);
+
+            console.log('📥 First Premium Final Response:', firstPremiumResult);
 
             dispatch({ type: HIDE_LOADING });
 
@@ -189,8 +222,20 @@ export const FirstPremiumBkashPayment: React.FC<FirstPremiumBkashProps> = ({
         <WebView
             source={{ uri: bkashUrl }}
             style={{ flex: 1, marginTop: 20 }}
+
+            onLoadStart={() => console.log('🌍 WebView Load Started')}
+            onLoad={() => console.log('✅ WebView Loaded Successfully')}
+            onLoadEnd={() => console.log('🏁 WebView Load Ended')}
+            onError={(syntheticEvent) => {
+                const { nativeEvent } = syntheticEvent;
+                console.error('❌ WebView Error:', nativeEvent);
+            }}
+
             onNavigationStateChange={async (navState) => {
+                console.log('🔄 Navigation State Changed → URL:', navState.url);
+
                 if (navState.url.includes('status=success')) {
+                    console.log('🎉 Success URL Detected!');
                     setBkashUrl('');
 
                     try {
@@ -209,6 +254,7 @@ export const FirstPremiumBkashPayment: React.FC<FirstPremiumBkashProps> = ({
                         onClose();
                     }
                 } else if (navState.url.includes('status=failure') || navState.url.includes('cancel')) {
+                    console.log('❌ Failure/Cancel URL Detected');
                     navigation.pop();
                     Alert.alert('Payment Cancelled', 'Transaction was cancelled.');
                     onClose();

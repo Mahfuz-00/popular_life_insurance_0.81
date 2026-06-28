@@ -61,7 +61,27 @@ export const FirstPremiumNagadPayment: React.FC<FirstPremiumNagadProps> = ({
     const trxNo = trxNoRef.current;
 
     useEffect(() => {
+        // ==================== DEBUG: Incoming Data ====================
+        console.log('🔍 [FirstPremiumNagadPayment] Component Mounted');
+        console.log('📦 Amount:', amount);
+        console.log('🆔 NID:', nid);
+        console.log('📱 Mobile:', mobileNo);
+        console.log('🔑 Secondary Payment ID:', secondaryPaymentId);
+        console.log('📋 Full Proposal Data:', JSON.stringify(proposalData, null, 2));
+        // ============================================================
+
+
+
         const init = async () => {
+            const timeoutId = setTimeout(() => {
+                console.error('⏰ Nagad initialization timeout');
+                console.log('Request timed out');
+                Alert.alert('Timeout', 'Nagad is taking too long. Please try again.');
+                onClose();
+            }, 25000); // 25 seconds timeout
+
+
+
             const postData = {
                 policyNo: nid,
                 amount,
@@ -71,6 +91,8 @@ export const FirstPremiumNagadPayment: React.FC<FirstPremiumNagadProps> = ({
             const paymentUrl = await nagadPaymentUrl(postData);
             console.log("NAGAD Response Body:");
             console.log("Body:", paymentUrl);
+
+            clearTimeout(timeoutId);
 
             if (paymentUrl) {
                 setUrl(paymentUrl);

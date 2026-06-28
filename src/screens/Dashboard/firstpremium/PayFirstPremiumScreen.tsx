@@ -407,7 +407,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       console.log('BM Incentive:', bmInc);
       agmInc = totalPremiumBeforeCommission * 0.03;
       console.log('AGM Incentive:', agmInc);
-      piInc  = totalPremiumBeforeCommission * 0.03;
+      piInc  = totalPremiumBeforeCommission * 0.01;
       console.log('PI Incentive:', piInc);
 
       const totalIncentive = faInc + umInc + bmInc + agmInc + piInc;
@@ -421,7 +421,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         console.log('UM Commission:', umComm);
         bmComm = totalPremiumBeforeCommission * 0.01;
         console.log('BM Commission:', bmComm);
-        agmComm = totalPremiumBeforeCommission * 0.01;
+        agmComm = totalPremiumBeforeCommission * 0.03;
         console.log('AGM Commission:', agmComm);
       } else if (isPlan72) {
         faComm = totalPremiumBeforeCommission * 0.22;
@@ -446,15 +446,17 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       // const grossComm = totalPremiumBeforeCommission * commRate;
       const grossComm = faComm + umComm + bmComm + agmComm + totalIncentive;
       console.log('Gross Commission:', grossComm);
-      const tax = grossComm * 0.05;
+      const tax = Math.ceil(grossComm * 0.05);
       console.log('Tax on Commission:', tax);
       const netComm = grossComm - tax;
       console.log('Net Commission:', netComm);
 
       let netCommRounded = Math.floor(netComm) + (netComm % 1 >= 0.5 ? 1 : 0);
 
-      let finalNet = Math.floor(totalPremiumBeforeCommission - grossComm) + ((totalPremiumBeforeCommission - grossComm) % 1 >= 0.5 ? 1 : 0) + extraCharge + tax;
+      let netBeforeRounding = Math.floor(totalPremiumBeforeCommission - grossComm) + ((totalPremiumBeforeCommission - grossComm) % 1 >= 0.5 ? 1 : 0) + extraCharge + tax;
 
+      const finalNet = Math.floor(netBeforeRounding) + ((netBeforeRounding % 1) >= 0.5 ? 1 : 0);
+      
       const finalTotalPremium = totalPremiumBeforeCommission + extraCharge;
 
       updateCalculated({

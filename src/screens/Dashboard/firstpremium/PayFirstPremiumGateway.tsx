@@ -159,6 +159,13 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
   ];
 
   const handleSubmit = async () => {
+    console.log('🔵 [handleSubmit] Button Pressed');
+    console.log('Payment Method Selected:', method);
+    console.log('Amount:', netAmount);
+    console.log('NID:', nid);
+    console.log('Secondary Payment ID:', secondaryPaymentId);
+
+
     if (!isEnabled) {
       if (Platform.OS === 'android') {
         ToastAndroid.show('Please agree to terms', ToastAndroid.LONG);
@@ -251,11 +258,20 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
       console.log('Secondary save failed');
     }
 
-    if (method === 'bkash') setShowBkash(true);
-    if (method === 'nagad') setShowNagad(true);
-    // if (method === 'dbbl') setShowDbbl(true);
-    if (method === 'ssl') {
-      Alert.alert('Payment Method', 'SSL Commerz is under maintanence.');
+    console.log('🚀 Launching Payment Gateway:', method);
+
+    if (method === 'bkash') {
+      console.log('→ Opening bKash WebView');
+      setShowBkash(true);
+    } else if (method === 'nagad') {
+      console.log('→ Opening Nagad WebView');
+      setShowNagad(true);
+    } else if (method === 'dbbl') {
+      console.log('→ Opening DBBL WebView');
+      setShowDbbl(true);
+    } else if (method === 'ssl') {
+      console.log('→ SSL selected (maintenance)');
+      Alert.alert('Payment Method', 'SSL Commerz is under maintenance.');
     }
     setIsSubmitting(false);
   };
