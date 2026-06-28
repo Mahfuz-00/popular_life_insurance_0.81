@@ -367,6 +367,7 @@ export const userPayPremiumUpdate = async (postData: any): Promise<{ data: any; 
 export const userPayFirstPremiumSave = async (postData: any): Promise<{ success: boolean; message?: string; id?: number; }> => {
   try {
     const headers = await getAuthHeaders();
+    console.log('Saving first premium payment with data:', postData);
     const { data } = await axios.post(`${SECONDARYAPI}/api/store/first_premium`, postData, { headers });
 
     if (data.errors) {

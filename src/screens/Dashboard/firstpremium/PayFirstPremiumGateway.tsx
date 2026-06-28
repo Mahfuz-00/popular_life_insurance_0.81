@@ -237,6 +237,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
       pi_incentive: pi_incentive || '0',
       total_incentive: total_incentive || '0',
       net_commission: net_commission || '0',
+      sms: false,
     };
 
     console.log('Prepared post data for payment:', postData);
@@ -327,6 +328,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
           pi_incentive: pi_incentive || '0',
           total_incentive: total_incentive || '0',
           net_commission: net_commission || '0',
+          sms: false,
         }}
         onSuccess={() => {
           dispatch(clearFirstPremiumData());
@@ -395,6 +397,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
           pi_incentive: pi_incentive || '0',
           total_incentive: total_incentive || '0',
           net_commission: net_commission || '0',
+          sms: false,
         }}
         onSuccess={() => {
           dispatch(clearFirstPremiumData());
@@ -463,6 +466,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
           pi_incentive: pi_incentive || '0',
           total_incentive: total_incentive || '0',
           net_commission: net_commission || '0',
+          sms: false,
         }}
         onSuccess={() => {
           dispatch(clearFirstPremiumData());
