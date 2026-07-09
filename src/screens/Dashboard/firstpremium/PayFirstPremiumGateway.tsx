@@ -100,6 +100,10 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
     agm_incentive,
     pi_incentive,
     total_incentive,
+    netamount3Layer,
+    commission3Layer,
+    netCommission3Layer,
+    netIncentive3Layer
   } = formData;
 
   const [method, setMethod] = useState<PaymentMethod>('bkash');
@@ -135,9 +139,13 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
     { label: 'Total Premium', value: totalPremium },
     { label: 'Installments', value: installments },
     { label: 'Installment Premium', value: installmentPremium },
-    { label: 'Commission', value: commission },
-    { label: 'Incentive', value: total_incentive },
-    { label: 'Payment Amount', value: netAmount },
+    // { label: 'Commission', value: commission },
+    // { label: 'Incentive', value: total_incentive },
+    // { label: 'Payment Amount', value: netAmount },
+    { label: 'Commission', value: parseInt(commission3Layer) },
+    { label: 'Incentive', value: parseInt(netIncentive3Layer) },
+    { label: 'Payment Amount', value: parseInt(netamount3Layer) },
+    { label: 'Servicing Cell', value: servicingCell },
     { label: 'Father/Husband Name', value: fatherHusbandName },
     { label: 'Mother Name', value: motherName },
     { label: 'Address', value: address },
@@ -162,6 +170,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
     console.log('🔵 [handleSubmit] Button Pressed');
     console.log('Payment Method Selected:', method);
     console.log('Amount:', netAmount);
+    console.log('Amount 3-Layer:', netamount3Layer);
     console.log('NID:', nid);
     console.log('Secondary Payment ID:', secondaryPaymentId);
 
@@ -192,6 +201,8 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
       return;
     }
 
+    // For 5 -Layer Commission, use net_pay: netAmount || '0', for 3-Layer Commission, use net_pay: netamount3Layer || '0',
+
     // === NEW: Sync to secondary server ===
     const postData = {
       method: method,
@@ -214,7 +225,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
       mode,
       sumAssured,
       commission: commission || '0',
-      net_pay: netAmount || '0',
+      net_pay: netamount3Layer || '0',
       father_or_husband_name: fatherHusbandName,
       mother_name: motherName,
       address,
@@ -292,7 +303,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
   if (showBkash) {
     return (
       <FirstPremiumBkashPayment
-        amount={netAmount}
+        amount={netamount3Layer}
         nid={nid}
         secondaryPaymentId={secondaryPaymentId}
         proposalData={{
@@ -315,7 +326,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
           agm: agm || null,
           agentMobile,
           commission: commission || '0',
-          net_pay: netAmount || '0',
+          net_pay: netamount3Layer || '0',
           father_or_husband_name: fatherHusbandName,
           mother_name: motherName,
           address,
@@ -360,7 +371,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
   if (showNagad) {
     return (
       <FirstPremiumNagadPayment
-        amount={netAmount}
+        amount={netamount3Layer}
         nid={nid}
         mobileNo={mobile}
         secondaryPaymentId={secondaryPaymentId}
@@ -384,7 +395,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
           agm: agm || null,
           agentMobile,
           commission: commission || '0',
-          net_pay: netAmount || '0',
+          net_pay: netamount3Layer || '0',
           father_or_husband_name: fatherHusbandName,
           mother_name: motherName,
           address,
@@ -429,7 +440,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
   if (showDbbl) {
     return (
       <FirstPremiumDBBLPayment
-        amount={netAmount}
+        amount={netamount3Layer}
         nid={nid}
         mobileNo={mobile}
         secondaryPaymentId={secondaryPaymentId}
@@ -453,7 +464,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
           agm: agm || null,
           agentMobile,
           commission: commission || '0',
-          net_pay: netAmount || '0',
+          net_pay: netamount3Layer || '0',
           father_or_husband_name: fatherHusbandName,
           mother_name: motherName,
           address,
@@ -534,7 +545,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
 
             {/* Pay Button */}
             <FilledButton
-              title={isSubmitting ? 'Processing...' : `Pay ${Math.ceil(Number(netAmount))}`}
+              title={isSubmitting ? 'Processing...' : `Pay ${Math.ceil(Number(netamount3Layer))} BDT`}
               style={styles.payBtn}
               onPress={handleSubmit}
               disabled={isSubmitting}

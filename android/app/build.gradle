@@ -84,8 +84,8 @@ android {
         applicationId "com.insurancecompanyapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 46
-        versionName "4.1.5"
+        versionCode 47
+        versionName "4.1.7"
     }
     signingConfigs {
         debug {

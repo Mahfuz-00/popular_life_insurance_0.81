@@ -90,7 +90,8 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
     commission: '0', netCommission: '0', netAmount: '0', totalPremium: '0',
     feOeAmount: '0', extraCharge: '0', finalInstallment: 0,
     faCommission: '0', umCommission: '0', bmCommission: '0', agmCommission: '0',
-    faIncentive: '0', umIncentive: '0', bmIncentive: '0', agmIncentive: '0', piIncentive: '0', totalIncentive: '0'
+    faIncentive: '0', umIncentive: '0', bmIncentive: '0', agmIncentive: '0', piIncentive: '0', totalIncentive: '0', 
+    netamount3Layer: '0', commission3Layer: '0', netCommission3Layer: '0', netIncentive3Layer: '0'
   });
 
   // UI State
@@ -284,7 +285,11 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       faCommission: '0', 
       umCommission: '0', 
       bmCommission: '0', 
-      agmCommission: '0'
+      agmCommission: '0',
+      netamount3Layer: '0',
+      commission3Layer: '0',
+      netCommission3Layer: '0',
+      netIncentive3Layer: '0',
     });
   }, []);
 
@@ -324,6 +329,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       const isPlan72 = formData.plan === '72';
       let faComm = 0, umComm = 0, bmComm = 0, agmComm = 0;
       let faInc = 0, umInc = 0, bmInc = 0, agmInc = 0, piInc = 0;
+      let faInc3 = 0, umInc3 = 0, bmInc3 = 0;
 
       // if (formData.plan === '10' || formData.plan === '15') commRate = 0.06;
       // if (formData.plan === '72') commRate = PLAN_72_COMMISSION[formData.term] ?? 0;
@@ -393,12 +399,14 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
 
       const roundedPremium = Math.floor(basePremiumFinal) + (basePremiumFinal % 1 >= 0.5 ? 1 : 0);
       const installmentNumber = getInstallmentNumber();
+      console.log('Installment Number:', installmentNumber);
       const totalPremiumBeforeInstallment = roundedPremium + extraCharge;
       console.log('Total Premium Before Installment Multiplier:', totalPremiumBeforeInstallment);
 
       const totalPremiumBeforeCommission = roundedPremium * installmentNumber;
       console.log('Total Premium Before Commission:', totalPremiumBeforeCommission);
 
+      // ==================== 5-LAYER COMMISSION FOR TRANSACTION ONLY ====================
       faInc = totalPremiumBeforeCommission * 0.05;
       console.log('FA Incentive:', faInc);
       umInc = totalPremiumBeforeCommission * 0.03;
@@ -407,10 +415,11 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       console.log('BM Incentive:', bmInc);
       agmInc = totalPremiumBeforeCommission * 0.03;
       console.log('AGM Incentive:', agmInc);
-      piInc  = totalPremiumBeforeCommission * 0.01;
+      piInc  = totalPremiumBeforeCommission * 0.03;
       console.log('PI Incentive:', piInc);
 
-      const totalIncentive = faInc + umInc + bmInc + agmInc + piInc;
+      const totalIncentivewithoutcielling = faInc + umInc + bmInc + agmInc + piInc;
+      const totalIncentive = Math.floor(totalIncentivewithoutcielling) + (totalIncentivewithoutcielling % 1 >= 0.5 ? 1 : 0);
       console.log('Total Incentive:', totalIncentive);
 
 
@@ -451,6 +460,61 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       const netComm = grossComm - tax;
       console.log('Net Commission:', netComm);
 
+
+      // ==================== 3-LAYER COMMISSION FOR TRANSACTION ONLY ====================
+      faInc3 = totalPremiumBeforeCommission * 0.05;
+      console.log('FA Incentive for 3-Layer:', faInc3);
+      umInc3 = totalPremiumBeforeCommission * 0.03;
+      console.log('UM Incentive for 3-Layer:', umInc3);
+      bmInc3 = totalPremiumBeforeCommission * 0.02;
+      console.log('BM Incentive for 3-Layer:', bmInc3);
+
+
+      const totalIncentive3withoutCieling = faInc3 + umInc3 + bmInc3;
+      const totalIncentive3 = Math.floor(totalIncentive3withoutCieling) + (totalIncentive3withoutCieling % 1 >= 0.5 ? 1 : 0);
+      console.log('Total Incentive for 3-Layer:', totalIncentive3);
+
+
+      let faComm3 = 0, umComm3 = 0, bmComm3 = 0;
+
+      if (formData.plan === '10' || formData.plan === '15') {
+        faComm3 = totalPremiumBeforeCommission * 0.05;
+        console.log('FA Commission for 3-Layer:', faComm3);
+        umComm3 = totalPremiumBeforeCommission * 0.01;
+        console.log('UM Commission for 3-Layer:', umComm3);
+        bmComm3 = totalPremiumBeforeCommission * 0.01;
+        console.log('BM Commission for 3-Layer:', bmComm3);
+      } else if (isPlan72) {
+        faComm3 = totalPremiumBeforeCommission * 0.22;
+        console.log('FA Commission for 3-Layer:', faComm3);
+        umComm3 = totalPremiumBeforeCommission * 0.066;
+        console.log('UM Commission for 3-Layer:', umComm3);
+        bmComm3 = totalPremiumBeforeCommission * 0.044;
+        console.log('BM Commission for 3-Layer:', bmComm3);
+      } else {
+        const faRate = termNum < 15 ? 0.25 : 0.35;
+        console.log('FA Commission Rate for 3-Layer:', faRate);
+        faComm3 = totalPremiumBeforeCommission * faRate;
+        console.log('FA Commission for 3-Layer:', faComm3);
+        umComm3 = totalPremiumBeforeCommission * 0.13;
+        console.log('UM Commission for 3-Layer:', umComm3);
+        bmComm3 = totalPremiumBeforeCommission * 0.08;
+        console.log('BM Commission for 3-Layer:', bmComm3);
+      }
+
+      const grossComm3Layer = faComm3 + umComm3 + bmComm3+ totalIncentive3;
+      const tax3Layer = Math.ceil(grossComm3Layer * 0.05);
+      const netComm3Layer = grossComm3Layer - tax3Layer;
+
+      console.log('3-Layer Gross Commission (FA+UM+BM):', grossComm3Layer);
+      console.log('3-Layer Tax:', tax3Layer);
+      console.log('3-Layer Net Commission:', netComm3Layer);
+
+      const finalNet3Layer = Math.floor(totalPremiumBeforeCommission - grossComm3Layer) + ((totalPremiumBeforeCommission - grossComm3Layer) % 1 >= 0.5 ? 1 : 0) + extraCharge + tax3Layer;
+      console.log('3-Layer Final Net Amount:', finalNet3Layer);
+
+      // =================== 3-LAYER COMMISSION ENDS HERE ====================
+
       let netCommRounded = Math.floor(netComm) + (netComm % 1 >= 0.5 ? 1 : 0);
 
       let netBeforeRounding = Math.floor(totalPremiumBeforeCommission - grossComm) + ((totalPremiumBeforeCommission - grossComm) % 1 >= 0.5 ? 1 : 0) + extraCharge + tax;
@@ -480,6 +544,10 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         agmIncentive: agmInc.toFixed(2),
         piIncentive: piInc.toFixed(2),
         totalIncentive: totalIncentive.toFixed(2),
+        commission3Layer: grossComm3Layer.toFixed(2),  
+        netCommission3Layer: netComm3Layer.toFixed(2),
+        netIncentive3Layer: totalIncentive3.toFixed(2),
+        netamount3Layer: finalNet3Layer.toFixed(2)
       });
 
       dispatch({ type: HIDE_LOADING });
@@ -670,6 +738,10 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         agm_incentive: calculated.agmIncentive || '0',
         pi_incentive: calculated.piIncentive || '0',
         total_incentive: calculated.totalIncentive || '0',
+        commission3Layer: calculated.commission3Layer || '0',
+        netCommission3Layer: calculated.netCommission3Layer || '0',
+        netamount3Layer: calculated.netamount3Layer || '0',
+        netIncentive3Layer: calculated.netIncentive3Layer || '0',
         rate: calculated.rate,
         netAmount: calculated.netAmount,
         fatherHusbandName: formData.fatherHusbandName,
@@ -841,9 +913,16 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             <Input label="Total Premium" value={calculated.totalPremium ? Math.ceil(parseFloat(calculated.totalPremium)).toString() : ''} editable={false} />
             <Input label="Installment" value={calculated.finalInstallment.toString()} editable={false} />
             <Input label="Installment Premium" value={installmentPremiumValue} editable={false} />
-            <Input label="Commission" value={calculated.commission ? Math.ceil(parseFloat(calculated.netCommission)).toString() : ''} editable={false} />
+
+            ========= For 5-Layer Commission Display ========
+            {/* <Input label="Commission" value={calculated.commission ? Math.ceil(parseFloat(calculated.commission)).toString() : ''} editable={false} />
             <Input label="Total Incentive" value={calculated.totalIncentive} editable={false} />
-            <Input label="Payment Amount" value={calculated.netAmount ? Math.ceil(parseFloat(calculated.netAmount)).toString() : ''} editable={false} />
+            <Input label="Payment Amount" value={calculated.netAmount ? Math.ceil(parseFloat(calculated.netAmount)).toString() : ''} editable={false} /> */}
+
+            ======== For 3-Layer Commission Display ========
+            <Input label="Commission" value={calculated.netCommission3Layer ? parseInt(Math.ceil(parseFloat(calculated.netCommission3Layer)).toString()).toString() : ''} editable={false} />
+            <Input label="Total Incentive" value={parseInt(calculated.netIncentive3Layer).toString()} editable={false} />
+            <Input label="Payment Amount" value={calculated.netamount3Layer ? parseInt(Math.ceil(parseFloat(calculated.netamount3Layer)).toString()).toString() : ''} editable={false} />
 
 
             {/* Agent Details */}
