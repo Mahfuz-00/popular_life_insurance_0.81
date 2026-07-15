@@ -88,7 +88,6 @@ export const FirstPremiumBkashPayment: React.FC<FirstPremiumBkashProps> = ({
             const result = await bkashCreatePayment(token!, amount, nid);
 
             clearTimeout(timeoutId);
-            
             if (result?.message?.includes('expired')) {
                 await AsyncStorage.removeItem('bkashToken');
                 Alert.alert('Session Expired', 'Please try again.');
