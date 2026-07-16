@@ -407,16 +407,20 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       console.log('Total Premium Before Commission:', totalPremiumBeforeCommission);
 
       // ==================== 5-LAYER COMMISSION FOR TRANSACTION ONLY ====================
-      faInc = totalPremiumBeforeCommission * 0.05;
-      console.log('FA Incentive:', faInc);
-      umInc = totalPremiumBeforeCommission * 0.03;
-      console.log('UM Incentive:', umInc);
-      bmInc = totalPremiumBeforeCommission * 0.02;
-      console.log('BM Incentive:', bmInc);
-      agmInc = totalPremiumBeforeCommission * 0.03;
-      console.log('AGM Incentive:', agmInc);
-      piInc  = totalPremiumBeforeCommission * 0.03;
-      console.log('PI Incentive:', piInc);
+      if (formData.plan !== '10' && formData.plan !== '15') {
+        faInc = totalPremiumBeforeCommission * 0.05;
+        console.log('FA Incentive:', faInc);
+        umInc = totalPremiumBeforeCommission * 0.03;
+        console.log('UM Incentive:', umInc);
+        bmInc = totalPremiumBeforeCommission * 0.02;
+        console.log('BM Incentive:', bmInc);
+        agmInc = totalPremiumBeforeCommission * 0.03;
+        console.log('AGM Incentive:', agmInc);
+        piInc  = totalPremiumBeforeCommission * 0.03;
+        console.log('PI Incentive:', piInc);
+      } else {
+        console.log('Plan 10 or 15 → No Incentive Added');
+      }
 
       const totalIncentivewithoutcielling = faInc + umInc + bmInc + agmInc + piInc;
       const totalIncentive = Math.floor(totalIncentivewithoutcielling) + (totalIncentivewithoutcielling % 1 >= 0.5 ? 1 : 0);
@@ -430,7 +434,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         console.log('UM Commission:', umComm);
         bmComm = totalPremiumBeforeCommission * 0.01;
         console.log('BM Commission:', bmComm);
-        agmComm = totalPremiumBeforeCommission * 0.03;
+        agmComm = totalPremiumBeforeCommission * 0.01;
         console.log('AGM Commission:', agmComm);
       } else if (isPlan72) {
         faComm = totalPremiumBeforeCommission * 0.22;
@@ -462,12 +466,16 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
 
 
       // ==================== 3-LAYER COMMISSION FOR TRANSACTION ONLY ====================
-      faInc3 = totalPremiumBeforeCommission * 0.05;
-      console.log('FA Incentive for 3-Layer:', faInc3);
-      umInc3 = totalPremiumBeforeCommission * 0.03;
-      console.log('UM Incentive for 3-Layer:', umInc3);
-      bmInc3 = totalPremiumBeforeCommission * 0.02;
-      console.log('BM Incentive for 3-Layer:', bmInc3);
+      if (formData.plan !== '10' && formData.plan !== '15') {
+        faInc3 = totalPremiumBeforeCommission * 0.05;
+        console.log('FA Incentive for 3-Layer:', faInc3);
+        umInc3 = totalPremiumBeforeCommission * 0.03;
+        console.log('UM Incentive for 3-Layer:', umInc3);
+        bmInc3 = totalPremiumBeforeCommission * 0.02;
+        console.log('BM Incentive for 3-Layer:', bmInc3); 
+      } else {
+        console.log('Plan 10 or 15 → No Incentive Added');
+      }
 
 
       const totalIncentive3withoutCieling = faInc3 + umInc3 + bmInc3;

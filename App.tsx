@@ -120,7 +120,7 @@ const checkUpdateNeeded = async () => {
     if (updateNeeded?.isNeeded) {
       Alert.alert(
         'New Version Available', 
-        'A newer version of the app is available on the Play Store. Please update to enjoy the latest features and security improvements.',
+        'A newer version of the app is available. Please update to continue using the app.',
         [
           {
             text: 'Update Now',
@@ -129,7 +129,7 @@ const checkUpdateNeeded = async () => {
               // On Android, it's often better to open the link first, 
               // as exitApp() might happen before the intent fires.
               Linking.openURL(updateNeeded.storeUrl);
-              setTimeout(() => BackHandler.exitApp(), 1000);
+              setTimeout(() => BackHandler.exitApp(), 1500);
             },
           },
         ],
