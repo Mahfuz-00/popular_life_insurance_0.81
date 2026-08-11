@@ -334,6 +334,34 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       // if (formData.plan === '10' || formData.plan === '15') commRate = 0.06;
       // if (formData.plan === '72') commRate = PLAN_72_COMMISSION[formData.term] ?? 0;
 
+      const totalAgeTerm = age + termNum;
+
+      if (formData.plan === '72') {
+        if (totalAgeTerm >= 70) {
+          dispatch({ type: HIDE_LOADING });
+          if (Platform.OS === 'android') {
+            ToastAndroid.show('Age limit is not acceptable for this plan', ToastAndroid.LONG);
+          } else {
+            Alert.alert('Error', 'Age limit is not acceptable for this plan');
+          }
+          return;
+        }
+      } else {
+        if (totalAgeTerm >= 60) {
+          dispatch({ type: HIDE_LOADING });
+          if (Platform.OS === 'android') {
+            ToastAndroid.show('Age limit is not acceptable for this plan', ToastAndroid.LONG);
+          } else {
+            Alert.alert('Error', 'Age limit is not acceptable for this plan');
+          }
+          return;
+        }
+      }
+
+
+
+
+
       // Plan 72 calculation
       if (formData.plan === '72') {
         const result = await getRate(selectedProject.code, formData.plan, formData.term, rateAge);
@@ -654,6 +682,19 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
+
+    const termNum = parseInt(formData.term || '0');
+    const totalAgeTerm = age + termNum;
+
+    if (formData.plan === '72') {
+      if (totalAgeTerm >= 70) {
+        newErrors.term = 'Age limit is not acceptable for this plan';
+      }
+    } else {
+      if (totalAgeTerm >= 60) {
+        newErrors.term = 'Age limit is not acceptable for this plan';
+      }
+    }
 
     if (!formData.nid) newErrors.nid = 'NID/Birth Reg/Passport is required';
     if (formData.nid.includes(' ')) newErrors.nid = 'NID must not contain spaces';
