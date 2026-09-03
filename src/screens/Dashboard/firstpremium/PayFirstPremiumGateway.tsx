@@ -106,7 +106,7 @@ const PayFirstPremiumGateway: React.FC<{ navigation: any }> = ({ navigation }) =
     netIncentive3Layer
   } = formData;
 
-  const [method, setMethod] = useState<PaymentMethod>('bkash');
+  const [method, setMethod] = useState<PaymentMethod>('nagad');
   const [isEnabled, setIsEnabled] = useState(false);
   const [showBkash, setShowBkash] = useState(false);
   const [showNagad, setShowNagad] = useState(false);

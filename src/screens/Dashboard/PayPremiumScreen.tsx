@@ -38,7 +38,7 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [policyDetails, setPolicyDetails] = useState<any>({});
 
   const [isEnabled, setIsEnabled] = useState(false);
-  const [method, setMethod] = useState<'bkash' | 'nagad' | 'dbbl' | 'ssl'>('bkash');
+  const [method, setMethod] = useState<'bkash' | 'nagad' | 'dbbl' | 'ssl'>('nagad');
 
   const [showBkash, setShowBkash] = useState(false);
   const [showNagad, setShowNagad] = useState(false);

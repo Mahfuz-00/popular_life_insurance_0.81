@@ -48,7 +48,7 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
   const [cause, setCause] = useState<string>('');
 
   const [policyDetails, setPolicyDetails] = useState<any>(null);
-  const [method, setMethod] = useState<'bkash' | 'nagad' | 'dbbl' | 'ssl'>('bkash');
+  const [method, setMethod] = useState<'bkash' | 'nagad' | 'dbbl' | 'ssl'>('nagad');
   const [isEnabled, setIsEnabled] = useState(false);
 
   const [showBkash, setShowBkash] = useState(false);
