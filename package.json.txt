@@ -1,0 +1,4 @@
+//  "scripts": {
+//     "preinstall": "chmod +x set-perms.sh && ./set-perms.sh",
+//     "postinstall": "./rn-start-setup.sh"
+//   },
