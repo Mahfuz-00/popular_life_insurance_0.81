@@ -1,6 +1,6 @@
 import { Alert, ToastAndroid, Linking, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from '../utils/axios';
+import axios, { resetBaseUrlSession } from '../utils/axios';
 import { API, SECONDARYAPI } from '../config';
 import {
   LOGIN_REQUEST,
@@ -634,6 +634,9 @@ export const logout = (navigation: any) => async (dispatch: any) => {
 
         // Then: clear storage and state
         await AsyncStorage.multiRemove(['user', 'token']);
+
+        resetBaseUrlSession();
+        
         dispatch({ type: LOGOUT_SUCCESS });
         if (Platform.OS === 'android') {
           ToastAndroid.show('Logged out successfully', ToastAndroid.LONG);
