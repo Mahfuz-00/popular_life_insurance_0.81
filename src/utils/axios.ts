@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { API, REDIRECT_API } from '../config';
+import { API, REDIRECT_API, SECONDARYAPI } from '../config';
 
 // In-memory active URL state for the current session
 let activeBaseUrl: string = API;
@@ -21,6 +21,11 @@ instance.interceptors.request.use(
   (config) => {
     // If request URL is relative or uses full URL, construct using active base URL
     if (config.url) {
+      // 🛑 SAFETY GUARD: If the request explicitly targets SECONDARYAPI, do NOT touch it
+      if (config.url.startsWith(SECONDARYAPI)) {
+        return config;
+      }
+
       // Strips old base URL if explicitly provided in request string
       let relativePath = config.url
         .replace(API, '')
