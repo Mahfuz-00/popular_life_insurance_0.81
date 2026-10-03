@@ -159,7 +159,7 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       return;
     }
 
-    // === NEW: Sync to secondary server ===
+    // === Sync to secondary server ===
     const postData = {
       policy_no: policyNumber,
       method: method,
@@ -175,7 +175,6 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       missing: false,
     };
 
-    // Try save first
     const saveResult = await userPayPremiumSave(postData);
     if (saveResult.success && saveResult.id) {
       setSecondaryPaymentId(saveResult.id);
@@ -285,6 +284,14 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     );
   }
 
+  // Any matured policy → hide payment options
+  const isMatured = !!(
+    policyDetails?.isMaturity === true ||
+    policyDetails?.isMaturity === 1 ||
+    policyDetails?.isMaturity === '1' ||
+    policyDetails?.isMaturity === 'true'
+  );
+
   return (
     <View style={globalStyle.container}>
       <ImageBackground source={BackgroundImage} style={{ flex: 1 }}>
@@ -296,7 +303,7 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
             <Input
               label="Proposal or Policy Number"
               value={policyNumber}
-              keyboardType='numeric'
+              keyboardType="numeric"
               onChangeText={setPolicyNumber}
               editable={Object.keys(policyDetails).length === 0}
               labelStyle={[globalStyle.fontMedium, { color: '#FFF', marginTop: 15 }]}
@@ -309,10 +316,54 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
                 onPress={handleGetPolicyDetails}
                 style={styles.btn}
               />
+            ) : isMatured ? (
+              <>
+                {/* Policy Info only — no payment */}
+                <Input
+                  label="Name"
+                  value={policyDetails.name}
+                  editable={false}
+                  labelStyle={{ color: '#FFF' }}
+                />
+                <Input
+                  label="Policy No"
+                  value={String(policyDetails.Policyno || policyNumber)}
+                  editable={false}
+                  labelStyle={{ color: '#FFF' }}
+                />
+                {policyDetails.DueAmount !== undefined && (
+                  <Input
+                    label="Due Amount"
+                    value={String(policyDetails.DueAmount || 0)}
+                    editable={false}
+                    labelStyle={{ color: '#FFF' }}
+                  />
+                )}
+
+                <Text
+                  style={[
+                    globalStyle.fontMedium,
+                    {
+                      color: '#FF6B6B',
+                      fontSize: 18,
+                      textAlign: 'center',
+                      marginTop: 30,
+                      marginBottom: 20,
+                    },
+                  ]}
+                >
+                  Policy is matured
+                </Text>
+              </>
             ) : (
               <>
                 {/* Policy Info */}
-                <Input label="Name" value={policyDetails.name} editable={false} labelStyle={{ color: '#FFF' }} />
+                <Input
+                  label="Name"
+                  value={policyDetails.name}
+                  editable={false}
+                  labelStyle={{ color: '#FFF' }}
+                />
 
                 {/* Amount Input */}
                 <Input
@@ -338,7 +389,12 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
                   <Switch value={isEnabled} onValueChange={setIsEnabled} />
                   <Text style={[globalStyle.fontMedium, { fontSize: 16 }]}>
                     I Agree to the{' '}
-                    <Text style={{ color: 'green' }} onPress={() => Linking.openURL('https://signup.sslcommerz.com/term-condition')}>
+                    <Text
+                      style={{ color: 'green' }}
+                      onPress={() =>
+                        Linking.openURL('https://signup.sslcommerz.com/term-condition')
+                      }
+                    >
                       Terms & Conditions
                     </Text>
                   </Text>
@@ -346,7 +402,11 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 
                 {/* Pay Button */}
                 <FilledButton
-                  title={isSubmitting ? 'Processing...' : `Pay ${Math.ceil(Number(amountToPay || 0))}`}
+                  title={
+                    isSubmitting
+                      ? 'Processing...'
+                      : `Pay ${Math.ceil(Number(amountToPay || 0))}`
+                  }
                   style={styles.btn}
                   onPress={handleSubmit}
                   disabled={isSubmitting}

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -57,9 +56,25 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [secondaryPaymentId, setSecondaryPaymentId] = useState<number | null>(null);
 
-
   const amountToPay = paymentType === 'partial' ? partialAmount : amount;
   const maxPartialAllowed = policyDetails ? Math.floor(policyDetails.DuePerInstalMent * 0.5) : 0;
+
+  // Matured → dialog + go back
+  useEffect(() => {
+    if (policyDetails?.isMaturity) {
+      Alert.alert(
+        'Policy Matured',
+        'Policy is matured',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.goBack(),
+          },
+        ],
+        { cancelable: false }
+      );
+    }
+  }, [policyDetails, navigation]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -70,11 +85,11 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
         if (response) {
           setPolicyDetails(response);
         } else {
-          Alert.alert("Error", "Could not load policy details.");
+          Alert.alert('Error', 'Could not load policy details.');
         }
       } catch (error) {
         console.error('Failed to fetch due premium details:', error);
-        Alert.alert("Error", "Failed to fetch policy details. Please try again.");
+        Alert.alert('Error', 'Failed to fetch policy details. Please try again.');
       } finally {
         dispatch({ type: HIDE_LOADING });
       }
@@ -95,7 +110,16 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
   const handleSubmit = async () => {
     if (isSubmitting) return;
 
-    console.log('Submitting payment with details:', { policyDetails, paymentType, amountToPay, partialAmount, adjustWith, cause, method, isEnabled });
+    console.log('Submitting payment with details:', {
+      policyDetails,
+      paymentType,
+      amountToPay,
+      partialAmount,
+      adjustWith,
+      cause,
+      method,
+      isEnabled,
+    });
 
     if (!isEnabled) {
       if (Platform.OS === 'android') {
@@ -113,8 +137,6 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
     }
 
     if (paymentType === 'partial') {
-      console.log('Submitting payment with details:', { policyDetails, paymentType, amountToPay, partialAmount, adjustWith, cause, method, isEnabled });
-
       if (!partialAmount || !adjustWith || !cause.trim()) {
         if (Platform.OS === 'android') {
           return ToastAndroid.show('Please fill all partial payment fields', ToastAndroid.LONG);
@@ -148,10 +170,6 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
     if (paymentType === 'full') {
       const dueTotal = Number(policyDetails.totalpremium);
       const entered = Number(amountToPay);
-
-      // if (entered > dueTotal) {
-      //   return ToastAndroid.show(`Cannot pay more than premium: ${dueTotal}`, ToastAndroid.LONG);
-      // }
 
       if (entered % dueTotal !== 0) {
         if (Platform.OS === 'android') {
@@ -195,7 +213,7 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
       return;
     }
 
-    // === NEW: Sync to secondary server ===
+    // === Sync to secondary server ===
     const postData = {
       policy_no: policyNo,
       method: method,
@@ -211,7 +229,6 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
       missing: false,
     };
 
-    // Try save first
     const saveResult = await userPayPremiumSave(postData);
     if (saveResult.success && saveResult.id) {
       setSecondaryPaymentId(saveResult.id);
@@ -232,12 +249,8 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
         Alert.alert('Error', 'Failed to start payment process.');
       }
     } finally {
-      // HIDE_LOADING right before showing the payment modal (Bkash/Nagad) 
-      // as the modal is expected to handle its own loading UI.
       dispatch({ type: HIDE_LOADING });
 
-      // Reset submitting state only if we didn't successfully launch the modal (i.e., for SSL/error path)
-      // If Bkash/Nagad launched, isSubmitting is reset in onSuccess/onClose handlers of those components.
       if (method === 'ssl') {
         setIsSubmitting(false);
         Alert.alert('Payment Method', 'SSL Commerz is under maintanence.');
@@ -331,6 +344,8 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
     );
   }
 
+  const isMatured = !!policyDetails?.isMaturity;
+
   return (
     <View style={globalStyle.container}>
       <ImageBackground source={BackgroundImage} style={{ flex: 1 }}>
@@ -340,16 +355,18 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
           <View style={globalStyle.wrapper}>
             {policyDetails ? (
               <>
-                {/* Policy Details Table */}
+                {/* Policy Details Table — always shown */}
                 <View style={styles.table}>
                   <View style={styles.rowWrapper}>
                     <Text style={[styles.rowLable, globalStyle.tableText]}>Policy No</Text>
                     <Text style={[styles.rowValue, globalStyle.tableText]}>{policyNo}</Text>
                   </View>
-                  {/* ... all your rows ... */}
+
                   <View style={styles.rowWrapper}>
                     <Text style={[styles.rowLable, globalStyle.tableText]}>Due Date</Text>
-                    <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.NextDueDate.format3}</Text>
+                    <Text style={[styles.rowValue, globalStyle.tableText]}>
+                      {policyDetails.NextDueDate?.format3}
+                    </Text>
                   </View>
 
                   <View style={styles.rowWrapper}>
@@ -392,96 +409,137 @@ const PhPayPremiumScreen: React.FC<{ navigation: any; route: any }> = ({ navigat
                     <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.mode}</Text>
                   </View>
 
-
                   <View style={styles.rowWrapper}>
                     <Text style={[styles.rowLable, globalStyle.tableText]}>Service Cell</Text>
-                    <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.service_cell_code || 0}</Text>
+                    <Text style={[styles.rowValue, globalStyle.tableText]}>
+                      {policyDetails.service_cell_code || 0}
+                    </Text>
                   </View>
 
                   <View style={styles.rowWrapperLast}>
                     <Text style={[styles.rowLable, globalStyle.tableText]}>Branch</Text>
-                    <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.branch_code || 0}</Text>
+                    <Text style={[styles.rowValue, globalStyle.tableText]}>
+                      {policyDetails.branch_code || 0}
+                    </Text>
                   </View>
                 </View>
 
-                {/* Payment Type Toggle */}
-                <Text style={[globalStyle.fontMedium, { color: '#000', marginTop: 15, fontSize: 16 }]}>
-                  Choose Payment Type
-                </Text>
-                <View style={styles.paymentTypeRow}>
-                  {(['full', 'partial'] as const).map((type) => (
-                    <TouchableOpacity
-                      key={type}
-                      onPress={() => setPaymentType(type)}
-                      style={styles.radioBtn}
-                    >
-                      <View style={[styles.radioOuter, paymentType === type && styles.radioActive]}>
-                        {paymentType === type && <View style={styles.radioInner} />}
-                      </View>
-                      <Text style={styles.radioLabel}>{type === 'full' ? 'Full Payment' : 'Partial Payment'}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-
-                {/* Amount Input */}
-                {paymentType === 'full' ? (
-                  <Input label="Amount" value={amount} onChangeText={setAmount} keyboardType="numeric" />
-                ) : (
+                {/* Matured → no payment UI (dialog + goBack already triggered) */}
+                {!isMatured && (
                   <>
-                    <Input label="Partial Amount" value={partialAmount} onChangeText={setPartialAmount} keyboardType="numeric" />
-                    <Text style={[globalStyle.fontMedium, { marginVertical: 10 }]}>Adjust With</Text>
-                    <View style={styles.adjustRow}>
-                      {['SB', 'Age_Proof', 'Suspense', 'Others', 'F/E', 'O/E', 'ADAB', 'PDAB'].map((item) => (
+                    {/* Payment Type Toggle */}
+                    <Text style={[globalStyle.fontMedium, { color: '#000', marginTop: 15, fontSize: 16 }]}>
+                      Choose Payment Type
+                    </Text>
+                    <View style={styles.paymentTypeRow}>
+                      {(['full', 'partial'] as const).map((type) => (
                         <TouchableOpacity
-                          key={item}
-                          onPress={() => setAdjustWith(item)}
-                          style={styles.adjustBtn}
+                          key={type}
+                          onPress={() => setPaymentType(type)}
+                          style={styles.radioBtn}
                         >
-                          <View style={[styles.radioOuter, adjustWith === item && styles.radioActive]}>
-                            {adjustWith === item && <View style={styles.radioInner} />}
+                          <View style={[styles.radioOuter, paymentType === type && styles.radioActive]}>
+                            {paymentType === type && <View style={styles.radioInner} />}
                           </View>
-                          <Text style={styles.adjustLabel}>{item === 'Age_Proof' ? 'Age Proof' : item}</Text>
+                          <Text style={styles.radioLabel}>
+                            {type === 'full' ? 'Full Payment' : 'Partial Payment'}
+                          </Text>
                         </TouchableOpacity>
                       ))}
                     </View>
-                    <EnglishOnlyInput
-                      label="Cause / Reason"
-                      value={cause}
-                      onChangeText={setCause} />
+
+                    {/* Amount Input */}
+                    {paymentType === 'full' ? (
+                      <Input
+                        label="Amount"
+                        value={amount}
+                        onChangeText={setAmount}
+                        keyboardType="numeric"
+                      />
+                    ) : (
+                      <>
+                        <Input
+                          label="Partial Amount"
+                          value={partialAmount}
+                          onChangeText={setPartialAmount}
+                          keyboardType="numeric"
+                        />
+                        <Text style={[globalStyle.fontMedium, { marginVertical: 10 }]}>Adjust With</Text>
+                        <View style={styles.adjustRow}>
+                          {['SB', 'Age_Proof', 'Suspense', 'Others', 'F/E', 'O/E', 'ADAB', 'PDAB'].map(
+                            (item) => (
+                              <TouchableOpacity
+                                key={item}
+                                onPress={() => setAdjustWith(item)}
+                                style={styles.adjustBtn}
+                              >
+                                <View
+                                  style={[
+                                    styles.radioOuter,
+                                    adjustWith === item && styles.radioActive,
+                                  ]}
+                                >
+                                  {adjustWith === item && <View style={styles.radioInner} />}
+                                </View>
+                                <Text style={styles.adjustLabel}>
+                                  {item === 'Age_Proof' ? 'Age Proof' : item}
+                                </Text>
+                              </TouchableOpacity>
+                            )
+                          )}
+                        </View>
+                        <EnglishOnlyInput
+                          label="Cause / Reason"
+                          value={cause}
+                          onChangeText={setCause}
+                        />
+                      </>
+                    )}
+
+                    {/* Gateway Selection */}
+                    <Text style={[globalStyle.fontMedium, { color: '#000', marginTop: 15 }]}>
+                      Choose Payment Method
+                    </Text>
+
+                    <PaymentMethodSelector
+                      selectedMethod={method}
+                      onSelect={(m: PaymentMethod) => setMethod(m)}
+                    />
+
+                    {/* Terms */}
+                    <View style={styles.termsRow}>
+                      <Switch value={isEnabled} onValueChange={setIsEnabled} />
+                      <Text style={[globalStyle.fontMedium, { fontSize: 16 }]}>
+                        I Agree to the{' '}
+                        <Text
+                          style={{ color: 'green' }}
+                          onPress={() =>
+                            Linking.openURL('https://signup.sslcommerz.com/term-condition')
+                          }
+                        >
+                          Terms & Conditions
+                        </Text>
+                      </Text>
+                    </View>
+
+                    {/* Pay Button */}
+                    <FilledButton
+                      title={
+                        isSubmitting
+                          ? 'Processing...'
+                          : `Pay ${Math.ceil(Number(amountToPay || 0))}`
+                      }
+                      style={styles.payBtn}
+                      onPress={handleSubmit}
+                      disabled={isSubmitting}
+                    />
                   </>
                 )}
-
-                {/* Gateway Selection */}
-                <Text style={[globalStyle.fontMedium, { color: '#000', marginTop: 15 }]}>
-                  Choose Payment Method
-                </Text>
-
-                <PaymentMethodSelector
-                  selectedMethod={method}
-                  onSelect={(m: PaymentMethod) => setMethod(m)}
-                />
-
-                {/* Terms */}
-                <View style={styles.termsRow}>
-                  <Switch value={isEnabled} onValueChange={setIsEnabled} />
-                  <Text style={[globalStyle.fontMedium, { fontSize: 16 }]}>
-                    I Agree to the{' '}
-                    <Text style={{ color: 'green' }} onPress={() => Linking.openURL('https://signup.sslcommerz.com/term-condition')}>
-                      Terms & Conditions
-                    </Text>
-                  </Text>
-                </View>
-
-                {/* Pay Button */}
-                <FilledButton
-                  title={isSubmitting ? 'Processing...' : `Pay ${Math.ceil(Number(amountToPay || 0))}`}
-                  style={styles.payBtn}
-                  onPress={handleSubmit}
-                  disabled={isSubmitting}
-                />
               </>
             ) : (
-              <Text style={{ textAlign: 'center', marginTop: 50, fontSize: 18 }}>Loading policy details...</Text>
+              <Text style={{ textAlign: 'center', marginTop: 50, fontSize: 18 }}>
+                Loading policy details...
+              </Text>
             )}
           </View>
         </ScrollView>
