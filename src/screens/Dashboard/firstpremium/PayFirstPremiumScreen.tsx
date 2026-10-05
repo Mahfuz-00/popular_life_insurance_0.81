@@ -142,6 +142,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       }
 
       const planRes = await getPlanList();
+      console.log('Fetched Plan:', await getPlanList());
       if (planRes && Array.isArray(planRes)) {
         const formattedPlans = planRes.map((p: any) => ({
           label: p.value,
@@ -154,6 +155,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
               value: m.value || m,
             })),
         }));
+        console.log('Formatted Plan:', formattedPlans);
         setAllPlans(formattedPlans);
         setPlans(formattedPlans);
       }
@@ -963,12 +965,12 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             <Input label="Installment" value={calculated.finalInstallment.toString()} editable={false} />
             <Input label="Installment Premium" value={installmentPremiumValue} editable={false} />
 
-            ========= For 5-Layer Commission Display ========
+            {/* ========= For 5-Layer Commission Display ======== */}
             {/* <Input label="Commission" value={calculated.commission ? Math.ceil(parseFloat(calculated.commission)).toString() : ''} editable={false} />
             <Input label="Total Incentive" value={calculated.totalIncentive} editable={false} />
             <Input label="Payment Amount" value={calculated.netAmount ? Math.ceil(parseFloat(calculated.netAmount)).toString() : ''} editable={false} /> */}
 
-            ======== For 3-Layer Commission Display ========
+            {/* ======== For 3-Layer Commission Display ======== */}
             <Input label="Commission" value={calculated.netCommission3Layer ? parseInt(Math.ceil(parseFloat(calculated.netCommission3Layer)).toString()).toString() : ''} editable={false} />
             <Input label="Total Incentive" value={parseInt(calculated.netIncentive3Layer).toString()} editable={false} />
             <Input label="Payment Amount" value={calculated.netamount3Layer ? parseInt(Math.ceil(parseFloat(calculated.netamount3Layer)).toString()).toString() : ''} editable={false} />

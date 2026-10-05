@@ -17,6 +17,7 @@ export const getPlanList = async () => {
         single: item.single === '1' ? { label: 'Single', value: 'single' } : null,
       }
     }));
+    console.log('Plan API Call', res);
     return res;
   } catch (error) {
     return [];

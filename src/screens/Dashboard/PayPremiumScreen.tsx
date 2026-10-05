@@ -48,6 +48,10 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 
   const amountToPay = amount;
 
+  const maturityHuman = policyDetails?.MaturityDate?.original
+  ? moment(policyDetails.MaturityDate.original).fromNow()
+  : policyDetails?.MaturityDate?.human || '';
+
   const handleGetPolicyDetails = async () => {
     if (!policyNumber) {
       if (Platform.OS === 'android') {
@@ -331,6 +335,12 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
                   editable={false}
                   labelStyle={{ color: '#FFF' }}
                 />
+                <Input
+                  label="Maturity Date"
+                  value={policyDetails.MaturityDate?.format3 || '—'}
+                  editable={false}
+                  labelStyle={{ color: '#FFF' }}
+                />
                 {policyDetails.DueAmount !== undefined && (
                   <Input
                     label="Due Amount"
@@ -340,7 +350,7 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
                   />
                 )}
 
-                <Text
+                {/* <Text
                   style={[
                     globalStyle.fontMedium,
                     {
@@ -352,8 +362,16 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
                     },
                   ]}
                 >
-                  Policy is matured
-                </Text>
+                  Policy is matured {maturityHuman}
+                </Text> */}
+
+                {/* Matured Banner */}
+                <View style={styles.maturedBanner}>
+                  <Text style={styles.maturedTitle}>Policy is Matured</Text>
+                  <Text style={styles.maturedSubtitle}>
+                    {policyDetails.MaturityDate?.human || maturityHuman}
+                  </Text>
+                </View>
               </>
             ) : (
               <>
@@ -438,6 +456,32 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginVertical: 20,
     paddingHorizontal: 20,
+  },
+  maturedBanner: {
+  backgroundColor: '#FF6B6B',          
+  borderRadius: 12,
+  paddingVertical: 20,
+  paddingHorizontal: 20,
+  marginTop: 30,
+  marginBottom: 20,
+  alignItems: 'center',
+  elevation: 4,                        
+  shadowColor: '#000',                
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.2,
+  shadowRadius: 4,
+  },
+  maturedTitle: {
+    fontSize: 20,
+    color: '#FFFFFF',
+    fontFamily: globalStyle.fontMedium.fontFamily,
+    marginBottom: 6,
+    fontWeight: '600',
+  },
+  maturedSubtitle: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    opacity: 0.95,
   },
 });
 

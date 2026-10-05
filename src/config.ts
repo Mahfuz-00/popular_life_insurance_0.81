@@ -1,4 +1,5 @@
-export const API = "http://103.155.184.108" as const;
+// export const API = "http://103.155.184.108" as const;
+export const API = "https://pliapp.com" as const;
 export const REDIRECT_API = "http://103.155.179.93" as const;
 export const SECONDARYAPI = "https://plim.touchandsolve.com" as const;
 
