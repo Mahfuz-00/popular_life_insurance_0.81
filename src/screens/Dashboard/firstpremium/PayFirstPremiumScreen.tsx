@@ -311,6 +311,13 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
     resetCalculated();
   }, [formData.plan]);
 
+  // Auto fill 1 when switching to monthly
+  useEffect(() => {
+    if (formData.mode === 'mly' && (!formData.installments || formData.installments === '0' || formData.installments === '')) {
+      updateFormData({ installments: '1' });
+    }
+  }, [formData.mode]);
+
   // Premium calculation
   useEffect(() => {
     const calculate = async () => {
@@ -359,8 +366,6 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
           return;
         }
       }
-
-
 
 
 
@@ -721,6 +726,11 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
     if (!formData.bm) newErrors.bm = 'BM code is required';
     if (!formData.nominee1Name) newErrors.nominee1Name = 'Nominee name is required';
     if (!formData.nominee1Percent) newErrors.nominee1Percent = 'Nominee percentage is required';
+    if (formData.mode === 'mly') {
+      if (!formData.installments || formData.installments === '0' || parseInt(formData.installments.toString(), 10) <= 0) {
+        newErrors.installments = 'Installments is required';
+      }
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -887,7 +897,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
                   const num = Number(sanitized);
 
                   if (!sanitized) {
-                    updateFormData({ installments: '' });
+                    updateFormData({ installments: '1' });
                     return;
                   }
 
