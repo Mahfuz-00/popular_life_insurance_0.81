@@ -637,107 +637,45 @@ const PhPayPremiumScreen: React.FC<{
                     </Text>
                   </View>
 
-                  <View style={styles.rowWrapper}>
-                    <Text
-                      style={[
-                        styles.rowLable,
-                        globalStyle.tableText,
-                      ]}
-                    >
-                      Due Date
-                    </Text>
+                  {/* Show full details only when NOT matured */}
+                  {!isMatured && (
+                    <>
+                      <View style={styles.rowWrapper}>
+                        <Text style={[styles.rowLable, globalStyle.tableText]}>Due Date</Text>
+                        <Text style={[styles.rowValue, globalStyle.tableText]}>
+                          {policyDetails.NextDueDate?.format3 || '—'}
+                        </Text>
+                      </View>
 
-                    <Text
-                      style={[
-                        styles.rowValue,
-                        globalStyle.tableText,
-                      ]}
-                    >
-                      {policyDetails.NextDueDate?.format3 || '—'}
-                    </Text>
-                  </View>
+                      <View style={styles.rowWrapper}>
+                        <Text style={[styles.rowLable, globalStyle.tableText]}>Maturity Date</Text>
+                        <Text style={[styles.rowValue, globalStyle.tableText]}>
+                          {policyDetails.MaturityDate?.format3 || '—'}
+                        </Text>
+                      </View>
 
-                  <View style={styles.rowWrapper}>
-                    <Text
-                      style={[
-                        styles.rowLable,
-                        globalStyle.tableText,
-                      ]}
-                    >
-                      Maturity Date
-                    </Text>
+                      <View style={styles.rowWrapper}>
+                        <Text style={[styles.rowLable, globalStyle.tableText]}>Installment</Text>
+                        <Text style={[styles.rowValue, globalStyle.tableText]}>
+                          {policyDetails.NoofInstolment || '—'}
+                        </Text>
+                      </View>
 
-                    <Text
-                      style={[
-                        styles.rowValue,
-                        globalStyle.tableText,
-                      ]}
-                    >
-                      {policyDetails.MaturityDate?.format3 || '—'}
-                    </Text>
-                  </View>
+                      <View style={styles.rowWrapper}>
+                        <Text style={[styles.rowLable, globalStyle.tableText]}>Instalment Expected</Text>
+                        <Text style={[styles.rowValue, globalStyle.tableText]}>
+                          {policyDetails.ins_expected || '—'}
+                        </Text>
+                      </View>
 
-                  <View style={styles.rowWrapper}>
-                    <Text
-                      style={[
-                        styles.rowLable,
-                        globalStyle.tableText,
-                      ]}
-                    >
-                      Installment
-                    </Text>
-
-                    <Text
-                      style={[
-                        styles.rowValue,
-                        globalStyle.tableText,
-                      ]}
-                    >
-                      {policyDetails.NoofInstolment || '—'}
-                    </Text>
-                  </View>
-
-                  <View style={styles.rowWrapper}>
-                    <Text
-                      style={[
-                        styles.rowLable,
-                        globalStyle.tableText,
-                      ]}
-                    >
-                      Instalment Expected
-                    </Text>
-
-                    <Text
-                      style={[
-                        styles.rowValue,
-                        globalStyle.tableText,
-                      ]}
-                    >
-                      {policyDetails.ins_expected || '—'}
-                    </Text>
-                  </View>
-
-                  <View style={styles.rowWrapper}>
-                    <Text
-                      style={[
-                        styles.rowLable,
-                        globalStyle.tableText,
-                      ]}
-                    >
-                      Due Per Instalment
-                    </Text>
-
-                    <Text
-                      style={[
-                        styles.rowValue,
-                        globalStyle.tableText,
-                      ]}
-                    >
-                      {Number(
-                        policyDetails.DuePerInstalMent || 0,
-                      ).toFixed(2)}
-                    </Text>
-                  </View>
+                      <View style={styles.rowWrapper}>
+                        <Text style={[styles.rowLable, globalStyle.tableText]}>Due Per Instalment</Text>
+                        <Text style={[styles.rowValue, globalStyle.tableText]}>
+                          {Number(policyDetails.DuePerInstalMent || 0).toFixed(2)}
+                        </Text>
+                      </View>
+                    </>
+                  )}
 
                   <View style={styles.rowWrapper}>
                     <Text
@@ -761,45 +699,24 @@ const PhPayPremiumScreen: React.FC<{
                     </Text>
                   </View>
 
-                  <View style={styles.rowWrapper}>
-                    <Text
-                      style={[
-                        styles.rowLable,
-                        globalStyle.tableText,
-                      ]}
-                    >
-                      Due Amount
-                    </Text>
+                  {/* Hide Due Amount when matured */}
+                  {!isMatured && (
+                    <>
+                      <View style={styles.rowWrapper}>
+                        <Text style={[styles.rowLable, globalStyle.tableText]}>Due Amount</Text>
+                        <Text style={[styles.rowValue, globalStyle.tableText]}>
+                          {policyDetails.DueAmount ?? '—'}
+                        </Text>
+                      </View>
 
-                    <Text
-                      style={[
-                        styles.rowValue,
-                        globalStyle.tableText,
-                      ]}
-                    >
-                      {policyDetails.DueAmount ?? '—'}
-                    </Text>
-                  </View>
-
-                  <View style={styles.rowWrapper}>
-                    <Text
-                      style={[
-                        styles.rowLable,
-                        globalStyle.tableText,
-                      ]}
-                    >
-                      Mode
-                    </Text>
-
-                    <Text
-                      style={[
-                        styles.rowValue,
-                        globalStyle.tableText,
-                      ]}
-                    >
-                      {policyDetails.mode || '—'}
-                    </Text>
-                  </View>
+                      <View style={styles.rowWrapper}>
+                        <Text style={[styles.rowLable, globalStyle.tableText]}>Mode</Text>
+                        <Text style={[styles.rowValue, globalStyle.tableText]}>
+                          {policyDetails.mode || '—'}
+                        </Text>
+                      </View>
+                    </>
+                  )}
 
                   <View style={styles.rowWrapper}>
                     <Text

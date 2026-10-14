@@ -703,6 +703,11 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       }
     }
 
+    const premiumValue = parseFloat(calculated.premium || '0');
+    if (!calculated.premium || calculated.premium === '0' || premiumValue < 500) {
+      newErrors.premium = 'Premium must be 500 or above';
+    }
+
     if (!formData.nid) newErrors.nid = 'NID/Birth Reg/Passport is required';
     if (formData.nid.includes(' ')) newErrors.nid = 'NID must not contain spaces';
     if (!formData.name) newErrors.name = 'Proposer name is required';
@@ -970,6 +975,7 @@ const PayFirstPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             <Input label="Code (Auto)" value={calculated.code6Digit} editable={false} />
             <Input label="Rate" value={isSpecialProject ? calculated.rate : '0'} editable={false} />
             <Input label="Premium" value={calculated.premium ? Math.ceil(parseFloat(calculated.premium)).toString() : ''} editable={false} />
+            {errors.premium && <Text style={styles.error}>{errors.premium}</Text>}
             <Input label="F/E or O/E Amount" value={calculated.feOeAmount} editable={false} />
             <Input label="Total Premium" value={calculated.totalPremium ? Math.ceil(parseFloat(calculated.totalPremium)).toString() : ''} editable={false} />
             <Input label="Installment" value={calculated.finalInstallment.toString()} editable={false} />

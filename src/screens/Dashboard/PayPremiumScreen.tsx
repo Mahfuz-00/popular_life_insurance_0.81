@@ -68,7 +68,16 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       if (res?.Policyno) {
         setPolicyDetails(res);
         console.log('Policy Details:', res);
-        if (res.DueAmount) {
+        const matured = !!(
+          res.isMaturity === true ||
+          res.isMaturity === 1 ||
+          res.isMaturity === '1' ||
+          res.isMaturity === 'true'
+        );
+
+        if (matured) {
+          setAmount('');
+        } else if (res.DueAmount) {
           setAmount(String(res.DueAmount));
         }
       } else {
@@ -341,14 +350,6 @@ const PayPremiumScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
                   editable={false}
                   labelStyle={{ color: '#FFF' }}
                 />
-                {policyDetails.DueAmount !== undefined && (
-                  <Input
-                    label="Due Amount"
-                    value={String(policyDetails.DueAmount || 0)}
-                    editable={false}
-                    labelStyle={{ color: '#FFF' }}
-                  />
-                )}
 
                 {/* <Text
                   style={[
